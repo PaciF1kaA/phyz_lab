@@ -18,7 +18,7 @@ st.set_page_config(
 )
 
 # =====================================================================
-# 2. ТОЧНЫЕ ТАБЛИЦЫ НСХ ТЕРМОПАР ИЗ ПРЕДОСТАВЛЕННЫХ ФАЙЛОВ (ГОСТ Р 8.585-2001)
+# 2. СПРАВОЧНЫЕ ТАБЛИЦЫ НСХ ТЕРМОПАР И БАЗА МЕТАЛЛОВ (С ПАСПОРТАМИ ДАННЫХ)
 # =====================================================================
 
 # 2.1. ТЖК (тип J, железо / константан), диапазон -210 ... 1200 °C, шаг 10 °C (142 точки)
@@ -46,8 +46,7 @@ TJK_MV = np.array([
     68.406, 68.980, 69.553
 ])
 
-# 2.2. ТХА (тип K, хромель / алюмель), диапазон -200 ... 1320 °C (56 точек из таблицы КИП-Сервис)
-# От -200 до 500 °C шаг 50 °C; от 520 до 1320 °C шаг 20 °C
+# 2.2. ТХА (тип K, хромель / алюмель), диапазон выборки -200 ... 1320 °C (56 точек из таблицы КИП-Сервис)
 THA_TEMPS = np.concatenate([
     np.arange(-200, 550, 50, dtype=float),
     np.arange(520, 1340, 20, dtype=float)
@@ -93,85 +92,150 @@ THK_MV = np.array([
     66.466
 ])
 
-# Единый справочник стандартных термопар
+# Единый справочник расчётных табличных моделей термопар для Стенда №1
 THERMOCOUPLES_DB = {
-    "ТЖК (тип J, Железо-Константан, ГОСТ Р 8.585-2001)": {
+    "ТЖК (тип J, Железо-Константан, таблица с шагом 10 °C)": {
+        "short_code": "J (ТЖК)",
+        "temp_unit": "°C",
         "unit": "мВ",
         "min_t": -210,
         "max_t": 1200,
         "default_hot": 500,
         "temps": TJK_TEMPS,
         "values": TJK_MV,
+        "grid_step": "Равномерный шаг 10 °C (142 узла, без пропусков)",
+        "data_source": "Справочная таблица НСХ КИП-Сервис (kipia.pdf, выдержка на основе ГОСТ Р 8.585-2001)",
+        "applicability": "Расчётная табличная модель в диапазоне −210…+1200 °C (на воздухе рабочий предел до 750 °C)",
         "color": "#80ed99",
         "electrodes": ("Железо (+)", "Константан (-)")
     },
-    "ТХА (тип K, Хромель-Алюмель, ГОСТ Р 8.585-2001)": {
+    "ТХА (тип K, Хромель-Алюмель, справочная выборка 50/20 °C)": {
+        "short_code": "K (ТХА)",
+        "temp_unit": "°C",
         "unit": "мВ",
         "min_t": -200,
         "max_t": 1320,
         "default_hot": 500,
         "temps": THA_TEMPS,
         "values": THA_MV,
+        "grid_step": "Неравномерный шаг: 50 °C (−200…500 °C) и 20 °C (520…1320 °C), всего 56 узлов",
+        "data_source": "Сокращённая справочная выборка КИП-Сервис (по ГОСТ Р 8.585-2001 полный диапазон −270…+1372 °C)",
+        "applicability": "Кусочно-линейная интерполяция по 56 узлам в диапазоне −200…+1320 °C (рабочий предел на воздухе до 1100–1200 °C)",
         "color": "#00b4d8",
         "electrodes": ("Хромель (+)", "Алюмель (-)")
     },
-    "ТХК (тип L, Хромель-Копель, ГОСТ Р 8.585-2001)": {
+    "ТХК (тип L, Хромель-Копель, таблица с шагом 10 °C)": {
+        "short_code": "L (ТХК)",
+        "temp_unit": "°C",
         "unit": "мВ",
         "min_t": -200,
         "max_t": 800,
         "default_hot": 500,
         "temps": THK_TEMPS,
         "values": THK_MV,
+        "grid_step": "Равномерный шаг 10 °C (101 узел, без пропусков)",
+        "data_source": "Справочная таблица НСХ КИП-Сервис (выдержка на основе ГОСТ Р 8.585-2001)",
+        "applicability": "Расчётная табличная модель в диапазоне −200…+800 °C",
         "color": "#f77f00",
         "electrodes": ("Хромель (+)", "Копель (-)")
     }
 }
 
-# База данных металлов и сплавов для Стенда №2 (абсолютный коэффициент Зеебека при ~20 °C)
+# База данных металлов и сплавов для Стенда №2 (приближённые коэффициенты при ~20 °C)
 METALS_DB = {
     "Хромель (Ni90-Cr10)": {
         "seebeck": 24.0,
+        "ref_temp": "≈ 20 °C (комнатная температура)",
         "color_hex": "#80ed99",
         "three_hex": "0x80ed99",
         "description": "Жаростойкий сплав никеля (90%) и хрома (10%), положительный термоэлектрод пар ТХА и ТХК."
     },
     "Железо (Fe)": {
         "seebeck": 16.0,
+        "ref_temp": "≈ 20 °C (комнатная температура)",
         "color_hex": "#adb5bd",
         "three_hex": "0xadb5bd",
         "description": "Технически чистое железо, положительный электрод термопары ТЖК."
     },
     "Медь (Cu)": {
         "seebeck": 1.8,
+        "ref_temp": "≈ 20 °C (комнатная температура)",
         "color_hex": "#f77f00",
         "three_hex": "0xf77f00",
-        "description": "Электротехническая медь с малой абсолютной термо-ЭДС."
+        "description": "Электротехническая медь с малой абсолютной термо-ЭДС (в реферате указано около 2 мкВ/К)."
     },
     "Платина (Pt)": {
         "seebeck": -4.5,
+        "ref_temp": "≈ 20 °C (комнатная температура)",
         "color_hex": "#e0e6ed",
         "three_hex": "0xe0e6ed",
         "description": "Благородный металл, используемый как эталон при построении термоэлектрических рядов."
     },
     "Алюмель (Ni95-Mn2-Al2-Si1)": {
         "seebeck": -17.0,
+        "ref_temp": "≈ 20 °C (комнатная температура)",
         "color_hex": "#00b4d8",
         "three_hex": "0x00b4d8",
-        "description": "Никелевый сплав, образующий с хромелем пару ТХА (при 20 °C S_пара ≈ 41 мкВ/°C)."
+        "description": "Никелевый сплав, образующий с хромелем пару ТХА (при 20 °C S_пары ≈ 41 мкВ/°C)."
     },
     "Константан (Cu55-Ni45)": {
         "seebeck": -35.0,
+        "ref_temp": "≈ 20 °C (комнатная температура)",
         "color_hex": "#e0aaff",
         "three_hex": "0xe0aaff",
-        "description": "Медно-никелевый сплав, образующий с железом пару ТЖК (при 20 °C S_пара ≈ 51 мкВ/°C)."
+        "description": "Медно-никелевый сплав, образующий с железом пару ТЖК (при 20 °C S_пары ≈ 51 мкВ/°C)."
     },
     "Копель (Cu56-Ni44-Mn)": {
         "seebeck": -40.5,
+        "ref_temp": "≈ 20 °C (комнатная температура)",
         "color_hex": "#ff9f1c",
         "three_hex": "0xff9f1c",
-        "description": "Термоэлектродный сплав, образующий с хромелем пару ТХК (при 20 °C S_пара ≈ 64.5 мкВ/°C)."
+        "description": "Термоэлектродный сплав, образующий с хромелем пару ТХК (при 20 °C S_пары ≈ 64.5 мкВ/°C)."
     }
 }
+
+
+def resolve_asset_path(rel_path: str) -> Path | None:
+    """
+    Находит путь к файлу из папки assets как при обычном запуске (локально или в Streamlit Cloud),
+    так и внутри собранного через PyInstaller исполняемого файла (.exe, sys._MEIPASS).
+    """
+    search_roots = []
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        search_roots.append(Path(sys._MEIPASS))
+    if "__file__" in globals():
+        search_roots.append(Path(__file__).resolve().parent)
+    search_roots.append(Path.cwd())
+
+    filename = Path(rel_path).name
+    for root in search_roots:
+        for candidate in (root / rel_path, root / "assets" / filename, root / filename):
+            if candidate.is_file():
+                return candidate
+    return None
+
+
+def get_threejs_script_tags() -> str:
+    """
+    Проверяет наличие локальных копий three.min.js и OrbitControls.js по отдельности.
+    Если локальный файл найден — встраивает его, иначе подключает внешний скрипт CDN.
+    """
+    local_three = resolve_asset_path("assets/three.min.js")
+    local_orbit = resolve_asset_path("assets/OrbitControls.js")
+
+    if local_three is not None:
+        three_js_code = local_three.read_text(encoding="utf-8", errors="ignore")
+        tag_three = f"<script>{three_js_code}</script>"
+    else:
+        tag_three = '<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>'
+
+    if local_orbit is not None:
+        orbit_js_code = local_orbit.read_text(encoding="utf-8", errors="ignore")
+        tag_orbit = f"<script>{orbit_js_code}</script>"
+    else:
+        tag_orbit = '<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>'
+
+    return f"{tag_three}\n{tag_orbit}"
 
 
 # =====================================================================
@@ -179,8 +243,8 @@ METALS_DB = {
 # =====================================================================
 def calculate_nominal_emf(sensor_key: str, temp_c: float) -> float:
     """
-    Возвращает точное табличное значение Термо-ЭДС E(T) по ГОСТ Р 8.585-2001
-    из загруженных массивов (с линейной интерполяцией только между узлами сетки).
+    Возвращает табличное значение Термо-ЭДС E(T) при T_0 = 0 °C
+    из встроенного массива выбранной термопары (с кусочно-линейной интерполяцией между узлами сетки).
     """
     spec = THERMOCOUPLES_DB[sensor_key]
     return float(np.interp(temp_c, spec["temps"], spec["values"]))
@@ -189,7 +253,7 @@ def calculate_nominal_emf(sensor_key: str, temp_c: float) -> float:
 def calculate_seebeck_diff(sensor_key: str, temp_c: float) -> float:
     """
     Вычисляет дифференциальную термо-ЭДС S(T) = dE/dT в мкВ/°C
-    по соседним табличным узлам с шагом dt = 10 °C.
+    методом центральной разности с шагом dt = 10 °C.
     """
     spec = THERMOCOUPLES_DB[sensor_key]
     dt = 10.0
@@ -200,6 +264,127 @@ def calculate_seebeck_diff(sensor_key: str, temp_c: float) -> float:
     e_plus = calculate_nominal_emf(sensor_key, t_plus)
     e_minus = calculate_nominal_emf(sensor_key, t_minus)
     return float(((e_plus - e_minus) / (t_plus - t_minus)) * 1000.0)
+
+
+def evaluate_circuit_physics(
+    e_hot: float,
+    e_cold: float,
+    t_hot: float,
+    t_cold: float,
+    fault_mode: str,
+    t_short_c: float | None = None,
+    e_short: float | None = None,
+    open_meter_mode: str = "Вторичный прибор с контролем обрыва (шунт входа)",
+    r_cold_branch_ohm: float = 8.0,
+    r_hot_loop_ohm: float = 7.0,
+    r_bridge_ohm: float = 0.0,
+    r_in_ohm: float = 1e6
+) -> dict:
+    """
+    Физическая модель термоэлектрической цепи с независимыми сопротивлениями участков:
+    - r_cold_branch_ohm (R_уч1): сопротивление проводов от холодного спая до точки КЗ, Ом;
+    - r_hot_loop_ohm (R_уч2): сопротивление горячего участка от точки КЗ до рабочего спая, Ом;
+    - r_bridge_ohm (R_кз): переходное сопротивление перемычки КЗ, Ом;
+    - r_in_ohm (R_вх): входное сопротивление измерительного прибора, Ом.
+    """
+    r_total_tp_ohm = r_cold_branch_ohm + r_hot_loop_ohm
+    e_generated_mv = e_hot - e_cold
+
+    if fault_mode == "Норма":
+        current_ua = (e_generated_mv * 1000.0) / (r_total_tp_ohm + r_in_ohm)
+        u_meter_mv = e_generated_mv * (r_in_ohm / (r_total_tp_ohm + r_in_ohm))
+        return {
+            "circuit_state": f"Замкнута (исправна, R_тп = {r_total_tp_ohm:.1f} Ом)",
+            "current_status": f"I = {current_ua:+.4f} мкА (термоток протекает)",
+            "current_ua": current_ua,
+            "i_loop_ma": 0.0,
+            "e_gen_mv": e_generated_mv,
+            "u_meter_mv": u_meter_mv,
+            "u_meter_str": f"{u_meter_mv:+.3f} мВ",
+            "measurement_state": "Достоверное измерение (R_вх ≫ R_тп, U_приб ≈ E_ген)",
+            "active_point_t": t_hot,
+            "active_point_e": u_meter_mv,
+            "warning": None
+        }
+
+    if fault_mode == "Обрыв термоэлектрического контура":
+        current_ua = 0.0
+        if open_meter_mode.startswith("Идеальный"):
+            u_meter_mv = e_generated_mv
+            u_meter_str = f"{u_meter_mv:+.3f} мВ (режим U_хх)"
+            meas_state = "Измерение ЭДС холостого хода U_хх на разомкнутых концах (I = 0 мкА)"
+        else:
+            u_meter_mv = None
+            u_meter_str = "ОБРЫВ (0.000 мВ на входе)"
+            meas_state = "Недостоверно: цепь разомкнута, источник ЭДС отсечён от входа прибора (I = 0 мкА)"
+
+        return {
+            "circuit_state": "Разомкнута (обрыв проводника)",
+            "current_status": "I = 0.0000 мкА (ток отсутствует, R_контура → ∞)",
+            "current_ua": 0.0,
+            "i_loop_ma": 0.0,
+            "e_gen_mv": e_generated_mv,
+            "u_meter_mv": u_meter_mv,
+            "u_meter_str": u_meter_str,
+            "measurement_state": meas_state,
+            "active_point_t": t_hot,
+            "active_point_e": e_generated_mv,
+            "warning": (
+                f"Физическое состояние при обрыве: внутри термоэлектродов сохраняется разделение носителей заряда, "
+                f"поэтому генерируемая термо-ЭДС холостого хода составляет E_ген = {e_generated_mv:+.3f} мВ. "
+                f"Так как контур разомкнут, электрический ток равен нулю (I = 0 мкА). "
+                f"Вход стандартного прибора с контролем обрыва отсечён от спая и сигнализирует об отказе линии."
+            )
+        }
+
+    # Режим «Паразитный спай (КЗ)» с точным расчётом по теореме Тевенина для введённых R_уч1, R_уч2, R_кз
+    t_kz = t_short_c if t_short_c is not None else t_cold
+    e_kz = e_short if e_short is not None else e_cold
+
+    # ЭДС холодного участка (от T_cold до T_кз) и горячего участка (от T_кз до T_hot)
+    e_segment_cold_mv = e_kz - e_cold
+    e_segment_hot_mv = e_hot - e_kz
+
+    # Сопротивление контура горячей петли КЗ (R_уч2 + R_кз)
+    r_loop_total = max(r_hot_loop_ohm + r_bridge_ohm, 1e-6)
+
+    # Локальный циркулирующий ток в горячей петле КЗ: I_кз = (E(T_hot) - E(T_кз)) / (R_уч2 + R_кз) [мА]
+    i_loop_ma = e_segment_hot_mv / r_loop_total
+
+    # Эквивалентная ЭДС Тевенина и эквивалентное сопротивление со стороны прибора
+    e_thevenin_mv = e_segment_cold_mv + i_loop_ma * r_bridge_ohm
+    r_thevenin_ohm = r_cold_branch_ohm + (r_hot_loop_ohm * r_bridge_ohm) / r_loop_total
+
+    # Ток во внешней цепи прибора (мкА) и напряжение на зажимах прибора (мВ)
+    i_meter_ua = (e_thevenin_mv * 1000.0) / (r_thevenin_ohm + r_in_ohm)
+    u_shunted_mv = e_thevenin_mv * (r_in_ohm / (r_thevenin_ohm + r_in_ohm))
+    error_mv = u_shunted_mv - e_generated_mv
+
+    return {
+        "circuit_state": (
+            f"Шунтирована перемычкой КЗ при T_кз = {t_kz:.0f} °C "
+            f"(R_уч1={r_cold_branch_ohm:.1f} Ом, R_уч2={r_hot_loop_ohm:.1f} Ом, R_кз={r_bridge_ohm:.2f} Ом)"
+        ),
+        "current_status": f"I_приб = {i_meter_ua:+.4f} мкА | Локальный ток петли КЗ: I_кз = {i_loop_ma:+.3f} мА",
+        "current_ua": i_meter_ua,
+        "i_loop_ma": i_loop_ma,
+        "e_gen_mv": e_generated_mv,
+        "u_meter_mv": u_shunted_mv,
+        "u_meter_str": f"{u_shunted_mv:+.3f} мВ (шунт при {t_kz:.0f} °C)",
+        "measurement_state": (
+            f"Искажено шунтированием: U_приб = {u_shunted_mv:+.3f} мВ, "
+            f"методическая погрешность ΔE = {error_mv:+.3f} мВ"
+        ),
+        "active_point_t": t_kz,
+        "active_point_e": u_shunted_mv,
+        "warning": (
+            f"Модель короткого замыкания (паразитного спая) при введённых сопротивлениях "
+            f"R_уч1 = {r_cold_branch_ohm:.1f} Ом, R_уч2 = {r_hot_loop_ohm:.1f} Ом, R_кз = {r_bridge_ohm:.2f} Ом: "
+            f"разность ЭДС горячего участка E(T_hot) − E(T_кз) = {e_segment_hot_mv:+.3f} мВ создаёт в замкнутой горячей петле "
+            f"локальный паразитный ток I_кз = ({e_segment_hot_mv:+.3f} мВ) / ({r_hot_loop_ohm:.1f} + {r_bridge_ohm:.2f} Ом) = {i_loop_ma:+.3f} мА. "
+            f"На вход прибора поступает напряжение U_приб = {u_shunted_mv:+.3f} мВ вместо полной ЭДС спая E_ген = {e_generated_mv:+.3f} мВ."
+        )
+    }
 
 
 def hot_junction_rgb(temp_c: float) -> tuple[str, str, float]:
@@ -227,25 +412,32 @@ def cold_junction_rgb(temp_c: float) -> tuple[str, str, float]:
 
 
 # =====================================================================
-# 4. 3D-ВИЗУАЛИЗАЦИЯ СТЕНДА №1 И СТЕНДА №2 (THREE.JS + ORBITCONTROLS)
+# 4. 3D-ВИЗУАЛИЗАЦИЯ С ПРОВЕРКОЙ THREE / ORBITCONTROLS И ПЕРЕХВАТОМ ОШИБОК WEBGL
 # =====================================================================
 def render_3d_stand1_gradient(
     t_hot: float,
     t_cold: float,
     sensor_title: str,
-    emf_str: str,
+    e_gen_str: str,
+    u_meter_str: str,
     seebeck_str: str,
-    fault_state: str
+    fault_state: str,
+    t_kz_val: float | None = None
 ) -> str:
     """
-    3D-модель термопары для Стенда №1:
-    Подсвечивает горячий спай красным/оранжевым (T_hot), а холодный спай — синим/голубым (T_cold).
+    3D-модель термопары для Стенда №1.
+    Проверяет наличие THREE и THREE.OrbitControls отдельно и перехватывает ошибки создания WebGLRenderer
+    с автоматическим переходом на векторную 2D SVG-схему.
     """
     hot_hex, hot_emissive, hot_int = hot_junction_rgb(t_hot)
     cold_hex, cold_emissive, cold_int = cold_junction_rgb(t_cold)
+    hot_css = "#" + hot_hex[2:]
+    cold_css = "#" + cold_hex[2:]
     border_col = "#ff2a2a" if fault_state != "Норма" else "#00b4d8"
     is_open = "Обрыв" in fault_state
     is_short = "Паразитный" in fault_state
+    kz_label = f"{t_kz_val:.0f} °C" if t_kz_val is not None else ""
+    three_scripts = get_threejs_script_tags()
 
     return f"""
     <!DOCTYPE html>
@@ -257,7 +449,7 @@ def render_3d_stand1_gradient(
             #hud {{
                 position: absolute; top: 10px; left: 12px; color: #e0e6ed;
                 background: rgba(20, 24, 33, 0.92); padding: 10px 14px;
-                border-radius: 8px; border-left: 4px solid {border_col}; font-size: 12.5px;
+                border-radius: 8px; border-left: 4px solid {border_col}; font-size: 12px;
                 pointer-events: none; z-index: 10; line-height: 1.45;
             }}
             #legend {{
@@ -270,161 +462,202 @@ def render_3d_stand1_gradient(
                 background: rgba(14, 17, 23, 0.75); padding: 5px 10px;
                 border-radius: 6px; font-size: 11px; pointer-events: none; z-index: 10;
             }}
+            #fallback2d {{
+                display: none; width: 100vw; height: 100vh;
+                align-items: center; justify-content: center; flex-direction: column;
+                background-color: #0e1117; color: #e0e6ed;
+            }}
             .hot-badge {{ color: #ff6b35; font-weight: bold; }}
             .cold-badge {{ color: #4cc9f0; font-weight: bold; }}
             #hud b {{ color: #ff9f1c; }}
         </style>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+        {three_scripts}
     </head>
     <body>
         <div id="hud">
             <div>Термопара: <b>{sensor_title}</b></div>
-            <div>Горячий спай T_hot: <span class="hot-badge">{t_hot:.1f} °C</span></div>
-            <div>Холодный спай T_cold: <span class="cold-badge">{t_cold:.1f} °C</span></div>
-            <div>Результирующая ЭДС: <b>{emf_str}</b> | S(T): <b>{seebeck_str}</b></div>
-            <div>Цепь: <b>{fault_state}</b></div>
+            <div>Горячий спай T_hot: <span class="hot-badge">{t_hot:.1f} °C</span> | Холодный спай T_cold: <span class="cold-badge">{t_cold:.1f} °C</span></div>
+            <div>ЭДС холостого хода E_ген: <b>{e_gen_str}</b> | S(T_hot): <b>{seebeck_str}</b></div>
+            <div>На приборе U_приб: <b>{u_meter_str}</b></div>
+            <div>Состояние цепи: <b>{fault_state}</b></div>
         </div>
         <div id="legend">
             🔴 Внизу: Горячий спай (T_hot) &nbsp;|&nbsp; 🔵 Вверху: Холодный спай (T_cold)
         </div>
         <div id="hint">🖱️ ЛКМ: вращать 3D | Колесо: масштаб | ПКМ: панорама</div>
+
+        <!-- Автономный 2D SVG-fallback при недоступности Three.js, OrbitControls или WebGL -->
+        <div id="fallback2d">
+            <svg width="320" height="360" viewBox="0 0 320 360">
+                <defs>
+                    <linearGradient id="gradWire" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:{cold_css};stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:{hot_css};stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <rect x="85" y="45" width="150" height="36" rx="6" fill="{cold_css}" stroke="#ffffff" stroke-width="1.5"/>
+                <text x="160" y="68" fill="#0e1117" font-size="12" font-weight="bold" text-anchor="middle">Холодный спай ({t_cold:.0f} °C)</text>
+                <line x1="115" y1="81" x2="155" y2="290" stroke="url(#gradWire)" stroke-width="8" stroke-linecap="round"/>
+                <line x1="205" y1="81" x2="165" y2="290" stroke="url(#gradWire)" stroke-width="8" stroke-linecap="round"/>
+                {"<rect x='115' y='165' width='35' height='22' fill='#0e1117'/><circle cx='132' cy='176' r='10' fill='none' stroke='#ff2a2a' stroke-width='2' stroke-dasharray='3,3'/><text x='70' y='180' fill='#ff4d4d' font-size='11'>Обрыв I=0</text>" if is_open else ""}
+                {"<line x1='128' y1='185' x2='192' y2='185' stroke='#ff2a2a' stroke-width='6'/><text x='235' y='189' fill='#ff4d4d' font-size='11'>КЗ (" + kz_label + ")</text>" if is_short else ""}
+                <circle cx="160" cy="295" r="20" fill="{hot_css}" stroke="#ffffff" stroke-width="1.5"/>
+                <text x="160" y="335" fill="{hot_css}" font-size="12" font-weight="bold" text-anchor="middle">Горячий спай ({t_hot:.0f} °C)</text>
+            </svg>
+        </div>
+
         <script>
-            const scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0e1117);
+            function activateFallback2D(reason) {{
+                const fb = document.getElementById('fallback2d');
+                const hintEl = document.getElementById('hint');
+                if (fb) fb.style.display = 'flex';
+                if (hintEl) hintEl.innerText = 'ℹ️ Автономная 2D SVG-схема (' + reason + ')';
+            }}
 
-            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0.0, 0.3, 6.8);
+            if (typeof window.THREE === 'undefined') {{
+                activateFallback2D('библиотека THREE не загружена');
+            }} else if (typeof window.THREE.OrbitControls === 'undefined') {{
+                activateFallback2D('модуль THREE.OrbitControls не загружен');
+            }} else {{
+                try {{
+                    const scene = new THREE.Scene();
+                    scene.background = new THREE.Color(0x0e1117);
 
-            const renderer = new THREE.WebGLRenderer({{ antialias: true }});
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            document.body.appendChild(renderer.domElement);
+                    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+                    camera.position.set(0.0, 0.3, 6.8);
 
-            const controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.06;
-            controls.autoRotate = true;
-            controls.autoRotateSpeed = 0.8;
-            controls.addEventListener('start', function() {{ controls.autoRotate = false; }});
+                    const renderer = new THREE.WebGLRenderer({{ antialias: true }});
+                    if (!renderer || !renderer.domElement) {{
+                        throw new Error('WebGL контекст недоступен');
+                    }}
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                    renderer.setPixelRatio(window.devicePixelRatio || 1);
+                    document.body.appendChild(renderer.domElement);
 
-            scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
-            dirLight.position.set(5, 8, 6);
-            scene.add(dirLight);
+                    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+                    controls.enableDamping = true;
+                    controls.dampingFactor = 0.06;
+                    controls.autoRotate = true;
+                    controls.autoRotateSpeed = 0.8;
+                    controls.addEventListener('start', function() {{ controls.autoRotate = false; }});
 
-            const hotLight = new THREE.PointLight({hot_emissive}, {hot_int * 1.8}, 6);
-            hotLight.position.set(0, -2.1, 0.5);
-            scene.add(hotLight);
+                    scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+                    const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
+                    dirLight.position.set(5, 8, 6);
+                    scene.add(dirLight);
 
-            const coldLight = new THREE.PointLight({cold_emissive}, {cold_int * 1.6}, 6);
-            coldLight.position.set(0, 2.0, 0.5);
-            scene.add(coldLight);
+                    const hotLight = new THREE.PointLight({hot_emissive}, {hot_int * 1.8}, 6);
+                    hotLight.position.set(0, -2.1, 0.5);
+                    scene.add(hotLight);
 
-            const group = new THREE.Group();
+                    const coldLight = new THREE.PointLight({cold_emissive}, {cold_int * 1.6}, 6);
+                    coldLight.position.set(0, 2.0, 0.5);
+                    scene.add(coldLight);
 
-            // 1. ХОЛОДНЫЙ СПАЙ (синий/голубой изотермический блок вверху)
-            const coldMat = new THREE.MeshStandardMaterial({{
-                color: {cold_hex}, emissive: {cold_emissive},
-                emissiveIntensity: {cold_int * 0.65}, metalness: 0.5, roughness: 0.25
-            }});
-            const coldBlock = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.55, 0.85), coldMat);
-            coldBlock.position.set(0, 2.05, 0);
-            group.add(coldBlock);
+                    const group = new THREE.Group();
 
-            const termGeom = new THREE.CylinderGeometry(0.16, 0.16, 0.35, 24);
-            const leftTerm = new THREE.Mesh(termGeom, coldMat);
-            leftTerm.position.set(-0.65, 2.45, 0);
-            group.add(leftTerm);
+                    const coldMat = new THREE.MeshStandardMaterial({{
+                        color: {cold_hex}, emissive: {cold_emissive},
+                        emissiveIntensity: {cold_int * 0.65}, metalness: 0.5, roughness: 0.25
+                    }});
+                    const coldBlock = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.55, 0.85), coldMat);
+                    coldBlock.position.set(0, 2.05, 0);
+                    group.add(coldBlock);
 
-            const rightTerm = new THREE.Mesh(termGeom, coldMat);
-            rightTerm.position.set(0.65, 2.45, 0);
-            group.add(rightTerm);
+                    const termGeom = new THREE.CylinderGeometry(0.16, 0.16, 0.35, 24);
+                    const leftTerm = new THREE.Mesh(termGeom, coldMat);
+                    leftTerm.position.set(-0.65, 2.45, 0);
+                    group.add(leftTerm);
 
-            // 2. ДВА ПРОВОДНИКА С ТЕПЛОВЫМ ГРАДИЕНТОМ ОТ T_cold К T_hot
-            const cCold = new THREE.Color({cold_hex});
-            const cHot = new THREE.Color({hot_hex});
-            const numSegs = 24;
-            const yTop = 1.75;
-            const yBot = -1.95;
+                    const rightTerm = new THREE.Mesh(termGeom, coldMat);
+                    rightTerm.position.set(0.65, 2.45, 0);
+                    group.add(rightTerm);
 
-            for (let i = 0; i < numSegs; i++) {{
-                const tFrac = i / (numSegs - 1);
-                const segColor = cCold.clone().lerp(cHot, tFrac);
-                const segMat = new THREE.MeshStandardMaterial({{
-                    color: segColor,
-                    emissive: segColor,
-                    emissiveIntensity: 0.22 + 0.35 * tFrac,
-                    metalness: 0.7,
-                    roughness: 0.25
-                }});
+                    const cCold = new THREE.Color({cold_hex});
+                    const cHot = new THREE.Color({hot_hex});
+                    const numSegs = 24;
+                    const yTop = 1.75;
+                    const yBot = -1.95;
 
-                const yPos = yTop - tFrac * (yTop - yBot);
-                const xSpread = 0.65 * (1.0 - 0.82 * (tFrac * tFrac));
-                const segHeight = (yTop - yBot) / numSegs * 1.15;
+                    for (let i = 0; i < numSegs; i++) {{
+                        const tFrac = i / (numSegs - 1);
+                        const segColor = cCold.clone().lerp(cHot, tFrac);
+                        const segMat = new THREE.MeshStandardMaterial({{
+                            color: segColor,
+                            emissive: segColor,
+                            emissiveIntensity: 0.22 + 0.35 * tFrac,
+                            metalness: 0.7,
+                            roughness: 0.25
+                        }});
 
-                if (!({str(is_open).lower()} && (i === 10 || i === 11))) {{
-                    const segLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, segHeight, 16), segMat);
-                    segLeft.position.set(-xSpread, yPos, 0);
-                    segLeft.rotation.z = 0.22 * tFrac;
-                    group.add(segLeft);
+                        const yPos = yTop - tFrac * (yTop - yBot);
+                        const xSpread = 0.65 * (1.0 - 0.82 * (tFrac * tFrac));
+                        const segHeight = (yTop - yBot) / numSegs * 1.15;
+
+                        if (!({str(is_open).lower()} && (i === 10 || i === 11))) {{
+                            const segLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, segHeight, 16), segMat);
+                            segLeft.position.set(-xSpread, yPos, 0);
+                            segLeft.rotation.z = 0.22 * tFrac;
+                            group.add(segLeft);
+                        }}
+
+                        const segRight = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, segHeight, 16), segMat);
+                        segRight.position.set(xSpread, yPos, 0);
+                        segRight.rotation.z = -0.22 * tFrac;
+                        group.add(segRight);
+                    }}
+
+                    const hotMat = new THREE.MeshStandardMaterial({{
+                        color: {hot_hex}, emissive: {hot_emissive},
+                        emissiveIntensity: {hot_int}, metalness: 0.4, roughness: 0.2
+                    }});
+                    const hotJunction = new THREE.Mesh(new THREE.SphereGeometry(0.34, 32, 24), hotMat);
+                    hotJunction.position.set(0, -2.05, 0);
+                    group.add(hotJunction);
+
+                    const heaterRing = new THREE.Mesh(
+                        new THREE.TorusGeometry(0.62, 0.07, 16, 48),
+                        new THREE.MeshStandardMaterial({{ color: {hot_hex}, emissive: {hot_emissive}, emissiveIntensity: 0.8 }})
+                    );
+                    heaterRing.rotation.x = Math.PI / 2;
+                    heaterRing.position.set(0, -2.05, 0);
+                    group.add(heaterRing);
+
+                    if ({str(is_short).lower()}) {{
+                        const shortMat = new THREE.MeshStandardMaterial({{
+                            color: 0xff2a2a, emissive: 0xff0000, emissiveIntensity: 0.85, metalness: 0.8
+                        }});
+                        const bridge = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.15, 16), shortMat);
+                        bridge.rotation.z = Math.PI / 2;
+                        bridge.position.set(0, 0.45, 0);
+                        group.add(bridge);
+                    }}
+
+                    if ({str(is_open).lower()}) {{
+                        const sparkMat = new THREE.MeshBasicMaterial({{ color: 0xff2a2a, wireframe: true }});
+                        const breakSphere = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 12), sparkMat);
+                        breakSphere.position.set(-0.52, 0.22, 0);
+                        group.add(breakSphere);
+                    }}
+
+                    scene.add(group);
+
+                    function animate() {{
+                        requestAnimationFrame(animate);
+                        controls.update();
+                        renderer.render(scene, camera);
+                    }}
+                    animate();
+
+                    window.addEventListener('resize', () => {{
+                        camera.aspect = window.innerWidth / window.innerHeight;
+                        camera.updateProjectionMatrix();
+                        renderer.setSize(window.innerWidth, window.innerHeight);
+                    }});
+                }} catch (err) {{
+                    activateFallback2D('ошибка инициализации WebGL: ' + (err && err.message ? err.message : 'неизвестная ошибка'));
                 }}
-
-                const segRight = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, segHeight, 16), segMat);
-                segRight.position.set(xSpread, yPos, 0);
-                segRight.rotation.z = -0.22 * tFrac;
-                group.add(segRight);
             }}
-
-            // 3. ГОРЯЧИЙ СПАЙ (сфера сварного соединения внизу)
-            const hotMat = new THREE.MeshStandardMaterial({{
-                color: {hot_hex}, emissive: {hot_emissive},
-                emissiveIntensity: {hot_int}, metalness: 0.4, roughness: 0.2
-            }});
-            const hotJunction = new THREE.Mesh(new THREE.SphereGeometry(0.34, 32, 24), hotMat);
-            hotJunction.position.set(0, -2.05, 0);
-            group.add(hotJunction);
-
-            const heaterRing = new THREE.Mesh(
-                new THREE.TorusGeometry(0.62, 0.07, 16, 48),
-                new THREE.MeshStandardMaterial({{ color: {hot_hex}, emissive: {hot_emissive}, emissiveIntensity: 0.8 }})
-            );
-            heaterRing.rotation.x = Math.PI / 2;
-            heaterRing.position.set(0, -2.05, 0);
-            group.add(heaterRing);
-
-            // 4. ВИЗУАЛИЗАЦИЯ ФИЗИЧЕСКИХ НАРУШЕНИЙ ЦЕПИ
-            if ({str(is_short).lower()}) {{
-                const shortMat = new THREE.MeshStandardMaterial({{
-                    color: 0xff2a2a, emissive: 0xff0000, emissiveIntensity: 0.85, metalness: 0.8
-                }});
-                const bridge = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.15, 16), shortMat);
-                bridge.rotation.z = Math.PI / 2;
-                bridge.position.set(0, 0.45, 0);
-                group.add(bridge);
-            }}
-
-            if ({str(is_open).lower()}) {{
-                const sparkMat = new THREE.MeshBasicMaterial({{ color: 0xff2a2a, wireframe: true }});
-                const breakSphere = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 12), sparkMat);
-                breakSphere.position.set(-0.52, 0.22, 0);
-                group.add(breakSphere);
-            }}
-
-            scene.add(group);
-
-            function animate() {{
-                requestAnimationFrame(animate);
-                controls.update();
-                renderer.render(scene, camera);
-            }}
-            animate();
-
-            window.addEventListener('resize', () => {{
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            }});
         </script>
     </body>
     </html>
@@ -438,18 +671,23 @@ def render_3d_stand2_pair(
     col2_hex: str,
     s_pair: float,
     delta_t: float,
-    emf_mv: float,
+    e_gen_mv: float,
+    u_meter_mv: float | None,
+    u_meter_str: str,
     fault_state: str
 ) -> str:
     """
-    3D-модель для Стенда №2:
-    Два соединенных разнородных проводника (Металл 1 и Металл 2), подключенных к вольтметру.
+    3D-модель для Стенда №2 с раздельной проверкой THREE / THREE.OrbitControls
+    и перехватом ошибок WebGLRenderer (автоматический переход на 2D SVG).
     """
     border_col = "#ff2a2a" if fault_state != "Норма" else "#80ed99"
     is_open = "Обрыв" in fault_state
     is_short = "Паразитный" in fault_state
-    needle_angle = float(np.clip((emf_mv / 50.0) * 0.9, -1.1, 1.1))
-    emf_label = "0.000 мВ (Обрыв)" if is_open else f"{emf_mv:+.3f} мВ"
+    col1_css = "#" + col1_hex[2:]
+    col2_css = "#" + col2_hex[2:]
+    meter_val = 0.0 if u_meter_mv is None else u_meter_mv
+    needle_angle = float(np.clip((meter_val / 50.0) * 0.9, -1.1, 1.1))
+    three_scripts = get_threejs_script_tags()
 
     return f"""
     <!DOCTYPE html>
@@ -461,7 +699,7 @@ def render_3d_stand2_pair(
             #hud {{
                 position: absolute; top: 10px; left: 12px; color: #e0e6ed;
                 background: rgba(20, 24, 33, 0.92); padding: 10px 14px;
-                border-radius: 8px; border-left: 4px solid {border_col}; font-size: 12.5px;
+                border-radius: 8px; border-left: 4px solid {border_col}; font-size: 12px;
                 pointer-events: none; z-index: 10; line-height: 1.45;
             }}
             #hint {{
@@ -469,133 +707,172 @@ def render_3d_stand2_pair(
                 background: rgba(14, 17, 23, 0.75); padding: 5px 10px;
                 border-radius: 6px; font-size: 11px; pointer-events: none; z-index: 10;
             }}
+            #fallback2d {{
+                display: none; width: 100vw; height: 100vh;
+                align-items: center; justify-content: center; flex-direction: column;
+                background-color: #0e1117; color: #e0e6ed;
+            }}
             #hud b {{ color: #80ed99; }}
         </style>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+        {three_scripts}
     </head>
     <body>
         <div id="hud">
             <div>Ветвь А: <b>{metal1_name}</b> | Ветвь B: <b>{metal2_name}</b></div>
-            <div>Коэффициент пары S_пара: <b>{s_pair:+.1f} мкВ/°C</b> | ΔT: <b>{delta_t:.0f} °C</b></div>
-            <div>Показание вольтметра: <b>{emf_label}</b></div>
+            <div>S_пары (при ~20 °C): <b>{s_pair:+.1f} мкВ/°C</b> | ΔT: <b>{delta_t:+.0f} °C</b></div>
+            <div>ЭДС холостого хода E_ген: <b>{e_gen_mv:+.3f} мВ</b></div>
+            <div>Показание вольтметра U_приб: <b>{u_meter_str}</b></div>
             <div>Состояние контура: <b>{fault_state}</b></div>
         </div>
         <div id="hint">🖱️ ЛКМ: вращать 3D | Колесо: масштаб | ПКМ: панорама</div>
+
+        <div id="fallback2d">
+            <svg width="320" height="360" viewBox="0 0 320 360">
+                <rect x="95" y="45" width="130" height="70" rx="8" fill="#1f2937" stroke="#9aa5b1" stroke-width="2"/>
+                <text x="160" y="75" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">Милливольтметр</text>
+                <text x="160" y="98" fill="#80ed99" font-size="11" text-anchor="middle">{u_meter_str}</text>
+                <line x1="115" y1="115" x2="155" y2="290" stroke="{col1_css}" stroke-width="7" stroke-linecap="round"/>
+                <line x1="205" y1="115" x2="165" y2="290" stroke="{col2_css}" stroke-width="7" stroke-linecap="round"/>
+                {"<rect x='115' y='180' width='35' height='22' fill='#0e1117'/><text x='65' y='195' fill='#ff4d4d' font-size='11'>Обрыв I=0</text>" if is_open else ""}
+                {"<line x1='130' y1='200' x2='190' y2='200' stroke='#ff2a2a' stroke-width='6'/><text x='225' y='204' fill='#ff4d4d' font-size='11'>Перемычка КЗ</text>" if is_short else ""}
+                <circle cx="160" cy="295" r="18" fill="#ff5400" stroke="#ffffff" stroke-width="1.5"/>
+            </svg>
+        </div>
+
         <script>
-            const scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0e1117);
+            function activateFallback2D(reason) {{
+                const fb = document.getElementById('fallback2d');
+                const hintEl = document.getElementById('hint');
+                if (fb) fb.style.display = 'flex';
+                if (hintEl) hintEl.innerText = 'ℹ️ Автономная 2D SVG-схема (' + reason + ')';
+            }}
 
-            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0.0, 0.5, 7.2);
-
-            const renderer = new THREE.WebGLRenderer({{ antialias: true }});
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            document.body.appendChild(renderer.domElement);
-
-            const controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.06;
-
-            scene.add(new THREE.AmbientLight(0xffffff, 0.75));
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
-            dirLight.position.set(4, 7, 6);
-            scene.add(dirLight);
-
-            const group = new THREE.Group();
-
-            const meterBodyMat = new THREE.MeshStandardMaterial({{ color: 0x1f2937, metalness: 0.5, roughness: 0.4 }});
-            const meterBody = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.35, 0.7), meterBodyMat);
-            meterBody.position.set(0, 1.75, 0);
-            group.add(meterBody);
-
-            const dialMat = new THREE.MeshStandardMaterial({{ color: 0x0f172a, roughness: 0.2 }});
-            const dialFace = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.08, 32), dialMat);
-            dialFace.rotation.x = Math.PI / 2;
-            dialFace.position.set(0, 1.72, 0.35);
-            group.add(dialFace);
-
-            const needlePivot = new THREE.Group();
-            needlePivot.position.set(0, 1.50, 0.42);
-            const needleMat = new THREE.MeshBasicMaterial({{ color: 0xff4d4d }});
-            const needle = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.48, 0.04), needleMat);
-            needle.position.set(0, 0.22, 0);
-            needlePivot.add(needle);
-            needlePivot.rotation.z = -{needle_angle};
-            group.add(needlePivot);
-
-            const coldMat = new THREE.MeshStandardMaterial({{
-                color: 0x00b4d8, emissive: 0x0077b6, emissiveIntensity: 0.5
-            }});
-            const termL = new THREE.Mesh(new THREE.SphereGeometry(0.18, 20, 20), coldMat);
-            termL.position.set(-0.85, 0.95, 0);
-            group.add(termL);
-
-            const termR = new THREE.Mesh(new THREE.SphereGeometry(0.18, 20, 20), coldMat);
-            termR.position.set(0.85, 0.95, 0);
-            group.add(termR);
-
-            const mat1 = new THREE.MeshStandardMaterial({{
-                color: {col1_hex}, metalness: 0.8, roughness: 0.22
-            }});
-            const mat2 = new THREE.MeshStandardMaterial({{
-                color: {col2_hex}, metalness: 0.8, roughness: 0.22
-            }});
-
-            if (!{str(is_open).lower()}) {{
-                const wire1 = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 3.1, 24), mat1);
-                wire1.position.set(-0.44, -0.45, 0);
-                wire1.rotation.z = 0.28;
-                group.add(wire1);
+            if (typeof window.THREE === 'undefined') {{
+                activateFallback2D('библиотека THREE не загружена');
+            }} else if (typeof window.THREE.OrbitControls === 'undefined') {{
+                activateFallback2D('модуль THREE.OrbitControls не загружен');
             }} else {{
-                const wire1Top = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 1.2, 24), mat1);
-                wire1Top.position.set(-0.68, 0.35, 0);
-                wire1Top.rotation.z = 0.28;
-                group.add(wire1Top);
+                try {{
+                    const scene = new THREE.Scene();
+                    scene.background = new THREE.Color(0x0e1117);
 
-                const wire1Bot = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 1.2, 24), mat1);
-                wire1Bot.position.set(-0.22, -1.25, 0);
-                wire1Bot.rotation.z = 0.28;
-                group.add(wire1Bot);
+                    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+                    camera.position.set(0.0, 0.5, 7.2);
+
+                    const renderer = new THREE.WebGLRenderer({{ antialias: true }});
+                    if (!renderer || !renderer.domElement) {{
+                        throw new Error('WebGL контекст недоступен');
+                    }}
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                    renderer.setPixelRatio(window.devicePixelRatio || 1);
+                    document.body.appendChild(renderer.domElement);
+
+                    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+                    controls.enableDamping = true;
+                    controls.dampingFactor = 0.06;
+
+                    scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+                    const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+                    dirLight.position.set(4, 7, 6);
+                    scene.add(dirLight);
+
+                    const group = new THREE.Group();
+
+                    const meterBodyMat = new THREE.MeshStandardMaterial({{ color: 0x1f2937, metalness: 0.5, roughness: 0.4 }});
+                    const meterBody = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.35, 0.7), meterBodyMat);
+                    meterBody.position.set(0, 1.75, 0);
+                    group.add(meterBody);
+
+                    const dialMat = new THREE.MeshStandardMaterial({{ color: 0x0f172a, roughness: 0.2 }});
+                    const dialFace = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.08, 32), dialMat);
+                    dialFace.rotation.x = Math.PI / 2;
+                    dialFace.position.set(0, 1.72, 0.35);
+                    group.add(dialFace);
+
+                    const needlePivot = new THREE.Group();
+                    needlePivot.position.set(0, 1.50, 0.42);
+                    const needleMat = new THREE.MeshBasicMaterial({{ color: 0xff4d4d }});
+                    const needle = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.48, 0.04), needleMat);
+                    needle.position.set(0, 0.22, 0);
+                    needlePivot.add(needle);
+                    needlePivot.rotation.z = -{needle_angle};
+                    group.add(needlePivot);
+
+                    const coldMat = new THREE.MeshStandardMaterial({{
+                        color: 0x00b4d8, emissive: 0x0077b6, emissiveIntensity: 0.5
+                    }});
+                    const termL = new THREE.Mesh(new THREE.SphereGeometry(0.18, 20, 20), coldMat);
+                    termL.position.set(-0.85, 0.95, 0);
+                    group.add(termL);
+
+                    const termR = new THREE.Mesh(new THREE.SphereGeometry(0.18, 20, 20), coldMat);
+                    termR.position.set(0.85, 0.95, 0);
+                    group.add(termR);
+
+                    const mat1 = new THREE.MeshStandardMaterial({{
+                        color: {col1_hex}, metalness: 0.8, roughness: 0.22
+                    }});
+                    const mat2 = new THREE.MeshStandardMaterial({{
+                        color: {col2_hex}, metalness: 0.8, roughness: 0.22
+                    }});
+
+                    if (!{str(is_open).lower()}) {{
+                        const wire1 = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 3.1, 24), mat1);
+                        wire1.position.set(-0.44, -0.45, 0);
+                        wire1.rotation.z = 0.28;
+                        group.add(wire1);
+                    }} else {{
+                        const wire1Top = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 1.2, 24), mat1);
+                        wire1Top.position.set(-0.68, 0.35, 0);
+                        wire1Top.rotation.z = 0.28;
+                        group.add(wire1Top);
+
+                        const wire1Bot = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 1.2, 24), mat1);
+                        wire1Bot.position.set(-0.22, -1.25, 0);
+                        wire1Bot.rotation.z = 0.28;
+                        group.add(wire1Bot);
+                    }}
+
+                    const wire2 = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 3.1, 24), mat2);
+                    wire2.position.set(0.44, -0.45, 0);
+                    wire2.rotation.z = -0.28;
+                    group.add(wire2);
+
+                    const hotMat = new THREE.MeshStandardMaterial({{
+                        color: 0xff5400, emissive: 0xff2a00, emissiveIntensity: 0.95, roughness: 0.2
+                    }});
+                    const hotJunction = new THREE.Mesh(new THREE.SphereGeometry(0.32, 32, 24), hotMat);
+                    hotJunction.position.set(0, -1.9, 0);
+                    group.add(hotJunction);
+
+                    if ({str(is_short).lower()}) {{
+                        const shortMat = new THREE.MeshStandardMaterial({{
+                            color: 0xff2a2a, emissive: 0xcc0000, emissiveIntensity: 0.8
+                        }});
+                        const shortBar = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.15, 16), shortMat);
+                        shortBar.rotation.z = Math.PI / 2;
+                        shortBar.position.set(0, 0.1, 0);
+                        group.add(shortBar);
+                    }}
+
+                    scene.add(group);
+
+                    function animate() {{
+                        requestAnimationFrame(animate);
+                        controls.update();
+                        renderer.render(scene, camera);
+                    }}
+                    animate();
+
+                    window.addEventListener('resize', () => {{
+                        camera.aspect = window.innerWidth / window.innerHeight;
+                        camera.updateProjectionMatrix();
+                        renderer.setSize(window.innerWidth, window.innerHeight);
+                    }});
+                }} catch (err) {{
+                    activateFallback2D('ошибка инициализации WebGL: ' + (err && err.message ? err.message : 'неизвестная ошибка'));
+                }}
             }}
-
-            const wire2 = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 3.1, 24), mat2);
-            wire2.position.set(0.44, -0.45, 0);
-            wire2.rotation.z = -0.28;
-            group.add(wire2);
-
-            const hotMat = new THREE.MeshStandardMaterial({{
-                color: 0xff5400, emissive: 0xff2a00, emissiveIntensity: 0.95, roughness: 0.2
-            }});
-            const hotJunction = new THREE.Mesh(new THREE.SphereGeometry(0.32, 32, 24), hotMat);
-            hotJunction.position.set(0, -1.9, 0);
-            group.add(hotJunction);
-
-            if ({str(is_short).lower()}) {{
-                const shortMat = new THREE.MeshStandardMaterial({{
-                    color: 0xff2a2a, emissive: 0xcc0000, emissiveIntensity: 0.8
-                }});
-                const shortBar = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.15, 16), shortMat);
-                shortBar.rotation.z = Math.PI / 2;
-                shortBar.position.set(0, 0.1, 0);
-                group.add(shortBar);
-            }}
-
-            scene.add(group);
-
-            function animate() {{
-                requestAnimationFrame(animate);
-                controls.update();
-                renderer.render(scene, camera);
-            }}
-            animate();
-
-            window.addEventListener('resize', () => {{
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            }});
         </script>
     </body>
     </html>
@@ -603,7 +880,7 @@ def render_3d_stand2_pair(
 
 
 # =====================================================================
-# 5. БОКОВАЯ ПАНЕЛЬ: ВЫБОР СТЕНДА, НАРУШЕНИЯ ЦЕПИ И ЗАДАЧИ ПО ФИЗИКЕ
+# 5. БОКОВАЯ ПАНЕЛЬ: ВЫБОР СТЕНДА, МОДЕЛИ НЕИСПРАВНОСТЕЙ И ПРАКТИКУМ
 # =====================================================================
 st.sidebar.title("⚛️ Физическая лаборатория")
 st.sidebar.caption("Тема: «Термо-ЭДС. Эффект Зеебека»")
@@ -627,8 +904,46 @@ circuit_fault_mode = st.sidebar.selectbox(
     ]
 )
 
+open_circuit_meter_mode = "Вторичный прибор с контролем обрыва (шунт входа)"
+if circuit_fault_mode == "Обрыв термоэлектрического контура":
+    open_circuit_meter_mode = st.sidebar.radio(
+        "Режим измерительного прибора при обрыве:",
+        options=[
+            "Вторичный прибор с контролем обрыва (шунт входа)",
+            "Идеальный высокоомный вольтметр на разрыве (измерение U_хх)"
+        ]
+    )
+
+# Независимые параметры сопротивлений участков цепи (п. 2 ревизии)
+r_cold_branch_input = 8.0
+r_hot_loop_input = 7.0
+r_bridge_input = 0.0
+if circuit_fault_mode == "Паразитный спай (КЗ)":
+    st.sidebar.markdown("**Сопротивления участков цепи при КЗ:**")
+    r_cold_branch_input = float(st.sidebar.number_input(
+        "Сопротивление холодного участка R_уч1 (до КЗ), Ом:",
+        min_value=0.1,
+        max_value=500.0,
+        value=8.0,
+        step=0.5
+    ))
+    r_hot_loop_input = float(st.sidebar.number_input(
+        "Сопротивление горячего участка R_уч2 (от КЗ до спая), Ом:",
+        min_value=0.1,
+        max_value=500.0,
+        value=5.0,
+        step=0.5
+    ))
+    r_bridge_input = float(st.sidebar.number_input(
+        "Переходное сопротивление перемычки R_кз, Ом:",
+        min_value=0.0,
+        max_value=100.0,
+        value=0.0,
+        step=0.5
+    ))
+
 st.sidebar.markdown("---")
-st.sidebar.subheader("🎓 Практикум Профессора")
+st.sidebar.subheader("🎓 Справочный практикум")
 if st.sidebar.button("🧠 Случайный качественный вопрос"):
     physics_questions = [
         {
@@ -662,7 +977,7 @@ if lab_mode.startswith("Стенд №1"):
     st.title("Стенд №1: Визуализация градиента температур и генерация Термо-ЭДС")
 
     sensor_name = st.sidebar.selectbox(
-        "Выберите стандартную термопару (ГОСТ Р 8.585-2001):",
+        "Выберите термопару из расчётной базы симулятора:",
         options=list(THERMOCOUPLES_DB.keys())
     )
     spec = THERMOCOUPLES_DB[sensor_name]
@@ -683,84 +998,133 @@ if lab_mode.startswith("Стенд №1"):
         step=10
     ))
 
-    # Расчет физических величин строго по таблицам из PDF-файлов
+    t_kz_stand1 = None
+    e_kz_stand1 = None
+    kz_contact_type = "Непосредственное соприкосновение электродов A и B"
+    if circuit_fault_mode == "Паразитный спай (КЗ)":
+        st.sidebar.markdown("**Температура и тип контакта КЗ:**")
+        kz_min = int(min(t_cold, t_hot))
+        kz_max = int(max(t_cold, t_hot))
+        kz_default = int(round((t_cold + t_hot) / 2.0, -1))
+        if kz_min == kz_max:
+            t_kz_stand1 = float(kz_min)
+        else:
+            t_kz_stand1 = float(st.sidebar.slider(
+                "Температура в точке перемычки (T_кз), °C:",
+                min_value=kz_min,
+                max_value=kz_max,
+                value=int(np.clip(kz_default, kz_min, kz_max)),
+                step=10
+            ))
+        kz_contact_type = st.sidebar.selectbox(
+            "Характер паразитного контакта:",
+            options=[
+                "Непосредственное соприкосновение электродов A и B",
+                "Перемычка из третьего металла C (изотермическая при T_кз)"
+            ]
+        )
+        e_kz_stand1 = calculate_nominal_emf(sensor_name, t_kz_stand1)
+
     e_hot = calculate_nominal_emf(sensor_name, t_hot)
     e_cold = calculate_nominal_emf(sensor_name, t_cold)
     delta_t = t_hot - t_cold
     seebeck_hot = calculate_seebeck_diff(sensor_name, t_hot)
 
-    if circuit_fault_mode == "Обрыв термоэлектрического контура":
-        st.error("⚠️ Нарушение цепи: Обрыв термоэлектрического контура! Замкнутая цепь разомкнута, ток носителей заряда равен нулю.")
-        e_result = 0.0
-        emf_display = "0.000 мВ (Обрыв)"
-    elif circuit_fault_mode == "Паразитный спай (КЗ)":
-        t_parasitic = t_cold + 0.25 * delta_t
-        e_result = calculate_nominal_emf(sensor_name, t_parasitic) - e_cold
-        st.warning(
-            f"⚠️ Нарушение цепи: Паразитный спай (КЗ) в точке с температурой T_кз ≈ {t_parasitic:.1f} °C! "
-            f"Рабочий участок шунтирован, измеряемая ЭДС занижена."
-        )
-        emf_display = f"{e_result:.3f} мВ (Шунт КЗ)"
-    else:
-        e_result = e_hot - e_cold
-        emf_display = f"{e_result:.3f} мВ"
-
-    # Отображение физической формулы с точными табличными числами
-    st.latex(
-        rf"E_{{\text{{рез}}}} = E(T_{{\text{{hot}}}}) - E(T_{{\text{{cold}}}}) = "
-        rf"E({t_hot:.0f}^\circ\text{{C}}) - E({t_cold:.0f}^\circ\text{{C}}) = "
-        rf"{e_hot:.3f} - ({e_cold:.3f}) = {e_hot - e_cold:.3f}\text{{ мВ}}"
+    phys = evaluate_circuit_physics(
+        e_hot=e_hot,
+        e_cold=e_cold,
+        t_hot=t_hot,
+        t_cold=t_cold,
+        fault_mode=circuit_fault_mode,
+        t_short_c=t_kz_stand1,
+        e_short=e_kz_stand1,
+        open_meter_mode=open_circuit_meter_mode,
+        r_cold_branch_ohm=r_cold_branch_input,
+        r_hot_loop_ohm=r_hot_loop_input,
+        r_bridge_ohm=r_bridge_input
     )
 
-    # Метрики Стенда №1
+    if circuit_fault_mode == "Норма":
+        st.latex(
+            rf"E_{{\text{{ген}}}} = E(T_{{\text{{hot}}}}) - E(T_{{\text{{cold}}}}) = "
+            rf"E({t_hot:.0f}^\circ\text{{C}}) - E({t_cold:.0f}^\circ\text{{C}}) = "
+            rf"{e_hot:.3f} - ({e_cold:.3f}) = {phys['e_gen_mv']:+.3f}\text{{ мВ}}, \quad "
+            rf"U_{{\text{{приб}}}} \approx E_{{\text{{ген}}}} = {phys['u_meter_mv']:+.3f}\text{{ мВ}}"
+        )
+    elif circuit_fault_mode == "Обрыв термоэлектрического контура":
+        st.latex(
+            rf"E_{{\text{{ген (х.х.)}}}} = E({t_hot:.0f}^\circ\text{{C}}) - E({t_cold:.0f}^\circ\text{{C}}) = "
+            rf"{e_hot:.3f} - ({e_cold:.3f}) = {phys['e_gen_mv']:+.3f}\text{{ мВ}}, \quad "
+            rf"R_{{\text{{контура}}}} \to \infty \implies I = 0\text{{ мкА}}"
+        )
+    else:
+        st.latex(
+            rf"I_{{\text{{кз}}}} = \frac{{E(T_{{\text{{hot}}}}) - E(T_{{\text{{кз}}}})}}{{R_{{\text{{уч2}}}} + R_{{\text{{кз}}}}}} = "
+            rf"\frac{{{e_hot:.3f} - ({e_kz_stand1:.3f})}}{{{r_hot_loop_input:.1f} + {r_bridge_input:.2f}}} = {phys['i_loop_ma']:+.3f}\text{{ мА}}, \quad "
+            rf"U_{{\text{{приб}}}} \approx \left[E(T_{{\text{{кз}}}}) - E(T_{{\text{{cold}}}})\right] + I_{{\text{{кз}}}} R_{{\text{{кз}}}} = "
+            rf"{phys['u_meter_mv']:+.3f}\text{{ мВ}}"
+        )
+
+    if phys["warning"]:
+        st.warning(f"⚠️ **Физическая диагностика цепи:** {phys['warning']}")
+        if circuit_fault_mode == "Паразитный спай (КЗ)" and "третьего" in kz_contact_type:
+            st.caption(
+                "ℹ️ По закону промежуточных металлов Вольта, если перемычка из третьего металла C находится "
+                "при единой температуре T_кз, сумма контактных ЭДС на её краях равна нулю, и измеряемый сигнал "
+                "определяется температурой T_кз и делителем сопротивлений R_уч2 и R_кз."
+            )
+
     m1, m2, m3, m4 = st.columns(4)
     m1.metric(
-        "Результирующая Термо-ЭДС (E)",
-        emf_display,
+        "1. Генерируемая Термо-ЭДС E_ген",
+        f"{phys['e_gen_mv']:+.3f} мВ",
         delta=f"E(T_hot)={e_hot:.3f} мВ | E(T_cold)={e_cold:.3f} мВ"
     )
     m2.metric(
-        "Дифференциальная термо-ЭДС S(T)",
-        f"{seebeck_hot:.2f} мкВ/°C",
-        delta=f"При T_hot = {t_hot:.0f} °C"
+        "2. Напряжение на приборе U_приб",
+        phys["u_meter_str"],
+        delta=phys["circuit_state"]
     )
     m3.metric(
-        "Градиент температур (ΔT)",
+        "3. Ток в цепи и S(T_hot)",
+        f"S = {seebeck_hot:.2f} мкВ/°C",
+        delta=phys["current_status"]
+    )
+    m4.metric(
+        "4. Градиент температур (ΔT)",
         f"{delta_t:+.1f} °C",
         delta=f"T_hot ({t_hot:.0f} °C) − T_cold ({t_cold:.0f} °C)"
     )
-    m4.metric(
-        "Термоэлектродная пара",
-        f"{spec['electrodes'][0]} / {spec['electrodes'][1]}",
-        delta=f"Режим: {circuit_fault_mode}"
+
+    st.caption(
+        f"**Состояние цепи:** {phys['circuit_state']} | "
+        f"**Ток в контуре:** {phys['current_status']} | "
+        f"**Статус измерения:** {phys['measurement_state']}"
     )
 
     col_plot, col_3d = st.columns([3, 2])
 
     with col_plot:
-        st.subheader("Формирование результирующей Термо-ЭДС на кривой НСХ")
+        st.subheader("Формирование Термо-ЭДС на характеристике НСХ")
         t_curve = spec["temps"]
         e_curve_abs = spec["values"]
         e_curve_rel = e_curve_abs - e_cold
 
         fig_stand1 = go.Figure()
 
-        # Кривая E(T) - E(T_cold)
         fig_stand1.add_trace(go.Scatter(
             x=t_curve, y=e_curve_rel, mode="lines",
             name=f"E(T) − E({t_cold:.0f} °C)",
             line=dict(color=spec["color"], width=3)
         ))
 
-        # Табличные кривые E(T) при T_cold = 0 °C (пунктиром для сверки с ГОСТ)
         fig_stand1.add_trace(go.Scatter(
             x=t_curve, y=e_curve_abs, mode="lines+markers",
-            name="Таблица ГОСТ E(T) при T₀ = 0 °C",
+            name="Табличная выборка E(T) при T₀ = 0 °C",
             line=dict(color="#adb5bd", width=1.5, dash="dash"),
             marker=dict(size=4, color="#ffffff")
         ))
 
-        # Точка холодного спая
         fig_stand1.add_trace(go.Scatter(
             x=[t_cold], y=[0.0],
             mode="markers+text", name="Холодный спай (T_cold)",
@@ -769,14 +1133,22 @@ if lab_mode.startswith("Стенд №1"):
             marker=dict(size=11, color="#00b4d8", symbol="circle", line=dict(width=2, color="white"))
         ))
 
-        # Точка горячего спая (результирующая и табличная)
         fig_stand1.add_trace(go.Scatter(
-            x=[t_hot], y=[e_result],
-            mode="markers+text", name="Рабочая точка E_рез",
-            text=[f"  T_hot = {t_hot:.0f} °C (E_рез = {emf_display}, E_табл = {e_hot:.3f} мВ)"],
+            x=[t_hot], y=[phys["e_gen_mv"]],
+            mode="markers+text", name="Генерируемая ЭДС спая E_ген",
+            text=[f"  T_hot = {t_hot:.0f} °C (E_ген = {phys['e_gen_mv']:+.3f} мВ)"],
             textposition="top left",
             marker=dict(size=13, color="#ff4d4d", symbol="diamond", line=dict(width=2, color="white"))
         ))
+
+        if circuit_fault_mode == "Паразитный спай (КЗ)" and t_kz_stand1 is not None:
+            fig_stand1.add_trace(go.Scatter(
+                x=[t_kz_stand1], y=[phys["u_meter_mv"]],
+                mode="markers+text", name="Точка шунтирования КЗ (U_приб)",
+                text=[f"  T_кз = {t_kz_stand1:.0f} °C (U_приб = {phys['u_meter_mv']:+.3f} мВ)"],
+                textposition="bottom left",
+                marker=dict(size=13, color="#ff9f1c", symbol="x", line=dict(width=2, color="white"))
+            ))
 
         if "ai_alloy" in st.session_state:
             ai = st.session_state["ai_alloy"]
@@ -785,7 +1157,7 @@ if lab_mode.startswith("Стенд №1"):
             e_ai_curve = (a1 * t_curve + a2 * (t_curve ** 2) + a3 * (t_curve ** 3)) - e_ai_cold
             fig_stand1.add_trace(go.Scatter(
                 x=t_curve, y=e_ai_curve, mode="lines",
-                name=f"Гипотетический сплав ({ai['s_target']} мкВ/°C)",
+                name=f"Условная модель НСХ ({ai['s_target']} мкВ/°C)",
                 line=dict(color="#ff9f1c", width=2.5, dash="dot")
             ))
 
@@ -801,27 +1173,39 @@ if lab_mode.startswith("Стенд №1"):
 
     with col_3d:
         st.subheader("3D-модель теплового градиента спаев")
-        short_title = sensor_name.split("(")[0].strip()
+        short_title = spec["short_code"]
         components.html(
             render_3d_stand1_gradient(
                 t_hot=t_hot,
                 t_cold=t_cold,
                 sensor_title=short_title,
-                emf_str=emf_display,
+                e_gen_str=f"{phys['e_gen_mv']:+.3f} мВ",
+                u_meter_str=phys["u_meter_str"],
                 seebeck_str=f"{seebeck_hot:.2f} мкВ/°C",
-                fault_state=circuit_fault_mode
+                fault_state=circuit_fault_mode,
+                t_kz_val=t_kz_stand1
             ),
             height=430
         )
 
-    # Таблица для быстрой проверки точных значений из файла ГОСТ Р 8.585-2001
-    with st.expander("📋 Справочная таблица НСХ выбранной термопары (данные из PDF ГОСТ Р 8.585-2001)"):
+    with st.expander("📊 Паспорт набора данных НСХ и справочная таблица (Аудит источников данных)"):
+        st.markdown(
+            f"- **Наименование в базе:** `{sensor_name}`\n"
+            f"- **Единицы измерения:** Температура — `{spec['temp_unit']}`, Термо-ЭДС — `{spec['unit']}`\n"
+            f"- **Шаг температурной сетки:** {spec['grid_step']}\n"
+            f"- **Источник данных:** {spec['data_source']}\n"
+            f"- **Область применимости:** {spec['applicability']}\n"
+            f"- **Примечание о полноте:** Для ТХА (тип K) массив содержит 56 опорных точек с шагом 50 °C / 20 °C "
+            f"(частичная справочная выборка, а не полная таблица ГОСТ Р 8.585-2001 с шагом 1 °C). "
+            f"Для типов T, E, N, S, R, B и вольфрам-рениевых пар в приложении реализован справочный подбор (раздел 10), "
+            f"но табличная расчётная модель на Стенде №1 для них не включена."
+        )
         df_gost = pd.DataFrame({
             "Температура раб. конца, °C": spec["temps"].astype(int),
-            "Термо-ЭДС E(T) при T₀=0 °C, мВ": [f"{v:.3f}" for v in spec["values"]],
-            f"Результирующая ЭДС при T_cold={t_cold:.0f} °C, мВ": [f"{(v - e_cold):.3f}" for v in spec["values"]]
+            "Табличная Термо-ЭДС E(T) при T₀=0 °C, мВ": [f"{v:.3f}" for v in spec["values"]],
+            f"Генерируемая ЭДС E_ген при T_cold={t_cold:.0f} °C, мВ": [f"{(v - e_cold):+.3f}" for v in spec["values"]]
         })
-        st.dataframe(df_gost, use_container_width=True, height=260)
+        st.dataframe(df_gost, use_container_width=True, height=240)
 
 
 # =====================================================================
@@ -829,6 +1213,15 @@ if lab_mode.startswith("Стенд №1"):
 # =====================================================================
 else:
     st.title("Стенд №2: Исследование эффекта Зеебека в разнородных металлах (Термоэлектрические пары)")
+
+    st.info(
+        "ℹ️ **Об используемом приближении (п. 3.4 ТЗ):** Абсолютные коэффициенты Зеебека металлов $S_1$ и $S_2$ "
+        "в данной модели являются **приближёнными справочными значениями при комнатной температуре ($\\approx 20\\text{ }^\\circ\\text{C}$)**. "
+        "Расчёт по формуле $E = S_{\\text{пары}} \\cdot \\Delta T$ использует **линейное приближение с постоянным коэффициентом Зеебека**, "
+        "которое физически строго справедливо только при малых перепадах температур $\\Delta T$. На широком интервале температур "
+        "коэффициент Зеебека зависит от температуры $S(T)$, и точная ЭДС определяется интегралом "
+        "$E = \\int_{T_{\\text{cold}}}^{T_{\\text{hot}}} [S_A(T) - S_B(T)]\\,dT$."
+    )
 
     metal_names = list(METALS_DB.keys())
     metal_1 = st.sidebar.selectbox(
@@ -842,83 +1235,147 @@ else:
         index=6  # Копель
     )
 
-    delta_t_val = float(st.sidebar.slider(
-        "Разность температур спаев ΔT = T_hot − T_cold (°C):",
-        min_value=0,
+    t_hot_s2 = float(st.sidebar.slider(
+        "Температура горячего спая (T_hot), °C:",
+        min_value=-100,
         max_value=800,
-        value=500,
+        value=520,
+        step=10
+    ))
+    t_cold_s2 = float(st.sidebar.slider(
+        "Температура холодного спая (T_cold), °C:",
+        min_value=-100,
+        max_value=200,
+        value=20,
         step=10
     ))
 
+    delta_t_val = t_hot_s2 - t_cold_s2
     s_metal1 = METALS_DB[metal_1]["seebeck"]
     s_metal2 = METALS_DB[metal_2]["seebeck"]
     s_pair = s_metal1 - s_metal2  # мкВ/°C
 
-    nominal_pair_emf_mv = (s_pair * delta_t_val) / 1000.0
+    e_hot_lin = (s_pair * t_hot_s2) / 1000.0
+    e_cold_lin = (s_pair * t_cold_s2) / 1000.0
 
-    if circuit_fault_mode == "Обрыв термоэлектрического контура":
-        st.error("⚠️ Нарушение цепи: Обрыв термоэлектрического контура! Измерительная цепь разомкнута.")
-        measured_pair_emf_mv = 0.0
-    elif circuit_fault_mode == "Паразитный спай (КЗ)":
-        measured_pair_emf_mv = 0.25 * nominal_pair_emf_mv
-        st.warning("⚠️ Нарушение цепи: Паразитный спай (КЗ)! Проводники замкнуты в промежуточной температурной зоне.")
-    else:
-        measured_pair_emf_mv = nominal_pair_emf_mv
+    t_kz_s2 = None
+    e_kz_lin = None
+    if circuit_fault_mode == "Паразитный спай (КЗ)":
+        kz_min2 = int(min(t_cold_s2, t_hot_s2))
+        kz_max2 = int(max(t_cold_s2, t_hot_s2))
+        kz_def2 = int(round((t_cold_s2 + t_hot_s2) / 2.0, -1))
+        if kz_min2 == kz_max2:
+            t_kz_s2 = float(kz_min2)
+        else:
+            t_kz_s2 = float(st.sidebar.slider(
+                "Температура перемычки КЗ (T_кз), °C:",
+                min_value=kz_min2,
+                max_value=kz_max2,
+                value=int(np.clip(kz_def2, kz_min2, kz_max2)),
+                step=10
+            ))
+        e_kz_lin = (s_pair * t_kz_s2) / 1000.0
 
-    if metal_1 == metal_2:
-        st.info("ℹ️ Выбраны одинаковые металлы (S_металл1 = S_металл2). В однородной цепи эффект Зеебека не создает результирующей ЭДС (S_пара = 0).")
-
-    st.latex(
-        rf"S_{{\text{{пара}}}} = S_{{\text{{металл1}}}} - S_{{\text{{металл2}}}} = "
-        rf"({s_metal1:+.1f}) - ({s_metal2:+.1f}) = {s_pair:+.1f}\text{{ мкВ/}}^\circ\text{{C}}, \quad "
-        rf"E(\Delta T) = S_{{\text{{пара}}}} \cdot \Delta T = {nominal_pair_emf_mv:+.3f}\text{{ мВ}}"
+    phys_s2 = evaluate_circuit_physics(
+        e_hot=e_hot_lin,
+        e_cold=e_cold_lin,
+        t_hot=t_hot_s2,
+        t_cold=t_cold_s2,
+        fault_mode=circuit_fault_mode,
+        t_short_c=t_kz_s2,
+        e_short=e_kz_lin,
+        open_meter_mode=open_circuit_meter_mode,
+        r_cold_branch_ohm=r_cold_branch_input,
+        r_hot_loop_ohm=r_hot_loop_input,
+        r_bridge_ohm=r_bridge_input
     )
 
+    if metal_1 == metal_2:
+        st.info("ℹ️ Выбраны одинаковые металлы ($S_1 = S_2$). По закону однородной цепи в контуре из одного металла термо-ЭДС равна нулю ($S_{\\text{пары}} = 0$).")
+
+    st.latex(
+        rf"S_{{\text{{пары}}}} \approx S_A(20^\circ\text{{C}}) - S_B(20^\circ\text{{C}}) = "
+        rf"({s_metal1:+.1f}) - ({s_metal2:+.1f}) = {s_pair:+.1f}\text{{ мкВ/}}^\circ\text{{C}}, \quad "
+        rf"E_{{\text{{лин}}}} = S_{{\text{{пары}}}} \cdot (T_{{\text{{hot}}}} - T_{{\text{{cold}}}}) = "
+        rf"{phys_s2['e_gen_mv']:+.3f}\text{{ мВ}}"
+    )
+
+    if phys_s2["warning"]:
+        st.warning(f"⚠️ **Физическая диагностика цепи:** {phys_s2['warning']}")
+
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric(f"S₁ ({metal_1.split('(')[0].strip()})", f"{s_metal1:+.1f} мкВ/°C")
-    c2.metric(f"S₂ ({metal_2.split('(')[0].strip()})", f"{s_metal2:+.1f} мкВ/°C")
-    c3.metric("Итоговый коэфф. Зеебека S_пара", f"{s_pair:+.1f} мкВ/°C")
+    c1.metric(
+        f"S₁ ({metal_1.split('(')[0].strip()})",
+        f"{s_metal1:+.1f} мкВ/°C",
+        delta="Приближённо при ~20 °C"
+    )
+    c2.metric(
+        f"S₂ ({metal_2.split('(')[0].strip()})",
+        f"{s_metal2:+.1f} мкВ/°C",
+        delta=f"S_пары = {s_pair:+.1f} мкВ/°C"
+    )
+    c3.metric(
+        "Генерируемая ЭДС E_ген (лин.)",
+        f"{phys_s2['e_gen_mv']:+.3f} мВ",
+        delta=f"ΔT = {delta_t_val:+.0f} °C ({t_hot_s2:.0f} − {t_cold_s2:.0f} °C)"
+    )
     c4.metric(
-        "Термо-ЭДС пары E(ΔT)",
-        f"{measured_pair_emf_mv:+.3f} мВ",
-        delta=f"При ΔT = {delta_t_val:.0f} °C ({circuit_fault_mode})"
+        "Напряжение на приборе U_приб",
+        phys_s2["u_meter_str"],
+        delta=phys_s2["current_status"]
     )
 
     col_l, col_r = st.columns([3, 2])
 
     with col_l:
-        st.subheader("Зависимость Термо-ЭДС E от разности температур ΔT")
-        dt_arr = np.linspace(0, 800, 81)
-        e_pair_arr = (s_pair * dt_arr) / 1000.0
+        st.subheader("Сравнение линейного приближения и нелинейной табличной НСХ")
+        t_grid_s2 = np.linspace(-100, 800, 91)
+        e_lin_arr = (s_pair * (t_grid_s2 - t_cold_s2)) / 1000.0
 
         fig_stand2 = go.Figure()
         fig_stand2.add_trace(go.Scatter(
-            x=dt_arr, y=e_pair_arr, mode="lines",
-            name=f"Линейная модель: {metal_1.split('(')[0].strip()} — {metal_2.split('(')[0].strip()}",
+            x=t_grid_s2, y=e_lin_arr, mode="lines",
+            name=f"Линейное приближение (S_пары = const = {s_pair:+.1f} мкВ/°C)",
             line=dict(color="#80ed99", width=3.5)
         ))
 
         pair_tuple = (metal_1.split("(")[0].strip(), metal_2.split("(")[0].strip())
         gost_match_key = None
+        gost_sign = 1.0
         if pair_tuple == ("Хромель", "Копель"):
-            gost_match_key = "ТХК (тип L, Хромель-Копель, ГОСТ Р 8.585-2001)"
+            gost_match_key, gost_sign = "ТХК (тип L, Хромель-Копель, таблица с шагом 10 °C)", 1.0
+        elif pair_tuple == ("Копель", "Хромель"):
+            gost_match_key, gost_sign = "ТХК (тип L, Хромель-Копель, таблица с шагом 10 °C)", -1.0
         elif pair_tuple == ("Хромель", "Алюмель"):
-            gost_match_key = "ТХА (тип K, Хромель-Алюмель, ГОСТ Р 8.585-2001)"
+            gost_match_key, gost_sign = "ТХА (тип K, Хромель-Алюмель, справочная выборка 50/20 °C)", 1.0
+        elif pair_tuple == ("Алюмель", "Хромель"):
+            gost_match_key, gost_sign = "ТХА (тип K, Хромель-Алюмель, справочная выборка 50/20 °C)", -1.0
         elif pair_tuple == ("Железо", "Константан"):
-            gost_match_key = "ТЖК (тип J, Железо-Константан, ГОСТ Р 8.585-2001)"
+            gost_match_key, gost_sign = "ТЖК (тип J, Железо-Константан, таблица с шагом 10 °C)", 1.0
+        elif pair_tuple == ("Константан", "Железо"):
+            gost_match_key, gost_sign = "ТЖК (тип J, Железо-Константан, таблица с шагом 10 °C)", -1.0
 
         if gost_match_key is not None:
-            e_gost_dt = [calculate_nominal_emf(gost_match_key, dt) for dt in dt_arr]
+            e_ref_cold = gost_sign * calculate_nominal_emf(gost_match_key, t_cold_s2)
+            e_gost_arr = [gost_sign * calculate_nominal_emf(gost_match_key, t_val) - e_ref_cold for t_val in t_grid_s2]
+            e_gost_hot = gost_sign * calculate_nominal_emf(gost_match_key, t_hot_s2) - e_ref_cold
             fig_stand2.add_trace(go.Scatter(
-                x=dt_arr, y=e_gost_dt, mode="lines",
-                name=f"Реальная НСХ по ГОСТ ({gost_match_key.split('(')[0].strip()})",
+                x=t_grid_s2, y=e_gost_arr, mode="lines",
+                name=f"Интегральная НСХ по таблице: ∫[S_A(T)−S_B(T)]dT ({THERMOCOUPLES_DB[gost_match_key]['short_code']})",
                 line=dict(color="#00b4d8", width=2.5, dash="dash")
             ))
+            st.caption(
+                f"📌 **Сравнение моделей при $T_{{\\text{{hot}}}} = {t_hot_s2:.0f}\\text{{ }}^\\circ\\text{{C}}$, "
+                f"$T_{{\\text{{cold}}}} = {t_cold_s2:.0f}\\text{{ }}^\\circ\\text{{C}}$:** "
+                f"линейное приближение даёт $E_{{\\text{{лин}}}} = {phys_s2['e_gen_mv']:+.3f}\\text{{ мВ}}$, "
+                f"тогда как табличная нелинейная характеристика даёт $E_{{\\text{{табл}}}} = {e_gost_hot:+.3f}\\text{{ мВ}}$ "
+                f"(расхождение из-за температурной зависимости $S(T)$ составляет ${abs(phys_s2['e_gen_mv'] - e_gost_hot):.3f}\\text{{ мВ}}$)."
+            )
 
         fig_stand2.add_trace(go.Scatter(
-            x=[delta_t_val], y=[measured_pair_emf_mv],
-            mode="markers+text", name="Рабочая точка пары",
-            text=[f"  ΔT = {delta_t_val:.0f} °C ({measured_pair_emf_mv:+.3f} мВ)"],
+            x=[t_hot_s2], y=[phys_s2["e_gen_mv"]],
+            mode="markers+text", name="Рабочая точка E_ген (лин.)",
+            text=[f"  T_hot = {t_hot_s2:.0f} °C (E_ген = {phys_s2['e_gen_mv']:+.3f} мВ)"],
             textposition="top left",
             marker=dict(size=14, color="#ff4d4d", symbol="diamond", line=dict(width=2, color="white"))
         ))
@@ -926,16 +1383,17 @@ else:
         if "ai_alloy" in st.session_state:
             ai = st.session_state["ai_alloy"]
             a1, a2, a3 = ai["coeffs"]["a1"], ai["coeffs"]["a2"], ai["coeffs"]["a3"]
-            e_ai_dt = a1 * dt_arr + a2 * (dt_arr ** 2) + a3 * (dt_arr ** 3)
+            e_ai_c = a1 * t_cold_s2 + a2 * (t_cold_s2 ** 2) + a3 * (t_cold_s2 ** 3)
+            e_ai_arr = (a1 * t_grid_s2 + a2 * (t_grid_s2 ** 2) + a3 * (t_grid_s2 ** 3)) - e_ai_c
             fig_stand2.add_trace(go.Scatter(
-                x=dt_arr, y=e_ai_dt, mode="lines",
-                name=f"ИИ-термоэлектрик ({ai['s_target']} мкВ/°C)",
+                x=t_grid_s2, y=e_ai_arr, mode="lines",
+                name=f"Условная модель НСХ ({ai['s_target']} мкВ/°C)",
                 line=dict(color="#ff9f1c", width=2.5, dash="dot")
             ))
 
         fig_stand2.update_layout(
-            xaxis_title="Разность температур спаев ΔT = T_hot − T_cold, °C",
-            yaxis_title="Термо-ЭДС пары E, мВ",
+            xaxis_title="Температура горячего спая T_hot, °C",
+            yaxis_title=f"Термо-ЭДС относительно T_cold = {t_cold_s2:.0f} °C, мВ",
             template="plotly_dark",
             height=430,
             margin=dict(l=20, r=20, t=30, b=20),
@@ -958,7 +1416,9 @@ else:
                 col2_hex=METALS_DB[metal_2]["three_hex"],
                 s_pair=s_pair,
                 delta_t=delta_t_val,
-                emf_mv=measured_pair_emf_mv,
+                e_gen_mv=phys_s2["e_gen_mv"],
+                u_meter_mv=phys_s2["u_meter_mv"],
+                u_meter_str=phys_s2["u_meter_str"],
                 fault_state=circuit_fault_mode
             ),
             height=430
@@ -968,15 +1428,19 @@ st.markdown("---")
 
 
 # =====================================================================
-# 8. ИИ-МЕНТОР (ПРОФЕССОР ТЕРМОДИНАМИКИ) И СИНТЕЗАТОР ТЕРМОЭЛЕКТРИКОВ
+# 8. СПРАВОЧНЫЙ ПОМОЩНИК И ГЕНЕРАТОР УСЛОВНОЙ НСХ
 # =====================================================================
-st.subheader("👨‍🏫 ИИ-Ментор: Профессор термодинамики и Синтезатор термоэлектриков")
+st.subheader("📘 Справочный помощник по термоэлектрическим явлениям и Генератор условной НСХ")
+st.caption(
+    "Раздел работает на основе локальной базы проверенных физических разборов и расчётных формул "
+    "(внешняя генеративная языковая модель не используется)."
+)
 
 
 def build_hypothetical_thermoelectric(target_s_uv: float) -> dict:
     """
-    Рассчитывает полиномиальные коэффициенты НСХ E(T) = a1*T + a2*T^2 + a3*T^3
-    для гипотетического термоэлектрика по заданному коэффициенту Зеебека S (мкВ/°C).
+    Генератор условной НСХ: формирует учебную полиномиальную модель E(T) = a1*T + a2*T^2 + a3*T^3
+    с заданным начальным наклоном S_0 (мкВ/°C) и фиксированными модельными коэффициентами нелинейности.
     """
     a1 = target_s_uv / 1000.0
     sign = 1.0 if target_s_uv >= 0 else -1.0
@@ -985,7 +1449,7 @@ def build_hypothetical_thermoelectric(target_s_uv: float) -> dict:
     t_vec = np.linspace(0, 1000, 200)
     e_vec = a1 * t_vec + a2 * (t_vec ** 2) + a3 * (t_vec ** 3)
     return {
-        "name": f"ThermoAlloy-S{int(abs(target_s_uv))}",
+        "name": f"Условная-НСХ-S{int(abs(target_s_uv))}",
         "s_target": round(target_s_uv, 2),
         "coeffs": {"a1": a1, "a2": a2, "a3": a3},
         "t": t_vec,
@@ -993,11 +1457,15 @@ def build_hypothetical_thermoelectric(target_s_uv: float) -> dict:
     }
 
 
-with st.expander("🔬 Интерактивный генератор гипотетического термоэлектрика (расчет полинома НСХ)", expanded=False):
+with st.expander("📐 Генератор условной НСХ (расчёт учебной полиномиальной модели)", expanded=False):
+    st.warning(
+        "⚠️ **Предупреждение:** Полученная характеристика является математической моделью "
+        "и не подтверждает существование реального термоэлектрического материала с такими свойствами."
+    )
     col_gen1, col_gen2 = st.columns([2, 1])
     with col_gen1:
         desired_s = st.number_input(
-            "Введите желаемый коэффициент Зеебека S₀ (мкВ/°C):",
+            "Задайте начальный коэффициент Зеебека S₀ при 0 °C (мкВ/°C):",
             min_value=-250.0,
             max_value=250.0,
             value=75.0,
@@ -1006,7 +1474,7 @@ with st.expander("🔬 Интерактивный генератор гипот�
     with col_gen2:
         st.write("")
         st.write("")
-        if st.button("Синтезировать полином НСХ"):
+        if st.button("Построить условную НСХ"):
             st.session_state["ai_alloy"] = build_hypothetical_thermoelectric(desired_s)
             st.rerun()
 
@@ -1015,7 +1483,10 @@ with st.expander("🔬 Интерактивный генератор гипот�
         c_a1 = ai_cur["coeffs"]["a1"]
         c_a2 = ai_cur["coeffs"]["a2"]
         c_a3 = ai_cur["coeffs"]["a3"]
-        st.success(f"Активен гипотетический сплав **{ai_cur['name']}** ($S_0 = {ai_cur['s_target']}$ мкВ/°C) — кривая добавлена на графики стендов.")
+        st.info(
+            f"Построена условная математическая модель **{ai_cur['name']}** ($S_0 = {ai_cur['s_target']}$ мкВ/°C, "
+            f"где $a_1 = S_0 / 1000$, а коэффициенты $a_2, a_3$ заданы как учебные константы нелинейности)."
+        )
         st.latex(
             rf"E(T) = a_1 T + a_2 T^2 + a_3 T^3 = "
             rf"{c_a1:.5f}\,T + ({c_a2:.2e})\,T^2 + ({c_a3:.2e})\,T^3 \text{{ [мВ]}}"
@@ -1026,12 +1497,12 @@ if "messages" not in st.session_state:
         {
             "role": "assistant",
             "content": (
-                "Приветствую в физической лаборатории термоэлектрических явлений! Я — **Профессор термодинамики**.\n\n"
-                "Задайте вопрос по физике эффекта Зеебека или укажите желаемый коэффициент Зеебека для расчета полинома НСХ:\n"
+                "Добро пожаловать в **Справочный помощник по термоэлектрическим явлениям**!\n\n"
+                "Выберите или введите интересующий вопрос по физике эффекта Зеебека (ответы формируются по базе знаний практикума):\n"
                 "- *«Почему при равенстве температур спаев Термо-ЭДС равна нулю?»*\n"
                 "- *«Как изменится ЭДС, если удлинить провода?»*\n"
                 "- *«Что такое закон Вольта для последовательной цепи металлов?»*\n"
-                "- *«Синтезируй термоэлектрик с коэффициентом Зеебека 85 мкВ/°C»*"
+                "- *«Построй условную НСХ для 85 мкВ/°C»*"
             )
         }
     ]
@@ -1041,7 +1512,7 @@ for msg in st.session_state["messages"]:
         st.markdown(msg["content"])
 
 user_query = st.chat_input(
-    "Спросите Профессора (например: 'Что такое закон Вольта?' или 'Сплав 90 мкВ/°C')..."
+    "Введите вопрос по теме (например: 'Что такое закон Вольта?' или 'Модель НСХ 90 мкВ/°C')..."
 )
 
 if user_query:
@@ -1064,22 +1535,22 @@ if user_query:
     elif any(k in q_low for k in ["удлин", "длин", "провод", "сечен"]):
         reply = (
             "**Физическое объяснение (Влияние длины и сечения проводников):**\n\n"
-            "Если проводники термопары однородны по химическому составу, то **Термо-ЭДС не изменится** при любом удлинении проводов. "
+            "Если проводники термопары однородны по химическому составу, то **генерируемая Термо-ЭДС не изменится** при удлинении проводов. "
             "Причина в том, что $E = \\int_{T_{\\text{cold}}}^{T_{\\text{hot}}} S_{AB}(T)\\,dT$ является функцией только граничных температур "
             "концов $T_{\\text{hot}}$ и $T_{\\text{cold}}$, а не градиента $\\nabla T$ по отдельности. Однако при увеличении длины $l$ возрастает "
-            "внутреннее омическое сопротивление контура $R_{\\text{вн}} = \\rho \\frac{l}{S_{\\text{сеч}}}$, что увеличивает падение напряжения "
+            "внутреннее омическое сопротивление контура $R_{\\text{тп}} = \\rho \\frac{l}{S_{\\text{сеч}}}$, что увеличивает падение напряжения "
             "при протекании тока через низкоомный прибор."
         )
     elif any(k in q_low for k in ["вольт", "третьего", "третий", "последоват"]):
         reply = (
-            "**Физическое объяснение (Закон Вольта / Закон третьего металла):**\n\n"
-            "Согласно закону Вольта, включение в термоэлектрический контур любого третьего проводника $C$ (например, медных выводов "
+            "**Физическое объяснение (Закон Вольта / Закон промежуточных металлов):**\n\n"
+            "Согласно закону промежуточных металлов, включение в термоэлектрический контур любого третьего проводника $C$ (например, медных выводов "
             "и входной цепи вольтметра) **не изменяет результирующую Термо-ЭДС**, если оба конца этого третьего проводника находятся "
             "при одинаковой температуре $T_{\\text{cold}}$:\n"
             "$$\\int_{T_{\\text{cold}}}^{T_{\\text{cold}}} S_C(T)\\,dT = 0$$\n"
             "Дополнительные термо-ЭДС на контактах «Металл А — Медь» и «Медь — Металл B» взаимно компенсируют друг друга."
         )
-    elif num_match and any(k in q_low for k in ["сплав", "зеебек", "мкв", "синтез", "коэфф", "сгенер"]):
+    elif num_match and any(k in q_low for k in ["модел", "нсх", "сплав", "зеебек", "мкв", "коэфф", "постро"]):
         s_val = float(num_match.group(1).replace(",", "."))
         s_val = float(np.clip(s_val, -300.0, 300.0))
         alloy_data = build_hypothetical_thermoelectric(s_val)
@@ -1087,19 +1558,20 @@ if user_query:
         c1, c2, c3 = alloy_data["coeffs"]["a1"], alloy_data["coeffs"]["a2"], alloy_data["coeffs"]["a3"]
 
         reply = (
-            f"Синтезирован гипотетический термоэлектрик **`{alloy_data['name']}`** для $S_0 = {alloy_data['s_target']}$ мкВ/°C "
+            f"Построена условная математическая характеристика **`{alloy_data['name']}`** для $S_0 = {alloy_data['s_target']}$ мкВ/°C "
             f"(кривая добавлена на графики Стенда №1 и Стенда №2):\n\n"
-            f"- **Линейный коэффициент $a_1$:** `{c1:.5f}` мВ/°C\n"
-            f"- **Квадратичный коэффициент нелинейности $a_2$:** `{c2:.2e}` мВ/°C²\n"
-            f"- **Кубический коэффициент ангармонизма $a_3$:** `{c3:.2e}` мВ/°C³\n\n"
-            f"Уравнение НСХ сплава:\n"
-            f"$$E(T) = {c1:.5f}\\,T + ({c2:.2e})\\,T^2 + ({c3:.2e})\\,T^3\\text{{ [мВ]}}$$"
+            f"- **Линейный коэффициент $a_1 = S_0 / 1000$:** `{c1:.5f}` мВ/°C\n"
+            f"- **Заданный модельный коэффициент $a_2$:** `{c2:.2e}` мВ/°C²\n"
+            f"- **Заданный модельный коэффициент $a_3$:** `{c3:.2e}` мВ/°C³\n\n"
+            f"$$E(T) = {c1:.5f}\\,T + ({c2:.2e})\\,T^2 + ({c3:.2e})\\,T^3\\text{{ [мВ]}}$$\n\n"
+            f"> *Предупреждение: полученная характеристика является математической моделью и не подтверждает "
+            f"существование реального термоэлектрического материала с такими свойствами.*"
         )
     else:
         reply = (
-            "Задайте один из фундаментальных вопросов (о равенстве температур спаев, удлинении проводов или законе Вольта) "
-            "либо укажите желаемый коэффициент Зеебека в мкВ/°C (например: *«Синтезируй сплав 65 мкВ/°C»*), чтобы я рассчитал "
-            "полиномиальные коэффициенты НСХ."
+            "В справочной базе помощника доступны разборы тем: **равенство температур спаев**, **влияние длины проводников**, "
+            "**закон промежуточных металлов (Вольта)**, а также расчёт **условной полиномиальной модели НСХ** по заданному "
+            "коэффициенту Зеебека (например: *«Модель НСХ 65 мкВ/°C»*)."
         )
 
     st.session_state["messages"].append({"role": "assistant", "content": reply})
@@ -1109,29 +1581,8 @@ if user_query:
 
 # =====================================================================
 # 9. ТЕОРЕТИЧЕСКИЙ РАЗДЕЛ: «ТЕРМО-ЭДС. ЭФФЕКТ ЗЕЕБЕКА»
-# (Интегрирован строго по файлу teoriya_termo_eds_zeebek.md)
 # =====================================================================
 st.markdown("---")
-
-
-def resolve_asset_path(rel_path: str) -> Path | None:
-    """
-    Находит путь к изображению из папки assets как при обычном запуске (локально или в Streamlit Cloud),
-    так и внутри собранного через PyInstaller исполняемого файла (.exe, sys._MEIPASS).
-    """
-    search_roots = []
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        search_roots.append(Path(sys._MEIPASS))
-    if "__file__" in globals():
-        search_roots.append(Path(__file__).resolve().parent)
-    search_roots.append(Path.cwd())
-
-    filename = Path(rel_path).name
-    for root in search_roots:
-        for candidate in (root / rel_path, root / "assets" / filename, root / filename):
-            if candidate.is_file():
-                return candidate
-    return None
 
 
 def render_theory_image(rel_path: str, caption: str) -> None:
@@ -1303,25 +1754,41 @@ def render_stage_3() -> None:
     st.markdown(
         "Эффект Пельтье — обратное по отношению к эффекту Зеебека явление. Если пропустить электрический ток "
         "через контакт двух разнородных проводников, то помимо джоулева тепла в контакте выделяется или "
-        "поглощается дополнительная теплота:"
+        "поглощается дополнительная тепловая мощность $\\dot{Q}$:"
     )
-    st.latex(r"Q = \Pi \cdot I,")
+    st.latex(r"\dot{Q} = \Pi \cdot I, \qquad Q = \dot{Q} \cdot t = \Pi \cdot I \cdot t,")
     st.markdown(
-        "где $Q$ — дополнительная теплота, $I$ — ток, $\\Pi$ — коэффициент Пельтье.\n\n"
-        "При изменении направления тока нагрев сменяется охлаждением. На этом явлении основаны "
-        "термоэлектрические охладители — модули Пельтье."
+        "где:\n\n"
+        "- $\\dot{Q}$ — тепловая мощность Пельтье, выделяемая или поглощаемая в контакте в единицу времени, **Вт** (Дж/с);\n"
+        "- $Q$ — количество теплоты за время $t$ при постоянном токе, **Дж**;\n"
+        "- $I$ — сила электрического тока, **А**;\n"
+        "- $\\Pi$ — коэффициент Пельтье данной пары проводников, **В**.\n\n"
+        "**Условия применимости и знак:** формула описывает обратимый тепловой эффект в спае отдельно от "
+        "необратимого джоулева нагрева ($\\dot{Q}_{\\text{Дж}} = I^2 R$). В отличие от закона Джоуля–Ленца, "
+        "мощность Пельтье линейна по току $I$: при изменении направления тока знак $\\dot{Q}$ меняется "
+        "(нагрев спая сменяется охлаждением). На этом явлении основаны термоэлектрические охладители — модули Пельтье."
     )
 
     st.markdown("### 3.2. Эффект Томсона")
     st.markdown(
-        "Эффект Томсона — выделение или поглощение теплоты в однородном проводнике, по которому течёт ток "
-        "при наличии градиента температуры. В реферате приведена зависимость:"
+        "Эффект Томсона — выделение или поглощение дополнительной тепловой мощности в однородном проводнике, "
+        "по которому течёт ток при наличии градиента температуры:"
     )
-    st.latex(r"Q = \tau \cdot I \cdot \Delta T,")
-    st.markdown("где $\\tau$ — коэффициент Томсона, $I$ — ток, а $\\Delta T$ — разность температур.")
+    st.latex(r"\dot{Q} = \tau \cdot I \cdot \Delta T, \qquad Q = \tau \cdot I \cdot \Delta T \cdot t,")
+    st.markdown(
+        "где:\n\n"
+        "- $\\dot{Q}$ — тепловая мощность Томсона на участке с перепадом температур $\\Delta T$, **Вт**;\n"
+        "- $Q$ — соответствующее количество теплоты за время $t$, **Дж**;\n"
+        "- $\\tau$ — коэффициент Томсона материала, **В/К**;\n"
+        "- $I$ — сила тока, **А**;\n"
+        "- $\\Delta T$ — разность температур на концах участка проводника, **К** (или °C).\n\n"
+        "**Условия применимости и знак:** соотношение применимо для участка со слабо меняющимся коэффициентом $\\tau$; "
+        "знак эффекта (выделение или поглощение теплоты) меняется на противоположный при смене направления тока $I$ "
+        "относительно направления градиента температуры."
+    )
 
     st.markdown("### 3.3. Связь коэффициентов")
-    st.markdown("В реферате приведены соотношения Кельвина:")
+    st.markdown("В реферате приведены соотношения Кельвина, связывающие все три коэффициента через абсолютную температуру $T$ (в К):")
     st.latex(r"\Pi = \alpha T, \qquad \tau = T\frac{d\alpha}{dT}.")
     st.markdown(
         "Таким образом, эффекты Зеебека, Пельтье и Томсона рассматриваются как связанные термоэлектрические "
@@ -1335,8 +1802,8 @@ def render_stage_3() -> None:
 
     st.markdown(
         "**Главная мысль этапа:** эффект Зеебека связан с возникновением электрического сигнала из-за разности "
-        "температур, эффект Пельтье — с выделением или поглощением теплоты при прохождении тока через контакт, "
-        "эффект Томсона — с тепловым эффектом тока в однородном проводнике при градиенте температуры.\n\n"
+        "температур, эффект Пельтье — с выделением или поглощением тепловой мощности при прохождении тока через контакт, "
+        "эффект Томсона — с тепловой мощностью тока в однородном проводнике при градиенте температуры.\n\n"
         "*Материал по реферату: глава 2.2, страницы 6–7.*"
     )
 
@@ -1638,9 +2105,6 @@ def render_theory_section() -> None:
 
     st.markdown("---")
 
-    # -----------------------------------------------------------------
-    # САМОПРОВЕРКА ПО МАТЕРИАЛУ
-    # -----------------------------------------------------------------
     st.subheader("✅ Самопроверка по материалу")
     qa_pairs = [
         (
@@ -1665,7 +2129,7 @@ def render_theory_section() -> None:
         ),
         (
             "6. Чем эффект Пельтье отличается от эффекта Зеебека?",
-            "Эффект Пельтье проявляется как выделение или поглощение теплоты при прохождении тока через контакт разнородных проводников."
+            "Эффект Пельтье проявляется как выделение или поглощение дополнительной тепловой мощности ($\\dot{Q} = \\Pi I$) при прохождении тока через контакт разнородных проводников."
         ),
         (
             "7. Что называют горячим и холодным спаями термопары?",
@@ -1696,9 +2160,6 @@ def render_theory_section() -> None:
 
     st.markdown("---")
 
-    # -----------------------------------------------------------------
-    # СЛОВАРЬ ТЕРМИНОВ
-    # -----------------------------------------------------------------
     st.subheader("📖 Словарь терминов")
     glossary_data = [
         {
@@ -1777,10 +2238,12 @@ render_theory_section()
 
 # =====================================================================
 # 10. МОДУЛЬ ПОДБОРА ТЕРМОПАРЫ ПО УСЛОВИЯМ ЭКСПЛУАТАЦИИ
-# (Основан исключительно на данных из teoriya_termo_eds_zeebek.md)
 # =====================================================================
 st.markdown("---")
 
+# В базе строго разделены:
+# - table_min / table_max: справочный диапазон стандартной таблицы (п. 5.2 реферата);
+# - confirmed_work_min / confirmed_work_max: явно подтверждённые в реферате рабочие пределы (None, если число в реферате не задано).
 SELECTOR_TC_SPECS = {
     "K": {
         "code": "K",
@@ -1789,14 +2252,17 @@ SELECTOR_TC_SPECS = {
         "electrodes": "Хромель (Ni–Cr) (+) / Алюмель (Ni–Al–Mn–Si) (−)",
         "table_min": -270.0,
         "table_max": 1372.0,
-        "table_range_str": "−270…+1372 °C",
-        "work_range_str": "На воздухе примерно до 1100–1200 °C (реальный рабочий диапазон уже табличного)",
+        "confirmed_work_min": -200.0,
+        "confirmed_work_max": 1200.0,
+        "table_range_str": "−270…+1372 °C (по таблице п. 5.2 реферата)",
+        "sim_nsh_str": "Реализована на Стенде №1: выборка −200…+1320 °C (56 точек, шаг 50/20 °C)",
+        "work_range_str": "Практическое применение на воздухе: примерно до +1100…1200 °C (при табличном пределе до +1372 °C)",
         "sensitivity_str": "около 41 мкВ/°C",
         "sensitivity_val": 41.0,
         "limitations": (
-            "Изменения характеристики при длительной работе в определённых температурных условиях; "
-            "чувствительность к составу атмосферы; верхний рабочий предел на воздухе (1100–1200 °C) "
-            "ниже табличного предела (1372 °C)."
+            "Чувствительна к составу атмосферы (при низком содержании кислорода и в восстановительной среде "
+            "возникает селективное окисление хрома и дрейф НСХ); изменения характеристики при длительной работе; "
+            "практический предел на воздухе (1100–1200 °C) ниже табличного (1372 °C)."
         )
     },
     "J": {
@@ -1806,13 +2272,15 @@ SELECTOR_TC_SPECS = {
         "electrodes": "Железо (+) / Константан (−)",
         "table_min": -210.0,
         "table_max": 1200.0,
-        "table_range_str": "−210…+1200 °C",
-        "work_range_str": "На воздухе применяют до 750 °C (реальный рабочий диапазон уже табличного)",
+        "confirmed_work_min": -210.0,
+        "confirmed_work_max": 750.0,
+        "table_range_str": "−210…+1200 °C (по таблице п. 5.2 реферата)",
+        "sim_nsh_str": "Реализована на Стенде №1: таблица −210…+1200 °C (142 точки, шаг 10 °C)",
+        "work_range_str": "Практическое применение на воздухе: до +750 °C (при табличном пределе до +1200 °C)",
         "sensitivity_str": "около 55 мкВ/°C",
         "sensitivity_val": 55.0,
         "limitations": (
-            "Железо подвержено ржавлению (коррозии); на воздухе рабочий предел ограничен 750 °C "
-            "при табличном диапазоне до 1200 °C."
+            "Железо подвержено ржавлению (коррозии при конденсации влаги) и интенсивному окислению на воздухе выше 750 °C."
         )
     },
     "T": {
@@ -1822,12 +2290,15 @@ SELECTOR_TC_SPECS = {
         "electrodes": "Медь (+) / Константан (−)",
         "table_min": -270.0,
         "table_max": 400.0,
-        "table_range_str": "−270…+400 °C",
-        "work_range_str": "Примерный рабочий диапазон для низких температур: от −200 до +350 °C",
+        "confirmed_work_min": -200.0,
+        "confirmed_work_max": 350.0,
+        "table_range_str": "−270…+400 °C (по таблице п. 5.2 реферата)",
+        "sim_nsh_str": "Только справочная рекомендация (расчётная таблица на Стенде №1 не реализована)",
+        "work_range_str": "Подтверждённый в реферате (п. 5.3) практический диапазон: примерно от −200 до +350 °C",
         "sensitivity_str": "около 43 мкВ/°C",
         "sensitivity_val": 43.0,
         "limitations": (
-            "Ограниченный верхний температурный предел (табличный до +400 °C, практический до +350 °C)."
+            "Низкий верхний температурный предел (практически до +350 °C, по таблице до +400 °C)."
         )
     },
     "E": {
@@ -1837,13 +2308,20 @@ SELECTOR_TC_SPECS = {
         "electrodes": "Хромель (+) / Константан (−)",
         "table_min": -270.0,
         "table_max": 1000.0,
-        "table_range_str": "−270…+1000 °C",
-        "work_range_str": "В пределах табличного диапазона −270…+1000 °C (реальный рабочий диапазон обычно уже табличного)",
+        "confirmed_work_min": None,
+        "confirmed_work_max": None,
+        "table_range_str": "−270…+1000 °C (по таблице п. 5.2 реферата)",
+        "sim_nsh_str": "Только справочная рекомендация (расчётная таблица на Стенде №1 не реализована)",
+        "work_range_str": (
+            "В реферате указан только табличный диапазон −270…+1000 °C "
+            "(отдельный численный рабочий предел не приведён; реальный рабочий диапазон уже табличного)"
+        ),
         "sensitivity_str": "около 68 мкВ/°C (наибольшая среди стандартных пар)",
         "sensitivity_val": 68.0,
         "limitations": (
-            "Верхний предел таблицы ограничен 1000 °C, а реальный длительный рабочий диапазон зависит "
-            "от диаметра электродов, атмосферы и защитной арматуры."
+            "Точный практический верхний предел в реферате численно не выделен (указано, что реальный рабочий "
+            "диапазон уже табличного −270…+1000 °C и зависит от диаметра электродов, атмосферы и арматуры); "
+            "содержит хромель, чувствительный к средам с низким содержанием кислорода и восстановительной атмосфере."
         )
     },
     "N": {
@@ -1853,13 +2331,20 @@ SELECTOR_TC_SPECS = {
         "electrodes": "Нихросил (Ni–Cr–Si) (+) / Нисил (Ni–Si–Mg) (−)",
         "table_min": -270.0,
         "table_max": 1300.0,
-        "table_range_str": "−270…+1300 °C",
-        "work_range_str": "В пределах табличного диапазона до 1300 °C (реальный рабочий диапазон уже табличного)",
+        "confirmed_work_min": None,
+        "confirmed_work_max": None,
+        "table_range_str": "−270…+1300 °C (по таблице п. 5.2 реферата)",
+        "sim_nsh_str": "Только справочная рекомендация (расчётная таблица на Стенде №1 не реализована)",
+        "work_range_str": (
+            "В реферате указан табличный диапазон −270…+1300 °C и повышенная стойкость к окислению "
+            "(отдельный численный рабочий предел в реферате не приведён; реальный рабочий диапазон уже табличного)"
+        ),
         "sensitivity_str": "около 39 мкВ/°C",
         "sensitivity_val": 39.0,
         "limitations": (
-            "Чувствительность немного ниже, чем у типа K (около 39 мкВ/°C против 41 мкВ/°C); "
-            "реальный рабочий предел зависит от защитной арматуры и диаметра электродов."
+            "Точный практический верхний предел в реферате численно не выделен (указана табличная граница +1300 °C, "
+            "при этом реальный рабочий предел уже табличного и требует проверки по паспорту датчика); "
+            "чувствительность немного ниже типа K (39 мкВ/°C)."
         )
     },
     "S": {
@@ -1869,13 +2354,16 @@ SELECTOR_TC_SPECS = {
         "electrodes": "Платина + 10 % родия (+) / Платина (−)",
         "table_min": -50.0,
         "table_max": 1768.0,
-        "table_range_str": "−50…+1768 °C",
-        "work_range_str": "Рекомендуемый рабочий диапазон: до 1600 °C",
+        "confirmed_work_min": -50.0,
+        "confirmed_work_max": 1600.0,
+        "table_range_str": "−50…+1768 °C (по таблице п. 5.2 реферата)",
+        "sim_nsh_str": "Только справочная рекомендация (расчётная таблица на Стенде №1 не реализована)",
+        "work_range_str": "Подтверждённый в реферате (п. 5.2) практический рабочий диапазон: до +1600 °C",
         "sensitivity_str": "около 10 мкВ/°C",
         "sensitivity_val": 10.0,
         "limitations": (
-            "Высокая стоимость и сравнительно малая чувствительность (около 10 мкВ/°C); "
-            "для защиты от загрязнения необходимо помещать в керамические чехлы."
+            "Высокая стоимость и малая чувствительность (около 10 мкВ/°C); для защиты от загрязнения "
+            "(особенно в восстановительных и технологических средах) необходимо помещать в керамические чехлы."
         )
     },
     "R": {
@@ -1885,13 +2373,15 @@ SELECTOR_TC_SPECS = {
         "electrodes": "Платина + 13 % родия (+) / Платина (−)",
         "table_min": -50.0,
         "table_max": 1768.0,
-        "table_range_str": "−50…+1768 °C",
-        "work_range_str": "Рекомендуемый рабочий диапазон: до 1600 °C",
+        "confirmed_work_min": -50.0,
+        "confirmed_work_max": 1600.0,
+        "table_range_str": "−50…+1768 °C (по таблице п. 5.2 реферата)",
+        "sim_nsh_str": "Только справочная рекомендация (расчётная таблица на Стенде №1 не реализована)",
+        "work_range_str": "Подтверждённый в реферате (п. 5.2) практический рабочий диапазон: до +1600 °C",
         "sensitivity_str": "около 10 мкВ/°C",
         "sensitivity_val": 10.0,
         "limitations": (
-            "Высокая стоимость и малая чувствительность (около 10 мкВ/°C); "
-            "требует обязательной защиты от загрязнения керамическими чехлами."
+            "Высокая стоимость и малая чувствительность (около 10 мкВ/°C); требует обязательной защиты керамическими чехлами."
         )
     },
     "B": {
@@ -1901,29 +2391,39 @@ SELECTOR_TC_SPECS = {
         "electrodes": "Платина + 30 % родия (+) / Платина + 6 % родия (−)",
         "table_min": 0.0,
         "table_max": 1820.0,
-        "table_range_str": "0…+1820 °C",
-        "work_range_str": "От +50 °C до верхнего рабочего предела в пределах таблицы 0…+1820 °C (реальный рабочий диапазон уже табличного)",
+        "confirmed_work_min": 50.0,
+        "confirmed_work_max": None,
+        "table_range_str": "0…+1820 °C (по таблице п. 5.2 реферата)",
+        "sim_nsh_str": "Только справочная рекомендация (расчётная таблица на Стенде №1 не реализована)",
+        "work_range_str": (
+            "Нижний рабочий предел: от +50 °C (ниже 50 °C не даёт сигнала); "
+            "верхний численный рабочий предел в реферате не выделен (таблица до +1820 °C, реальный рабочий диапазон уже табличного)"
+        ),
         "sensitivity_str": "около 10 мкВ/°C при высоких температурах",
         "sensitivity_val": 10.0,
         "limitations": (
-            "Практически не даёт сигнала при температурах ниже 50 °C; высокая стоимость; "
-            "малая чувствительность (около 10 мкВ/°C); требует защиты керамическими чехлами от загрязнения."
+            "Практически не даёт сигнала при температурах ниже +50 °C; точный верхний практический предел "
+            "в реферате численно не указан (указана только граница таблицы +1820 °C); высокая стоимость, "
+            "малая чувствительность, обязательна защита керамическими чехлами."
         )
     },
     "W-Re": {
         "code": "W-Re",
-        "gost": "В источнике не указано (группа вольфрам-рениевых термопар)",
+        "gost": "Вольфрам-рениевые (конкретная марка в реферате не указана)",
         "title": "Вольфрам-рениевые термопары",
-        "electrodes": "Вольфрам-рениевые сплавы (конкретное процентное соотношение электродов в источнике не детализировано)",
-        "table_min": None,
-        "table_max": None,
-        "table_range_str": "В таблице стандартных типов (п. 5.2) не приведена",
-        "work_range_str": "Очень высокие температуры — порядка 2200–2500 °C (только в вакууме, инертной или восстановительной среде)",
-        "sensitivity_str": "Численное значение чувствительности в источнике не указано",
+        "electrodes": "Вольфрам-рениевые сплавы (конкретный состав электродов в источнике не детализирован)",
+        "table_min": 2200.0,
+        "table_max": 2500.0,
+        "confirmed_work_min": 2200.0,
+        "confirmed_work_max": 2500.0,
+        "table_range_str": "В таблице п. 5.2 не приведены; в тексте п. 5.3 указан диапазон порядка 2200–2500 °C",
+        "sim_nsh_str": "Только справочная рекомендация (расчётная таблица на Стенде №1 не реализована)",
+        "work_range_str": "Порядка 2200–2500 °C ТОЛЬКО в вакууме, инертной или восстановительной среде",
+        "sensitivity_str": "Численное значение чувствительности в источнике не приведено",
         "sensitivity_val": None,
         "limitations": (
-            "Вольфрам быстро окисляется на воздухе — применение в воздушной/окислительной среде недопустимо. "
-            "Используются только в вакууме, инертной или восстановительной среде."
+            "КАТЕГОРИЧЕСКИ НЕДОПУСТИМЫ НА ВОЗДУХЕ (вольфрам быстро окисляется в окислительной атмосфере); "
+            "применимы только в вакууме, инертной или восстановительной среде."
         )
     }
 }
@@ -1936,351 +2436,376 @@ def evaluate_thermocouple_selection(
     priority: str
 ) -> dict:
     """
-    Выполняет подбор термопары по всему диапазону [t_min, t_max], рабочей среде и приоритету,
-    опираясь исключительно на факты из теоретического материала teoriya_termo_eds_zeebek.md.
+    Выполняет строгий многокритериальный подбор термопары по полному интервалу [t_min, t_max],
+    рабочей среде и приоритету.
+    Включает прямую валидацию t_min < t_max (п. 6 ревизии) и разграничение табличных и рабочих пределов (п. 3 ревизии).
     """
-    warnings_list = []
-
-    if environment == "неизвестная":
-        warnings_list.append(
-            "Рабочая среда указана как «неизвестная». В теоретическом материале подчёркнуто, что состав атмосферы "
-            "критически влияет на выбор термопары (например, вольфрам быстро окисляется на воздухе, тип K чувствителен "
-            "к составу атмосферы, железо в типе J подвержено ржавлению, а платиновые пары требуют керамических чехлов "
-            "для защиты от загрязнения). Перед установкой обязательно уточните состав среды."
-        )
-    elif environment in ("инертная", "восстановительная", "вакуум"):
-        warnings_list.append(
-            f"Выбрана среда «{environment}». В предоставленном теоретическом источнике прямо подтверждена работа "
-            "в вакууме, инертной и восстановительной среде для вольфрам-рениевых термопар (при 2200–2500 °C), "
-            "а также отмечена чувствительность типа K к составу атмосферы и необходимость керамических чехлов "
-            "для защиты типов S, R, B от загрязнения. Точные численные поправки диапазонов стандартных пар "
-            "для данной среды в источнике не приведены — требуется сверка с паспортом датчика."
-        )
-
-    # 1. СЦЕНАРИЙ ЭКСТРЕМАЛЬНО ВЫСОКИХ ТЕМПЕРАТУР (> 1820 °C)
-    if t_max > 1820.0:
-        if t_max <= 2500.0 and t_min >= 1800.0:
-            if environment == "воздушная / окислительная":
-                return {
-                    "status": "error",
-                    "message": (
-                        f"Для диапазона {t_min:.0f}…{t_max:.0f} °C в воздушной / окислительной среде надёжный выбор невозможен: "
-                        "стандартные благородные термопары (S, R, B) имеют табличный предел до 1768–1820 °C (и рабочий предел S/R до 1600 °C), "
-                        "а вольфрам-рениевые термопары (работающие при 2200–2500 °C) нельзя применять на воздухе, "
-                        "поскольку вольфрам быстро окисляется на воздухе."
-                    ),
-                    "warnings": warnings_list,
-                    "primary": None,
-                    "alternatives": []
-                }
-            else:
-                if environment == "неизвестная":
-                    warnings_list.append(
-                        "КРИТИЧЕСКОЕ УСЛОВИЕ: Вольфрам-рениевые термопары допустимы ТОЛЬКО в вакууме, инертной "
-                        "или восстановительной среде! На воздухе вольфрам быстро окисляется."
-                    )
-                if t_min < 2200.0:
-                    warnings_list.append(
-                        f"Нижняя граница заданного диапазона ({t_min:.0f} °C) ниже ориентировочного интервала "
-                        "2200–2500 °C, указанного в источнике для вольфрам-рениевых термопар."
-                    )
-                warnings_list.append(
-                    "В предоставленном источнике для вольфрам-рениевых термопар не указаны конкретные марки по ГОСТ Р 8.585-2001 "
-                    "и численное значение чувствительности (мкВ/°C)."
-                )
-                return {
-                    "status": "ok",
-                    "primary": SELECTOR_TC_SPECS["W-Re"],
-                    "justification": (
-                        f"Заданный температурный диапазон ({t_min:.0f}…{t_max:.0f} °C) превышает верхнюю границу "
-                        "стандартных таблиц всех платинородиевых термопар (до 1768 °C у S и R, до 1820 °C у B). "
-                        "Согласно разделу 5.3 теоретического материала, для измерения очень высоких температур "
-                        "порядка 2200–2500 °C применяются вольфрам-рениевые термопары (при условии работы "
-                        "в вакууме, инертной или восстановительной среде)."
-                    ),
-                    "alternatives": [],
-                    "warnings": warnings_list
-                }
-        else:
-            return {
-                "status": "error",
-                "message": (
-                    f"Заданный диапазон ({t_min:.0f}…{t_max:.0f} °C) выходит за пределы подтверждённых в источнике "
-                    "рабочих характеристик (или требует перекрытия слишком широкого интервала от низких температур до >1820 °C). "
-                    "В источнике максимальная температура для вольфрам-рениевых термопар указана порядка 2200–2500 °C."
-                ),
-                "warnings": warnings_list,
-                "primary": None,
-                "alternatives": []
-            }
-
-    # 2. СЦЕНАРИЙ ОЧЕНЬ ВЫСОКИХ ТЕМПЕРАТУР (1600 < t_max <= 1820 °C)
-    if t_max > 1600.0:
-        if t_min < 50.0:
-            return {
-                "status": "error",
-                "message": (
-                    f"Заданный диапазон ({t_min:.0f}…{t_max:.0f} °C) не может быть надёжно перекрыт одной стандартной термопарой по данным источника: "
-                    "при температурах выше 1600 °C рабочий предел термопар S и R (до 1600 °C) уже превышен, "
-                    "а термопара типа B (с таблицей до 1820 °C) практически не даёт сигнала при температурах ниже 50 °C."
-                ),
-                "warnings": warnings_list,
-                "primary": None,
-                "alternatives": []
-            }
-
-        warnings_list.append(
-            f"ВНИМАНИЕ: Заданная максимальная температура ({t_max:.0f} °C) превышает рекомендуемый рабочий предел "
-            "термопар типов S и R (до 1600 °C) и приближается к верхней границе стандартной таблицы термопары типа B (1820 °C). "
-            "В теоретическом материале (раздел 5.2) указано, что приведённые в таблице диапазоны — это границы стандартных таблиц, "
-            "а реальные рабочие диапазоны обычно уже и зависят от диаметра электродов, атмосферы и защитной арматуры. "
-            "Точный гарантированный рабочий предел для типа B в источнике не выделен отдельно — необходима проверка по паспорту датчика."
-        )
-        alts = []
-        if t_max <= 1768.0:
-            alts.append({
-                "spec": SELECTOR_TC_SPECS["S"],
-                "note": "Укладывается только в табличный диапазон (−50…+1768 °C), но превышает указанный в источнике рабочий предел (до 1600 °C)."
-            })
-        return {
-            "status": "warning",
-            "primary": SELECTOR_TC_SPECS["B"],
-            "justification": (
-                f"В диапазоне {t_min:.0f}…{t_max:.0f} °C (где T_min ≥ 50 °C и T_max > 1600 °C) тип B (ТПР) является единственной "
-                "стандартной термопарой из таблицы 5.2, чей табличный диапазон (0…+1820 °C) полностью включает заданный интервал, "
-                "так как типы S и R имеют рабочий предел до 1600 °C (и табличный предел до 1768 °C). "
-                "Однако выбор требует осторожности, поскольку работа ведётся вблизи границы стандартной таблицы."
-            ),
-            "alternatives": alts,
-            "warnings": warnings_list
-        }
-
-    # 3. ОТБОР СТАНДАРТНЫХ ТЕРМОПАР ДЛЯ ДИАПАЗОНОВ В ПРЕДЕЛАХ ДО 1600 °C
-    candidates = []
-
-    # Проверка каждого типа по всему диапазону [t_min, t_max] с учетом рабочих границ из источника
-    # Тип T: таблица -270...+400, рабочий для низких температур -200...+350 °C
-    if t_min >= -200.0 and t_max <= 350.0:
-        candidates.append("T")
-
-    # Тип J: таблица -210...+1200, на воздухе применяют до 750 °C
-    if t_min >= -210.0 and t_max <= 750.0:
-        candidates.append("J")
-
-    # Тип E: таблица -270...+1000 °C (реальный рабочий диапазон уже табличного, ограничиваем строго < 1000 °C)
-    if t_min >= -200.0 and t_max <= 900.0:
-        candidates.append("E")
-
-    # Тип K: таблица -270...+1372 °C, рабочий диапазон примерно до 1100–1200 °C
-    if t_min >= -200.0 and t_max <= 1200.0:
-        candidates.append("K")
-
-    # Тип N: таблица -270...+1300 °C, улучшенная замена типа K для высоких температур
-    if t_min >= -200.0 and t_max <= 1250.0:
-        candidates.append("N")
-
-    # Типы S и R: таблица -50...+1768 °C, рабочий диапазон до 1600 °C
-    if t_min >= -50.0 and t_max <= 1600.0:
-        candidates.append("S")
-        candidates.append("R")
-
-    # Тип B: таблица 0...+1820 °C, ниже 50 °C практически не даёт сигнала
-    if t_min >= 50.0 and t_max <= 1600.0:
-        candidates.append("B")
-
-    if not candidates:
+    # Пункт 6 ревизии: прямая проверка корректности диапазона внутри функции
+    if t_min >= t_max:
         return {
             "status": "error",
             "message": (
-                f"Для заданного диапазона {t_min:.0f}…{t_max:.0f} °C не найдено термопары с подтверждённым в источнике "
-                "рабочим интервалом, одновременно перекрывающим как нижнюю, так и верхнюю границу."
+                f"Некорректный ввод температурного интервала: минимальная температура ({t_min:.1f} °C) "
+                f"должна быть строго меньше максимальной температуры ({t_max:.1f} °C)."
             ),
-            "warnings": warnings_list,
+            "warnings": [],
             "primary": None,
-            "alternatives": []
+            "alternatives": [],
+            "rejected_reasons": {}
         }
 
-    # Ранжирование подходящих кандидатов в зависимости от температурной зоны и приоритета пользователя
+    warnings_list = []
+    rejected_reasons = {}
+    candidates = []
+
+    # 1. ПРОВЕРКА КАЖДОГО ТИПА ПО ВСЕМУ ИНТЕРВАЛУ [t_min, t_max] И СРЕДЕ
+    for code, sp in SELECTOR_TC_SPECS.items():
+        if code == "W-Re":
+            if t_min >= 2200.0 and t_max <= 2500.0:
+                if environment == "воздушная / окислительная":
+                    rejected_reasons[code] = (
+                        "Недопустима в воздушной/окислительной среде: вольфрам быстро окисляется на воздухе."
+                    )
+                elif environment == "среда с пониженным содержанием кислорода":
+                    rejected_reasons[code] = (
+                        "Недопустима при наличии остаточного кислорода: вольфрам быстро окисляется, "
+                        "требуется вакуум, чистая инертная или восстановительная среда."
+                    )
+                elif environment == "неизвестная":
+                    rejected_reasons[code] = (
+                        "Не может быть рекомендована при неизвестной рабочей среде: вольфрам быстро окисляется "
+                        "на воздухе, поэтому без подтверждения вакуума, инертной или восстановительной среды выбор небезопасен."
+                    )
+                else:
+                    candidates.append(code)
+            else:
+                rejected_reasons[code] = (
+                    f"В теоретическом источнике (п. 5.3) применение вольфрам-рениевых термопар подтверждено "
+                    f"только для области очень высоких температур порядка 2200–2500 °C (задано: {t_min:.0f}…{t_max:.0f} °C)."
+                )
+            continue
+
+        # Нижняя граница: используем подтверждённый рабочий предел, если он есть, иначе табличный
+        lower_bound = sp["confirmed_work_min"] if sp["confirmed_work_min"] is not None else sp["table_min"]
+        if t_min < lower_bound:
+            if code == "B" and t_min >= 0.0:
+                rejected_reasons[code] = (
+                    f"Нижняя температура ({t_min:.0f} °C) ниже +50 °C: согласно п. 5.2 реферата, "
+                    "тип B практически не даёт сигнала при температурах ниже 50 °C."
+                )
+            else:
+                rejected_reasons[code] = (
+                    f"Нижняя температура ({t_min:.0f} °C) выходит за допустимый нижний предел ({lower_bound:.0f} °C; "
+                    f"граница стандартной таблицы {sp['table_min']:.0f} °C)."
+                )
+            continue
+
+        # Верхняя граница: если в реферате задан подтверждённый практический предел (T: 350, J: 750, K: 1200, S/R: 1600),
+        # отсекаем строго по нему; если задан только табличный (E: 1000, N: 1300, B: 1820), проверяем по таблице,
+        # но помечаем необходимость условного статуса и проверки паспорта.
+        upper_bound = sp["confirmed_work_max"] if sp["confirmed_work_max"] is not None else sp["table_max"]
+        if t_max > upper_bound:
+            if sp["confirmed_work_max"] is not None and t_max <= sp["table_max"]:
+                rejected_reasons[code] = (
+                    f"Верхняя температура ({t_max:.0f} °C) укладывается в справочную таблицу ({sp['table_range_str']}), "
+                    f"но превышает подтверждённый в реферате практический рабочий предел ({sp['confirmed_work_max']:.0f} °C)."
+                )
+            else:
+                rejected_reasons[code] = (
+                    f"Верхняя температура ({t_max:.0f} °C) превышает предел стандартной таблицы ({sp['table_max']:.0f} °C)."
+                )
+            continue
+
+        candidates.append(code)
+
+    # 2. ЕСЛИ НИ ОДИН ТИП НЕ ПРОШЁЛ ФИЛЬТРАЦИЮ
+    if not candidates:
+        if t_max > 1820.0 and t_min < 2200.0:
+            err_msg = (
+                f"Для температурного интервала **{t_min:.0f}…{t_max:.0f} °C** (среда: *{environment}*) в предоставленном "
+                "теоретическом материале нет подтверждённого типа термопары: верхний табличный предел платинородиевой "
+                "термопары типа B заканчивается на **+1820 °C**, а для вольфрам-рениевых термопар в реферате "
+                "указан только диапазон порядка **2200–2500 °C** (без характеристик для промежуточной зоны 1820–2200 °C)."
+            )
+        elif t_min >= 2200.0 and t_max <= 2500.0 and environment in (
+            "воздушная / окислительная",
+            "среда с пониженным содержанием кислорода",
+            "неизвестная"
+        ):
+            err_msg = (
+                f"В диапазоне **{t_min:.0f}…{t_max:.0f} °C** при рабочей среде **«{environment}»** безопасный выбор невозможен: "
+                "вольфрам-рениевые термопары (2200–2500 °C) быстро окисляются при наличии кислорода и допускаются "
+                "**только в вакууме, инертной или восстановительной среде**."
+            )
+        else:
+            err_msg = (
+                f"Для заданного интервала **{t_min:.0f}…{t_max:.0f} °C** и среды **«{environment}»** не найден тип термопары, "
+                "рабочий диапазон которого полностью перекрывает весь заданный интервал от минимальной до максимальной температуры."
+            )
+        return {
+            "status": "error",
+            "message": err_msg,
+            "warnings": warnings_list,
+            "primary": None,
+            "alternatives": [],
+            "rejected_reasons": rejected_reasons
+        }
+
+    # 3. АНАЛИЗ РАБОЧЕЙ СРЕДЫ (п. 4 ревизии — без произвольного порога 500 °C, с разделением сред)
+    status_code = "ok"
+    if environment == "неизвестная":
+        status_code = "conditional"
+        warnings_list.append(
+            "РАБОЧАЯ СРЕДА НЕ ОПРЕДЕЛЕНА («неизвестная»): выдана условная оценка только по температурному интервалу. "
+            "Безусловная рекомендация невозможна без уточнения атмосферы (тип K чувствителен к составу атмосферы, "
+            "железо в типе J ржавеет во влажной среде, а платиновые пары S, R, B требуют керамических чехлов)."
+        )
+    elif environment == "восстановительная" and candidates != ["W-Re"]:
+        status_code = "conditional"
+        warnings_list.append(
+            "УСЛОВНАЯ РЕКОМЕНДАЦИЯ ДЛЯ ВОССТАНОВИТЕЛЬНОЙ СРЕДЫ: в предоставленном реферате работа непосредственно "
+            "в восстановительной атмосфере подтверждена только для вольфрам-рениевых термопар (при 2200–2500 °C). "
+            "Для стандартных термопар точные допустимые пределы в восстановительной атмосфере в источнике не приведены: "
+            "тип K чувствителен к составу атмосферы, а платинородиевые пары (S, R, B) требуют герметичной защиты "
+            "керамическими чехлами от загрязнения. Необходима проверка по паспорту датчика."
+        )
+    elif environment == "среда с пониженным содержанием кислорода":
+        status_code = "conditional"
+        warnings_list.append(
+            "УСЛОВНАЯ РЕКОМЕНДАЦИЯ ДЛЯ СРЕДЫ С ПОНИЖЕННЫМ СОДЕРЖАНИЕМ КИСЛОРОДА: никель-хромовые термопары (особенно тип K) "
+            "чувствительны к составу атмосферы и при дефиците кислорода подвержены селективному окислению хрома с уходом градуировки; "
+            "пара нихросил–нисил (тип N) лучше сопротивляется окислению, однако точные рабочие границы для данной среды "
+            "в реферате не приведены — требуется проверка паспорта и выбор защитного чехла."
+        )
+    elif environment in ("инертная", "вакуум") and candidates != ["W-Re"]:
+        status_code = "conditional"
+        warnings_list.append(
+            f"Выбрана среда «{environment}»: в реферате числовые рабочие пределы стандартных пар (J до 750 °C, K до 1100–1200 °C, "
+            "S и R до 1600 °C) приведены для обычных (воздушных) условий, поэтому применение в инертной среде или вакууме "
+            "требует проверки по паспорту датчика и учёта защитной арматуры (керамических чехлов для S, R, B)."
+        )
+
+    # 4. СПЕЦИАЛЬНЫЙ СЛУЧАЙ: ВОЛЬФРАМ-РЕНИЕВЫЕ ТЕРМОПАРЫ (2200...2500 °C)
+    if candidates == ["W-Re"]:
+        warnings_list.append(
+            "В теоретическом материале (п. 5.3) для вольфрам-рениевых термопар приведён только ориентировочный "
+            "рабочий диапазон (2200–2500 °C) и требование к среде (вакуум, инертная или восстановительная). "
+            "Конкретная градуировка по ГОСТ и численная чувствительность в реферате не указаны."
+        )
+        return {
+            "status": "conditional",
+            "primary": SELECTOR_TC_SPECS["W-Re"],
+            "justification": (
+                f"Интервал **{t_min:.0f}…{t_max:.0f} °C** превышает табличный предел всех стандартных пар (максимум +1820 °C у типа B). "
+                f"Поскольку задана допустимая безокислительная среда (*{environment}*), по данным п. 5.3 реферата "
+                "условно рекомендуются **вольфрам-рениевые термопары** (с обязательной проверкой паспорта конкретной марки)."
+            ),
+            "alternatives": [],
+            "warnings": warnings_list,
+            "rejected_reasons": rejected_reasons
+        }
+
+    # 5. РАНЖИРОВАНИЕ КАНДИДАТОВ С УЧЁТОМ ТЕМПЕРАТУРНОЙ ЗОНЫ, СРЕДЫ И ПРИОРИТЕТА
     scored = []
     for code in candidates:
         score = 0.0
         reasons = []
 
-        # 3.1. Повышенная температура (1200 < t_max <= 1600 °C): работают только благородные металлы S, R, B
-        if t_max > 1200.0:
-            if code in ("S", "R"):
-                score += 100.0
+        if t_max > 1600.0:
+            # Свыше 1600 до 1820 °C в кандидатах остаётся только тип B
+            if code == "B":
+                score += 95.0
                 reasons.append(
-                    f"при температуре до {t_max:.0f} °C неблагородные сплавы (K, N, J, E, T) уже не применяются "
-                    "(рабочий предел типа K — до 1100–1200 °C, таблица N — до 1300 °C), тогда как платинородиевые "
-                    "термопары S и R имеют подтверждённый рабочий диапазон до 1600 °C и высокую стабильность"
+                    f"единственная стандартная термопара из таблицы п. 5.2 со справочным пределом до +1820 °C "
+                    f"(у типов S и R практический рабочий предел ограничен +1600 °C)"
+                )
+        elif t_max > 1200.0:
+            # От 1200 до 1600 °C: S, R, B (и N по таблице до 1300 °C)
+            if code in ("S", "R"):
+                score += 96.0
+                reasons.append(
+                    f"имеет явно подтверждённый в реферате (п. 5.2) практический рабочий предел до +1600 °C "
+                    f"и высокую стабильность в диапазоне {t_min:.0f}…{t_max:.0f} °C"
                 )
                 if code == "S":
-                    score += 2.0  # S и R равноценны по таблице, S выводим первым, R — как прямую альтернативу
+                    score += 1.5
             elif code == "B":
-                score += 85.0
-                reasons.append("подходит для высоких температур, но уступает S и R по универсальности в нижней части диапазона")
-
-        # 3.2. Высокая температура (900 < t_max <= 1200 °C)
+                score += 84.0
+                reasons.append("высокотемпературная платинородиевая пара со справочным диапазоном 0…+1820 °C")
+            elif code == "N":
+                score += 70.0
+                reasons.append(
+                    "укладывается в верхнюю часть справочной таблицы типа N (−270…+1300 °C), "
+                    "но точный практический предел выше 1200 °C в реферате не подтверждён"
+                )
         elif t_max > 900.0:
+            # Высокая температура 900...1200 °C
             if code == "N":
-                score += 90.0
-                reasons.append(
-                    "в источнике пара нихросил–нисил (тип N) описана как улучшенная замена типа K: "
-                    "она лучше сопротивляется окислению и меньше изменяет характеристику при высоких температурах"
-                )
-            elif code == "K":
-                score += 82.0
-                reasons.append(
-                    "широко применяемая промышленная пара с рабочим пределом примерно до 1100–1200 °C "
-                    "и чувствительностью около 41 мкВ/°C"
-                )
-            elif code in ("S", "R"):
-                score += 75.0
-                reasons.append("обеспечивает эталонную стабильность при высоких температурах (рабочий диапазон до 1600 °C)")
-            elif code == "B":
-                score += 60.0
-
-        # 3.3. Низкотемпературное измерение (t_min < 0 °C и t_max <= 350 °C)
-        elif t_min < 0.0 and t_max <= 350.0:
-            if code == "T":
                 score += 92.0
                 reasons.append(
-                    "согласно разделу 5.3 источника, пара медь–константан (тип T) специально применяется "
-                    "для низких температур в примерном диапазоне от −200 до +350 °C"
+                    "согласно п. 5.3 реферата, тип N (нихросил–нисил) является улучшенной заменой типа K: "
+                    "лучше сопротивляется окислению и меньше изменяет характеристику при высоких температурах"
+                )
+            elif code == "K":
+                score += 84.0
+                reasons.append("широко распространённая промышленная пара с рабочим пределом на воздухе до 1100–1200 °C")
+            elif code in ("S", "R"):
+                score += 78.0
+                reasons.append("эталонная стабильность при высоких температурах (рабочий предел до +1600 °C)")
+            elif code == "E":
+                score += 70.0
+                reasons.append("высокая чувствительность (около 68 мкВ/°C), но работа вблизи табличного предела +1000 °C")
+            elif code == "B":
+                score += 65.0
+        elif t_min < 0.0 and t_max <= 350.0:
+            # Низкотемпературное измерение (п. 1 ревизии: согласовано с выбором типа T)
+            if code == "T":
+                score += 94.0
+                reasons.append(
+                    "в п. 5.3 реферата пара медь–константан (тип T) прямо указана для низких температур "
+                    "с подтверждённым примерным диапазоном от −200 до +350 °C"
                 )
             elif code == "E":
                 score += 88.0
-                reasons.append("обеспечивает максимальную чувствительность среди стандартных пар (около 68 мкВ/°C)")
+                reasons.append("обладает максимальной чувствительность среди стандартных пар (около 68 мкВ/°C)")
             elif code == "K":
-                score += 84.0
+                score += 85.0
                 reasons.append("универсальная промышленная термопара с почти линейной характеристикой")
             elif code == "N":
-                score += 80.0
+                score += 82.0
+                reasons.append("стабильная никель-хромовая пара со справочным диапазоном от −270 °C")
             elif code == "J":
-                score += 65.0  # Снижаем балл при отрицательных температурах из-за ржавления железа
-
-        # 3.4. Умеренные температуры (0 <= t_min и t_max <= 900 °C)
+                score += 65.0
+                reasons.append("чувствительность около 55 мкВ/°C, но железо подвержено ржавлению при конденсации влаги")
+            elif code in ("S", "R"):
+                score += 45.0
         else:
+            # Умеренная температура (t_min >= 0 °C и t_max <= 900 °C)
             if code == "K":
                 score += 90.0
                 reasons.append(
-                    "широко применяется в промышленной термометрии, недорогая, имеет почти линейную "
-                    "характеристику и хорошую чувствительность (около 41 мкВ/°C)"
+                    "недорогая и наиболее универсальная промышленная пара с почти линейной характеристикой "
+                    "и чувствительностью около 41 мкВ/°C"
                 )
+            elif code == "E":
+                score += 87.0
+                reasons.append("наибольшая чувствительность среди стандартных термопар (около 68 мкВ/°C)")
             elif code == "N":
                 score += 86.0
-                reasons.append("улучшенная замена типа K с повышенной стабильностью и стойкостью к окислению")
-            elif code == "E":
-                score += 85.0
-                reasons.append("обладает наибольшей чувствительностью среди стандартных термопар (около 68 мкВ/°C)")
+                reasons.append("повышенная стабильность характеристики и стойкость к окислению по сравнению с типом K")
             elif code == "J":
-                score += 82.0
-                reasons.append("имеет высокую чувствительность (около 55 мкВ/°C) и работает на воздухе до 750 °C")
+                score += 84.0
+                reasons.append("высокая чувствительность (около 55 мкВ/°C) при работе на воздухе до +750 °C")
             elif code == "T":
-                score += 80.0
-                reasons.append("хорошо подходит для умеренных и низких температур (до +350 °C)")
+                score += 82.0
+                reasons.append("хорошая воспроизводимость в области умеренных температур до +350 °C")
             elif code in ("S", "R"):
-                score += 55.0
+                score += 50.0
             elif code == "B":
-                score += 45.0
+                score += 40.0
 
-        # Учёт выбранного пользователем ПРИОРИТЕТА
+        # Корректировка баллов при выборе среды с пониженным содержанием кислорода или восстановительной среды
+        if environment in ("восстановительная", "среда с пониженным содержанием кислорода"):
+            if code == "K":
+                score -= 12.0  # Тип K чувствителен к составу атмосферы
+            elif code == "N":
+                score += 4.0   # Тип N лучше сопротивляется окислению и изменениям характеристики
+
+        # Учёт приоритета выбора (п. 1 ревизии: без перебивания типа T типом K при t_min < 0 °C)
         if priority == "повышенная чувствительность":
             sens = SELECTOR_TC_SPECS[code]["sensitivity_val"] or 0.0
             score += sens * 0.45
             if code == "E":
-                reasons.append(
-                    "приоритет «повышенная чувствительность»: тип E имеет самую высокую чувствительность "
-                    "среди всех стандартных термопар (около 68 мкВ/°C)"
-                )
+                reasons.append("приоритет «повышенная чувствительность»: максимальный сигнал около 68 мкВ/°C")
             elif code == "J":
-                reasons.append("приоритет «повышенная чувствительность»: высокая чувствительность около 55 мкВ/°C")
+                reasons.append("приоритет «повышенная чувствительность»: повышенный сигнал около 55 мкВ/°C")
         elif priority == "стабильность и точность":
             if code == "N":
                 score += 18.0
-                reasons.append(
-                    "приоритет «стабильность и точность»: тип N меньше изменяет характеристику при высоких "
-                    "температурах и лучше сопротивляется окислению, чем тип K"
-                )
+                reasons.append("приоритет «стабильность и точность»: меньший дрейф характеристики при нагреве, чем у типа K")
             elif code in ("S", "R"):
-                score += 22.0 if t_max >= 600.0 else 8.0
-                reasons.append(
-                    "приоритет «стабильность и точность»: платинородиевые пары характеризуются высокой "
-                    "стабильностью и применяются в эталонных измерениях"
-                )
+                score += 24.0 if t_max >= 600.0 else 10.0
+                reasons.append("приоритет «стабильность и точность»: благородные металлы для точных и эталонных измерений")
             elif code == "T" and t_max <= 350.0:
-                score += 12.0
+                score += 14.0
         elif priority == "универсальность":
-            if code == "K" and t_max <= 1100.0:
-                score += 15.0
-                reasons.append("приоритет «универсальность»: тип K — наиболее распространённая универсальная промышленная пара")
-            elif code == "N" and t_max > 1000.0:
-                score += 14.0
-            elif code == "T" and t_min < 0.0 and t_max <= 350.0:
-                score += 14.0
+            if t_min < 0.0 and t_max <= 350.0:
+                if code == "T":
+                    score += 12.0
+                    reasons.append("приоритет «универсальность» в низкотемпературной зоне: оптимальная пара для области −200…+350 °C")
+                elif code == "K":
+                    score += 8.0
+            else:
+                if code == "K" and t_max <= 1100.0:
+                    score += 15.0
+                    reasons.append("приоритет «универсальность»: стандартное решение для общепромышленной термометрии")
+                elif code == "K" and t_max > 1100.0:
+                    score += 8.0
+                elif code == "N" and 900.0 < t_max <= 1200.0:
+                    score += 14.0
 
         scored.append((score, code, reasons))
 
     scored.sort(key=lambda item: item[0], reverse=True)
-    best_score, best_code, best_reasons = scored[0]
+    _, best_code, best_reasons = scored[0]
     primary_spec = SELECTOR_TC_SPECS[best_code]
 
-    # Дополнительные предупреждения по граничным режимам
-    if best_code == "K" and t_max > 1100.0:
+    # Пункт 3 ревизии: проверка подтверждённости практического рабочего предела выбранного типа (E, N, B)
+    if primary_spec["confirmed_work_max"] is None or primary_spec["confirmed_work_min"] is None:
+        status_code = "conditional"
         warnings_list.append(
-            f"Верхняя температура ({t_max:.0f} °C) находится вблизи границы рабочего диапазона термопары типа K "
-            "(1100–1200 °C). В источнике отмечено, что при длительной работе возможны изменения характеристики — "
-            "рекомендуется рассмотреть тип N (ТНН) или платинородиевые термопары S / R (ТПП)."
+            f"УСЛОВНАЯ РЕКОМЕНДАЦИЯ ПО РАБОЧЕМУ ДИАПАЗОНУ ({primary_spec['title']}): в предоставленном реферате "
+            f"для типа {best_code} приведены границы стандартной таблицы ({primary_spec['table_range_str']}), "
+            "но не выделено отдельное численное значение гарантированного практического верхнего предела "
+            "(при этом в п. 5.2 указано, что реальные рабочие диапазоны обычно уже табличных и зависят от диаметра "
+            "электродов, атмосферы и защитной арматуры). Перед применением обязательна сверка с паспортом датчика."
         )
-    if t_max > 1100.0 and "K" in candidates and best_code != "K":
+
+    if (best_code == "K" or "K" in candidates) and t_max > 1100.0:
         warnings_list.append(
-            f"Примечание по типу K (ТХА): при температуре {t_max:.0f} °C работа ведётся на верхнем пределе "
-            "рабочего диапазона типа K (1100–1200 °C), поэтому предпочтение отдано более стабильным при высокой температуре материалам."
-        )
-    if priority == "повышенная чувствительность" and best_code in ("S", "R", "B"):
-        warnings_list.append(
-            "Выбран приоритет «повышенная чувствительность», однако в температурной области свыше 1200 °C "
-            "работоспособны только платинородиевые термопары (S, R, B), которые имеют малую чувствительность (около 10 мкВ/°C). "
-            "Потребуется высокочувствительный измерительный усилитель."
+            f"Примечание по типу K (ТХА): температура {t_max:.0f} °C находится на верхнем краю указанного в реферате "
+            "практического рабочего диапазона типа K на воздухе (1100–1200 °C)."
         )
     if best_code in ("S", "R"):
         warnings_list.append(
-            "Термопары типов S и R (ТПП) в соответствии с таблицей 5.2 имеют одинаковый табличный (−50…+1768 °C) "
-            "и рабочий (до 1600 °C) диапазоны и чувствительность около 10 мкВ/°C — оба варианта технически равноправны."
+            "Термопары типов S (Платина + 10 % родия / Платина) и R (Платина + 13 % родия / Платина) имеют "
+            "одинаковые табличные (−50…+1768 °C) и рабочие (до +1600 °C) границы и чувствительность около 10 мкВ/°C."
         )
 
-    # Формирование 1–2 альтернативных вариантов
     alternatives = []
     for _, alt_code, alt_reasons in scored[1:3]:
         alt_spec = SELECTOR_TC_SPECS[alt_code]
         alt_note = "; ".join(alt_reasons) if alt_reasons else (
-            f"Подходит по рабочему диапазону ({alt_spec['work_range_str']}), чувствительность: {alt_spec['sensitivity_str']}."
+            f"Перекрывает заданный интервал ({alt_spec['work_range_str']}), чувствительность: {alt_spec['sensitivity_str']}."
         )
+        if alt_spec["confirmed_work_max"] is None:
+            alt_note += " (Точный рабочий предел в реферате не выделен — требуется сверка с паспортом)."
         alternatives.append({"spec": alt_spec, "note": alt_note})
 
     justification_text = (
-        f"Для диапазона **{t_min:.0f}…{t_max:.0f} °C** (среда: *{environment}*, приоритет: *{priority}*) "
-        f"рекомендуется **{primary_spec['title']}**, так как: " + "; ".join(best_reasons) + "."
+        f"Для полного температурного интервала **{t_min:.0f}…{t_max:.0f} °C** "
+        f"(рабочая среда: *{environment}*, приоритет: *{priority}*) выбран **{primary_spec['title']}**, поскольку он: "
+        + "; ".join(best_reasons) + "."
     )
 
     return {
-        "status": "ok",
+        "status": status_code,
         "primary": primary_spec,
         "justification": justification_text,
         "alternatives": alternatives,
-        "warnings": warnings_list
+        "warnings": warnings_list,
+        "rejected_reasons": rejected_reasons
     }
 
 
 def render_thermocouple_selector() -> None:
-    """Отрисовывает интерактивный модуль «Подбор термопары по условиям эксплуатации»."""
+    """Интерактивный модуль «Подбор термопары по условиям эксплуатации»."""
     st.header("🧭 Подбор термопары по условиям эксплуатации")
     st.markdown(
-        "Интерактивный инженерный помощник для выбора типа термопары по заданному диапазону температур, "
-        "рабочей среде и приоритету измерения. Алгоритм проверяет **весь температурный интервал** от $T_{\\min}$ до $T_{\\max}$ "
-        "и разграничивает **границы стандартных таблиц ГОСТ Р 8.585-2001** и **реальные рабочие диапазоны**, "
-        "указанные в теоретическом материале."
+        "Инженерный модуль для выбора типа термопары по полному диапазону температур $[T_{\\min}, T_{\\max}]$, "
+        "характеру рабочей среды и приоритету измерения. Алгоритм разделяет **справочный диапазон таблиц НСХ**, "
+        "**фактический рекомендуемый рабочий диапазон** и выдаёт условную рекомендацию с предупреждением, если "
+        "для выбранного типа или среды в реферате не указан точный гарантированный рабочий предел."
     )
 
     if "sel_t_min" not in st.session_state:
@@ -2291,33 +2816,62 @@ def render_thermocouple_selector() -> None:
         st.session_state["sel_env"] = "воздушная / окислительная"
     if "sel_prio" not in st.session_state:
         st.session_state["sel_prio"] = "универсальность"
+    if "selector_committed" not in st.session_state:
+        st.session_state["selector_committed"] = None
 
-    with st.expander("⚡ Быстрая загрузка контрольных сценариев (для проверки)", expanded=False):
-        st.caption("Нажмите на любой из 6 контрольных сценариев ТЗ, чтобы автоматически подставить параметры:")
-        sc_cols = st.columns(3)
-        scenarios_preset = [
-            ("1. Низкая (−50…+100 °C)", -50.0, 100.0, "воздушная / окислительная"),
-            ("2. Умеренная (20…300 °C)", 20.0, 300.0, "воздушная / окислительная"),
-            ("3. Высокая (1000…1150 °C)", 1000.0, 1150.0, "воздушная / окислительная"),
-            ("4. Повышенная (1200…1500 °C)", 1200.0, 1500.0, "воздушная / окислительная"),
-            ("5. Очень высокая (1700…1800 °C)", 1700.0, 1800.0, "воздушная / окислительная"),
-            ("6. Экстремальная (2200…2500 °C, вакуум)", 2200.0, 2500.0, "вакуум"),
-        ]
-        for idx, (label, s_min, s_max, s_env) in enumerate(scenarios_preset):
-            with sc_cols[idx % 3]:
+    scenarios_preset = [
+        ("1. −50…+100 °C, воздушная среда", -50.0, 100.0, "воздушная / окислительная", "универсальность"),
+        ("2. 20…300 °C, воздушная среда", 20.0, 300.0, "воздушная / окислительная", "универсальность"),
+        ("3. 1000…1150 °C, воздушная среда", 1000.0, 1150.0, "воздушная / окислительная", "универсальность"),
+        ("4. 1200…1500 °C, воздушная среда", 1200.0, 1500.0, "воздушная / окислительная", "универсальность"),
+        ("5. 1700…1800 °C, инертная среда", 1700.0, 1800.0, "инертная", "стабильность и точность"),
+        ("6. 2200…2500 °C, вакуум", 2200.0, 2500.0, "вакуум", "универсальность"),
+        ("7. 2200…2500 °C, неизвестная среда", 2200.0, 2500.0, "неизвестная", "универсальность"),
+        ("8. 1800…2000 °C, вакуум (вне подтверждённых зон)", 1800.0, 2000.0, "вакуум", "универсальность"),
+        ("9. −250…+1700 °C, воздушная (вне диапазонов)", -250.0, 1700.0, "воздушная / окислительная", "универсальность"),
+        ("10. Ошибка ввода: T_min = 400 °C > T_max = 100 °C", 400.0, 100.0, "воздушная / окислительная", "универсальность"),
+    ]
+
+    with st.expander("⚡ Контрольные тестовые сценарии (10 сценариев + автоматическая верификация)", expanded=False):
+        st.caption("Нажмите на кнопку любого сценария для загрузки в форму или запустите сводную таблицу исполнения всех 10 тестов:")
+        sc_cols = st.columns(2)
+        for idx, (label, s_min, s_max, s_env, s_prio) in enumerate(scenarios_preset):
+            with sc_cols[idx % 2]:
                 if st.button(label, key=f"preset_btn_{idx}", use_container_width=True):
                     st.session_state["sel_t_min"] = s_min
                     st.session_state["sel_t_max"] = s_max
                     st.session_state["sel_env"] = s_env
+                    st.session_state["sel_prio"] = s_prio
+                    st.session_state["selector_committed"] = {
+                        "t_min": s_min,
+                        "t_max": s_max,
+                        "env": s_env,
+                        "prio": s_prio
+                    }
                     st.rerun()
 
-    with st.container(border=True):
+        if st.button("🧪 Выполнить все 10 сценариев и показать сводный протокол", use_container_width=True):
+            protocol_rows = []
+            for label, s_min, s_max, s_env, s_prio in scenarios_preset:
+                res = evaluate_thermocouple_selection(s_min, s_max, s_env, s_prio)
+                prim_title = res["primary"]["title"] if res["primary"] else "Отказ (не найден)"
+                alt_titles = ", ".join(a["spec"]["code"] for a in res["alternatives"]) if res["alternatives"] else "—"
+                protocol_rows.append({
+                    "Сценарий": label,
+                    "Статус": res["status"],
+                    "Фактический результат": prim_title,
+                    "Альтернативы": alt_titles,
+                    "Предупреждения": "Да (" + str(len(res["warnings"])) + ")" if res["warnings"] else ("Ошибка/Отказ" if res["status"] == "error" else "Нет")
+                })
+            st.dataframe(pd.DataFrame(protocol_rows), use_container_width=True, hide_index=True)
+
+    with st.form("thermocouple_selector_form"):
         col_in1, col_in2, col_in3, col_in4 = st.columns(4)
         with col_in1:
             t_min_in = st.number_input(
                 "Минимальная температура, °C:",
                 min_value=-270.0,
-                max_value=2600.0,
+                max_value=3000.0,
                 value=float(st.session_state["sel_t_min"]),
                 step=10.0
             )
@@ -2325,7 +2879,7 @@ def render_thermocouple_selector() -> None:
             t_max_in = st.number_input(
                 "Максимальная температура, °C:",
                 min_value=-270.0,
-                max_value=2600.0,
+                max_value=3000.0,
                 value=float(st.session_state["sel_t_max"]),
                 step=10.0
             )
@@ -2334,13 +2888,15 @@ def render_thermocouple_selector() -> None:
                 "воздушная / окислительная",
                 "инертная",
                 "восстановительная",
+                "среда с пониженным содержанием кислорода",
                 "вакуум",
                 "неизвестная"
             ]
+            current_env = st.session_state["sel_env"] if st.session_state["sel_env"] in env_options else env_options[0]
             env_in = st.selectbox(
                 "Рабочая среда:",
                 options=env_options,
-                index=env_options.index(st.session_state["sel_env"])
+                index=env_options.index(current_env)
             )
         with col_in4:
             prio_options = [
@@ -2354,69 +2910,98 @@ def render_thermocouple_selector() -> None:
                 index=prio_options.index(st.session_state["sel_prio"])
             )
 
+        run_selection = st.form_submit_button(
+            "🔍 Подобрать термопару",
+            type="primary",
+            use_container_width=True
+        )
+
+    if run_selection:
         st.session_state["sel_t_min"] = t_min_in
         st.session_state["sel_t_max"] = t_max_in
         st.session_state["sel_env"] = env_in
         st.session_state["sel_prio"] = prio_in
+        st.session_state["selector_committed"] = {
+            "t_min": t_min_in,
+            "t_max": t_max_in,
+            "env": env_in,
+            "prio": prio_in
+        }
 
-        run_selection = st.button("🔍 Подобрать термопару", type="primary", use_container_width=True)
-
-    # Проверка корректности ввода температур
-    if t_min_in > t_max_in:
-        st.error(
-            f"❌ Ошибка ввода параметров: минимальная температура ({t_min_in:.1f} °C) "
-            f"не может быть выше максимальной температуры ({t_max_in:.1f} °C)."
-        )
+    if st.session_state["selector_committed"] is None:
+        st.info("👆 Задайте параметры эксплуатации и нажмите кнопку **«🔍 Подобрать термопару»**, чтобы выполнить расчёт.")
         return
 
-    # Выполняем подбор автоматически при изменении параметров или нажатии кнопки
-    if run_selection or True:
-        result = evaluate_thermocouple_selection(t_min_in, t_max_in, env_in, prio_in)
+    committed = st.session_state["selector_committed"]
+    result = evaluate_thermocouple_selection(
+        committed["t_min"],
+        committed["t_max"],
+        committed["env"],
+        committed["prio"]
+    )
 
-        if result["status"] == "error":
-            st.error(f"⚠️ **Невозможно рекомендовать безопасный тип термопары:**\n\n{result['message']}")
-            for w in result["warnings"]:
-                st.warning(f"⚠️ {w}")
-        else:
-            p = result["primary"]
-            with st.container(border=True):
-                st.subheader(f"🏆 Рекомендуемая термопара: {p['title']}")
-                k1, k2, k3 = st.columns(3)
-                k1.metric("Обозначение по ГОСТ Р 8.585-2001", p["gost"])
-                k2.metric("Ориентировочная чувствительность", p["sensitivity_str"])
-                k3.metric("Диапазон стандартной таблицы", p["table_range_str"])
-
-                st.markdown(f"- **Положительный и отрицательный электроды:** {p['electrodes']}")
-                st.markdown(f"- **Рекомендуемый рабочий диапазон (по источнику):** {p['work_range_str']}")
-                st.markdown(f"- **Диапазон стандартной справочной таблицы:** {p['table_range_str']}")
-                st.markdown(f"- **Техническое обоснование выбора:** {result['justification']}")
-                st.markdown(f"- **Ограничения и возможные проблемы:** {p['limitations']}")
-
-            for w in result["warnings"]:
-                st.warning(f"⚠️ **Предупреждение:** {w}")
-
-            if result["alternatives"]:
-                st.subheader("🔄 Альтернативные варианты")
-                alt_cols = st.columns(len(result["alternatives"]))
-                for idx, alt_item in enumerate(result["alternatives"]):
-                    alt_sp = alt_item["spec"]
-                    with alt_cols[idx]:
-                        with st.container(border=True):
-                            st.markdown(f"#### {alt_sp['title']}")
-                            st.markdown(f"- **Обозначение ГОСТ:** `{alt_sp['gost']}`")
-                            st.markdown(f"- **Электроды:** {alt_sp['electrodes']}")
-                            st.markdown(f"- **Рабочий диапазон:** {alt_sp['work_range_str']}")
-                            st.markdown(f"- **Табличный диапазон:** {alt_sp['table_range_str']}")
-                            st.markdown(f"- **Чувствительность:** {alt_sp['sensitivity_str']}")
-                            st.markdown(f"- **Комментарий:** {alt_item['note']}")
-                            st.caption(f"*Ограничения:* {alt_sp['limitations']}")
-
-        st.info(
-            "📌 **Метрологическое примечание для промышленного применения:** приведённая рекомендация носит "
-            "учебно-справочный характер на основе материалов реферата. При реальном проектировании узла учёта "
-            "необходимо свериться с паспортом конкретного датчика, требованиями ГОСТ Р 8.585-2001, диаметром "
-            "термоэлектродов, материалом защитной арматуры (чехла) и входным диапазоном вторичного измерительного прибора."
+    if result["status"] == "error":
+        st.error(f"🚫 **Подходящий тип термопары не найден (отказ в рекомендации):**\n\n{result['message']}")
+        for w in result["warnings"]:
+            st.warning(f"⚠️ {w}")
+    else:
+        p = result["primary"]
+        header_prefix = (
+            "⚠️ Условная рекомендация (требуется проверка паспорта датчика / условий среды)"
+            if result["status"] in ("warning", "conditional")
+            else "🏆 Рекомендуемый тип термопары"
         )
+        with st.container(border=True):
+            st.subheader(f"{header_prefix}: {p['title']}")
+            k1, k2, k3 = st.columns(3)
+            k1.metric("Обозначение по ГОСТ Р 8.585-2001", p["gost"])
+            k2.metric("Ориентировочная чувствительность", p["sensitivity_str"])
+            k3.metric("Справочный диапазон таблицы", p["table_range_str"].split("(")[0].strip())
+
+            st.markdown(f"- **1. Материалы электродов:** {p['electrodes']}")
+            st.markdown(f"- **2. Практический рабочий диапазон (по источнику):** {p['work_range_str']}")
+            st.markdown(f"- **3. Справочный диапазон стандартной таблицы:** {p['table_range_str']}")
+            st.markdown(f"- **4. Статус в расчётной базе симулятора (Стенд №1):** {p['sim_nsh_str']}")
+            st.markdown(f"- **5. Обоснование выбора:** {result['justification']}")
+            st.markdown(f"- **6. Ограничения применения и возможные проблемы:** {p['limitations']}")
+
+        for w in result["warnings"]:
+            st.warning(f"⚠️ **Предупреждение:** {w}")
+
+        if result["alternatives"]:
+            st.subheader("🔄 Возможные альтернативные варианты")
+            alt_cols = st.columns(len(result["alternatives"]))
+            for idx, alt_item in enumerate(result["alternatives"]):
+                alt_sp = alt_item["spec"]
+                with alt_cols[idx]:
+                    with st.container(border=True):
+                        st.markdown(f"#### {alt_sp['title']}")
+                        st.markdown(f"- **Обозначение ГОСТ:** `{alt_sp['gost']}`")
+                        st.markdown(f"- **Материалы электродов:** {alt_sp['electrodes']}")
+                        st.markdown(f"- **Рабочий диапазон:** {alt_sp['work_range_str']}")
+                        st.markdown(f"- **Табличный диапазон:** {alt_sp['table_range_str']}")
+                        st.markdown(f"- **Статус в симуляторе:** {alt_sp['sim_nsh_str']}")
+                        st.markdown(f"- **Чувствительность:** {alt_sp['sensitivity_str']}")
+                        st.markdown(f"- **Пояснение:** {alt_item['note']}")
+                        st.caption(f"*Ограничения:* {alt_sp['limitations']}")
+
+    if result.get("rejected_reasons"):
+        with st.expander("📋 Причины отклонения остальных типов термопар для заданного режима"):
+            rej_rows = [
+                {
+                    "Тип термопары": SELECTOR_TC_SPECS[k]["title"],
+                    "Причина отказа / неприменимости": reason
+                }
+                for k, reason in result["rejected_reasons"].items()
+            ]
+            st.dataframe(pd.DataFrame(rej_rows), use_container_width=True, hide_index=True)
+
+    st.info(
+        "📌 **Примечание о достоверности:** Выбор выполнен по учебно-справочным данным реферата. "
+        "При реальном промышленном внедрении необходимо свериться с паспортом конкретного датчика, "
+        "требованиями ГОСТ Р 8.585-2001, диаметром термоэлектродов, конструкцией защитной арматуры (чехла) "
+        "и характеристиками вторичного измерительного прибора."
+    )
 
 
 render_thermocouple_selector()
