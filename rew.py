@@ -445,8 +445,8 @@ def configure_adaptive_plotly_layout(
 ) -> tuple[dict, str]:
     """
     Настраивает адаптивное отображение графика Plotly под мобильные (320–430 px) и настольные экраны.
-    Подбирает геометрию осей так, чтобы основная кривая имела визуальный наклон ~45° (в пределах 40–50°),
-    НЕ изменяя и НЕ искажая исходные физические данные.
+    Устанавливает равномерную линейную градуировку оси температуры с шагом 250 °C (tick0=0, dtick=250)
+    и подбирает геометрию осей под визуальный наклон ~45° без изменения исходных физических данных.
     """
     x_arr = np.asarray(x_main, dtype=float)
     y_arr = np.asarray(y_main, dtype=float)
@@ -463,7 +463,7 @@ def configure_adaptive_plotly_layout(
     y_all_min, y_all_max = float(np.min(y_all_concat)), float(np.max(y_all_concat))
     dy_all = y_all_max - y_all_min
 
-    # Запас (padding) вокруг фактических границ, чтобы крайние маркеры не обрезались
+    # Запас (padding) вокруг фактических границ, чтобы крайние маркеры и подписи не обрезались
     pad_x = max(0.06 * dx_main, 1.0)
     x_range = [x_data_min - pad_x, x_data_max + pad_x]
 
@@ -480,8 +480,8 @@ def configure_adaptive_plotly_layout(
     if display_mode == "Смартфон (320–430 px)":
         fig_height = 470
         margins = dict(l=54, r=14, t=28, b=145)
-        x_nticks, y_nticks = 5, 6
-        tick_size, title_size, legend_size = 12, 13, 11
+        y_nticks = 6
+        x_tick_size, y_tick_size, title_size, legend_size = 10, 12, 13, 11
         legend_y = -0.28
         hover_mode = "closest"
         plotly_config = {
@@ -492,16 +492,16 @@ def configure_adaptive_plotly_layout(
     elif display_mode == "Компьютер (широкий экран)":
         fig_height = 520
         margins = dict(l=64, r=24, t=32, b=115)
-        x_nticks, y_nticks = 8, 7
-        tick_size, title_size, legend_size = 12, 13, 12
+        y_nticks = 7
+        x_tick_size, y_tick_size, title_size, legend_size = 12, 12, 13, 12
         legend_y = -0.21
         hover_mode = "x unified"
         plotly_config = {"responsive": True, "displaylogo": False}
     else:
         fig_height = 490
         margins = dict(l=58, r=16, t=30, b=135)
-        x_nticks, y_nticks = 6, 6
-        tick_size, title_size, legend_size = 12, 13, 11
+        y_nticks = 6
+        x_tick_size, y_tick_size, title_size, legend_size = 11, 12, 13, 11
         legend_y = -0.25
         hover_mode = "closest"
         plotly_config = {
@@ -510,22 +510,27 @@ def configure_adaptive_plotly_layout(
             "modeBarButtonsToRemove": ["lasso2d", "select2d"]
         }
 
-    # 3. Расчёт соотношения масштабов осей для визуального угла ~45°
+    # 3. Градуировка горизонтальной оси температуры с равномерным шагом 250 °C (от 0 в обе стороны)
     xaxis_cfg = dict(
         title=dict(text=x_title, font=dict(size=title_size)),
         range=x_range,
-        nticks=x_nticks,
-        tickfont=dict(size=tick_size),
+        tickmode="linear",
+        tick0=0,
+        dtick=250,
+        tickangle=0,
+        ticks="outside",
+        ticklen=5,
+        tickfont=dict(size=x_tick_size),
         automargin=True,
         showgrid=True,
-        gridcolor="rgba(255,255,255,0.10)",
-        zerolinecolor="rgba(255,255,255,0.28)"
+        gridcolor="rgba(255,255,255,0.14)",
+        zerolinecolor="rgba(255,255,255,0.32)"
     )
     yaxis_cfg = dict(
         title=dict(text=y_title, font=dict(size=title_size)),
         range=y_range,
         nticks=y_nticks,
-        tickfont=dict(size=tick_size),
+        tickfont=dict(size=y_tick_size),
         automargin=True,
         showgrid=True,
         gridcolor="rgba(255,255,255,0.10)",
@@ -534,8 +539,8 @@ def configure_adaptive_plotly_layout(
 
     if dy_main < 1e-6 or dx_main < 1e-6:
         angle_note = (
-            "Визуальный угол основной линии: 0° (физически горизонтальная прямая, ΔE = 0 мВ). "
-            "Фиксация наклона 45° физически неприменима — график отображён без искажения."
+            "Градуировка оси T: шаг 250 °C (от 0 °C). Визуальный угол основной линии: 0° "
+            "(физически горизонтальная прямая, ΔE = 0 мВ) — график отображён без искажения."
         )
     else:
         target_scaleratio = dx_main / dy_main
@@ -550,14 +555,15 @@ def configure_adaptive_plotly_layout(
             yaxis_cfg["constraintoward"] = "center"
             angle_sign = "−45°" if (float(y_arr[-1]) < float(y_arr[0])) else "+45°"
             angle_note = (
-                f"Масштаб осей согласован (scaleratio = {target_scaleratio:.2f} °C/мВ, constrain='domain'): "
-                f"расчётный визуальный наклон основной кривой составляет {angle_sign} без изменения исходных данных."
+                f"Градуировка оси T: линейный шаг 250 °C (tick0=0, dtick=250). "
+                f"Масштаб осей согласован (scaleratio = {target_scaleratio:.2f} °C/мВ): "
+                f"расчётный визуальный наклон основной кривой {angle_sign} без изменения исходных данных."
             )
         else:
             angle_note = (
+                "Градуировка оси T: линейный шаг 250 °C (tick0=0, dtick=250). "
                 "Вспомогательная кривая существенно расширяет диапазон оси Y (расчётное соотношение сторон "
-                f"{needed_box_aspect:.2f} выходит за комфортный интервал 0.55…1.75). "
-                "Чтобы избежать сжатия области построения и потери информативности, принудительная фиксация 45° отключена."
+                f"{needed_box_aspect:.2f} вне интервала 0.55…1.75), поэтому принудительная фиксация 45° отключена."
             )
 
     fig.update_layout(
@@ -579,6 +585,23 @@ def configure_adaptive_plotly_layout(
             itemwidth=30
         )
     )
+
+    # Совместимое подключение промежуточных делений (шаг 125 °C) без числовых подписей
+    try:
+        fig.update_xaxes(
+            minor=dict(
+                tickmode="linear",
+                tick0=0,
+                dtick=125,
+                ticks="outside",
+                ticklen=3,
+                showgrid=True,
+                gridcolor="rgba(255,255,255,0.04)"
+            )
+        )
+    except Exception:
+        # Если установлена старая версия Plotly без поддержки minor-делений, график работает с основными делениями 250 °C
+        pass
 
     return plotly_config, angle_note
 
@@ -2492,9 +2515,6 @@ render_theory_section()
 # =====================================================================
 st.markdown("---")
 
-# В базе строго разделены:
-# - table_min / table_max: справочный диапазон стандартной таблицы (п. 5.2 реферата);
-# - confirmed_work_min / confirmed_work_max: явно подтверждённые в реферате рабочие пределы (None, если число в реферате не задано).
 SELECTOR_TC_SPECS = {
     "K": {
         "code": "K",
@@ -2689,9 +2709,7 @@ def evaluate_thermocouple_selection(
     """
     Выполняет строгий многокритериальный подбор термопары по полному интервалу [t_min, t_max],
     рабочей среде и приоритету.
-    Включает прямую валидацию t_min < t_max (п. 6 ревизии) и разграничение табличных и рабочих пределов (п. 3 ревизии).
     """
-    # Пункт 6 ревизии: прямая проверка корректности диапазона внутри функции
     if t_min >= t_max:
         return {
             "status": "error",
@@ -2709,7 +2727,6 @@ def evaluate_thermocouple_selection(
     rejected_reasons = {}
     candidates = []
 
-    # 1. ПРОВЕРКА КАЖДОГО ТИПА ПО ВСЕМУ ИНТЕРВАЛУ [t_min, t_max] И СРЕДЕ
     for code, sp in SELECTOR_TC_SPECS.items():
         if code == "W-Re":
             if t_min >= 2200.0 and t_max <= 2500.0:
@@ -2736,7 +2753,6 @@ def evaluate_thermocouple_selection(
                 )
             continue
 
-        # Нижняя граница: используем подтверждённый рабочий предел, если он есть, иначе табличный
         lower_bound = sp["confirmed_work_min"] if sp["confirmed_work_min"] is not None else sp["table_min"]
         if t_min < lower_bound:
             if code == "B" and t_min >= 0.0:
@@ -2751,9 +2767,6 @@ def evaluate_thermocouple_selection(
                 )
             continue
 
-        # Верхняя граница: если в реферате задан подтверждённый практический предел (T: 350, J: 750, K: 1200, S/R: 1600),
-        # отсекаем строго по нему; если задан только табличный (E: 1000, N: 1300, B: 1820), проверяем по таблице,
-        # но помечаем необходимость условного статуса и проверки паспорта.
         upper_bound = sp["confirmed_work_max"] if sp["confirmed_work_max"] is not None else sp["table_max"]
         if t_max > upper_bound:
             if sp["confirmed_work_max"] is not None and t_max <= sp["table_max"]:
@@ -2769,7 +2782,6 @@ def evaluate_thermocouple_selection(
 
         candidates.append(code)
 
-    # 2. ЕСЛИ НИ ОДИН ТИП НЕ ПРОШЁЛ ФИЛЬТРАЦИЮ
     if not candidates:
         if t_max > 1820.0 and t_min < 2200.0:
             err_msg = (
@@ -2802,7 +2814,6 @@ def evaluate_thermocouple_selection(
             "rejected_reasons": rejected_reasons
         }
 
-    # 3. АНАЛИЗ РАБОЧЕЙ СРЕДЫ (п. 4 ревизии — без произвольного порога 500 °C, с разделением сред)
     status_code = "ok"
     if environment == "неизвестная":
         status_code = "conditional"
@@ -2836,7 +2847,6 @@ def evaluate_thermocouple_selection(
             "требует проверки по паспорту датчика и учёта защитной арматуры (керамических чехлов для S, R, B)."
         )
 
-    # 4. СПЕЦИАЛЬНЫЙ СЛУЧАЙ: ВОЛЬФРАМ-РЕНИЕВЫЕ ТЕРМОПАРЫ (2200...2500 °C)
     if candidates == ["W-Re"]:
         warnings_list.append(
             "В теоретическом материале (п. 5.3) для вольфрам-рениевых термопар приведён только ориентировочный "
@@ -2856,14 +2866,12 @@ def evaluate_thermocouple_selection(
             "rejected_reasons": rejected_reasons
         }
 
-    # 5. РАНЖИРОВАНИЕ КАНДИДАТОВ С УЧЁТОМ ТЕМПЕРАТУРНОЙ ЗОНЫ, СРЕДЫ И ПРИОРИТЕТА
     scored = []
     for code in candidates:
         score = 0.0
         reasons = []
 
         if t_max > 1600.0:
-            # Свыше 1600 до 1820 °C в кандидатах остаётся только тип B
             if code == "B":
                 score += 95.0
                 reasons.append(
@@ -2871,7 +2879,6 @@ def evaluate_thermocouple_selection(
                     f"(у типов S и R практический рабочий предел ограничен +1600 °C)"
                 )
         elif t_max > 1200.0:
-            # От 1200 до 1600 °C: S, R, B (и N по таблице до 1300 °C)
             if code in ("S", "R"):
                 score += 96.0
                 reasons.append(
@@ -2890,7 +2897,6 @@ def evaluate_thermocouple_selection(
                     "но точный практический предел выше 1200 °C в реферате не подтверждён"
                 )
         elif t_max > 900.0:
-            # Высокая температура 900...1200 °C
             if code == "N":
                 score += 92.0
                 reasons.append(
@@ -2909,7 +2915,6 @@ def evaluate_thermocouple_selection(
             elif code == "B":
                 score += 65.0
         elif t_min < 0.0 and t_max <= 350.0:
-            # Низкотемпературное измерение (п. 1 ревизии: согласовано с выбором типа T)
             if code == "T":
                 score += 94.0
                 reasons.append(
@@ -2931,7 +2936,6 @@ def evaluate_thermocouple_selection(
             elif code in ("S", "R"):
                 score += 45.0
         else:
-            # Умеренная температура (t_min >= 0 °C и t_max <= 900 °C)
             if code == "K":
                 score += 90.0
                 reasons.append(
@@ -2955,14 +2959,12 @@ def evaluate_thermocouple_selection(
             elif code == "B":
                 score += 40.0
 
-        # Корректировка баллов при выборе среды с пониженным содержанием кислорода или восстановительной среды
         if environment in ("восстановительная", "среда с пониженным содержанием кислорода"):
             if code == "K":
-                score -= 12.0  # Тип K чувствителен к составу атмосферы
+                score -= 12.0
             elif code == "N":
-                score += 4.0   # Тип N лучше сопротивляется окислению и изменениям характеристики
+                score += 4.0
 
-        # Учёт приоритета выбора (п. 1 ревизии: без перебивания типа T типом K при t_min < 0 °C)
         if priority == "повышенная чувствительность":
             sens = SELECTOR_TC_SPECS[code]["sensitivity_val"] or 0.0
             score += sens * 0.45
@@ -3001,7 +3003,6 @@ def evaluate_thermocouple_selection(
     _, best_code, best_reasons = scored[0]
     primary_spec = SELECTOR_TC_SPECS[best_code]
 
-    # Пункт 3 ревизии: проверка подтверждённости практического рабочего предела выбранного типа (E, N, B)
     if primary_spec["confirmed_work_max"] is None or primary_spec["confirmed_work_min"] is None:
         status_code = "conditional"
         warnings_list.append(
