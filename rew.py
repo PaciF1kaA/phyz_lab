@@ -9,12 +9,35 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 # =====================================================================
-# 1. КОНФИГУРАЦИЯ СТРАНИЦЫ STREAMLIT
+# 1. КОНФИГУРАЦИЯ СТРАНИЦЫ STREAMLIT И АДАПТИВНЫЕ СТИЛИ
 # =====================================================================
 st.set_page_config(
     page_title="Физическая лаборатория: Термо-ЭДС и Эффект Зеебека",
     layout="wide",
     initial_sidebar_state="expanded"
+)
+
+# Адаптивные стили для исключения горизонтального переполнения графиков на смартфонах (320–430 px)
+st.markdown(
+    """
+    <style>
+        .stPlotlyChart, .js-plotly-plot, .plot-container {
+            max-width: 100% !important;
+            overflow-x: hidden !important;
+        }
+        @media (max-width: 640px) {
+            .block-container {
+                padding-left: 0.65rem !important;
+                padding-right: 0.65rem !important;
+            }
+            .stPlotlyChart {
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+            }
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
 )
 
 # =====================================================================
@@ -239,7 +262,7 @@ def get_threejs_script_tags() -> str:
 
 
 # =====================================================================
-# 3. ФИЗИЧЕСКИЕ ФУНКЦИИ РАСЧЕТА ТЕРМО-ЭДС И КОЭФФИЦИЕНТА ЗЕЕБЕКА
+# 3. ФИЗИЧЕСКИЕ ФУНКЦИИ РАСЧЕТА ТЕРМО-ЭДС, КОЭФФИЦИЕНТА ЗЕЕБЕКА И ГРАФИКОВ
 # =====================================================================
 def calculate_nominal_emf(sensor_key: str, temp_c: float) -> float:
     """
@@ -409,6 +432,155 @@ def cold_junction_rgb(temp_c: float) -> tuple[str, str, float]:
     emissive = f"0x00{int(g * 0.7):02x}{int(b * 0.9):02x}"
     intensity = float(0.45 + 0.4 * (1.0 - norm))
     return hex_col, emissive, intensity
+
+
+def configure_adaptive_plotly_layout(
+    fig: go.Figure,
+    x_main: np.ndarray,
+    y_main: np.ndarray,
+    all_y_arrays: list[np.ndarray],
+    x_title: str,
+    y_title: str,
+    display_mode: str = "Адаптивный (ПК + смартфон)"
+) -> tuple[dict, str]:
+    """
+    Настраивает адаптивное отображение графика Plotly под мобильные (320–430 px) и настольные экраны.
+    Подбирает геометрию осей так, чтобы основная кривая имела визуальный наклон ~45° (в пределах 40–50°),
+    НЕ изменяя и НЕ искажая исходные физические данные.
+    """
+    x_arr = np.asarray(x_main, dtype=float)
+    y_arr = np.asarray(y_main, dtype=float)
+
+    # 1. Фактические физические диапазоны без модификации данных
+    x_data_min, x_data_max = float(np.min(x_arr)), float(np.max(x_arr))
+    dx_main = x_data_max - x_data_min
+    dy_main_chord = abs(float(y_arr[-1]) - float(y_arr[0]))
+    dy_main_span = float(np.max(y_arr) - np.min(y_arr))
+    dy_main = max(dy_main_chord, dy_main_span)
+
+    # Полный диапазон по Y с учётом всех отображаемых кривых и точек
+    y_all_concat = np.concatenate([np.asarray(a, dtype=float).ravel() for a in all_y_arrays if len(a) > 0])
+    y_all_min, y_all_max = float(np.min(y_all_concat)), float(np.max(y_all_concat))
+    dy_all = y_all_max - y_all_min
+
+    # Запас (padding) вокруг фактических границ, чтобы крайние маркеры не обрезались
+    pad_x = max(0.06 * dx_main, 1.0)
+    x_range = [x_data_min - pad_x, x_data_max + pad_x]
+
+    if dy_all < 1e-6:
+        y_range = [-1.0, 1.0]
+    else:
+        pad_y = 0.09 * dy_all
+        y_range = [y_all_min - pad_y, y_all_max + pad_y]
+
+    r_x = x_range[1] - x_range[0]
+    r_y = y_range[1] - y_range[0]
+
+    # 2. Параметры вёрстки для мобильного, адаптивного и десктопного режимов
+    if display_mode == "Смартфон (320–430 px)":
+        fig_height = 470
+        margins = dict(l=54, r=14, t=28, b=145)
+        x_nticks, y_nticks = 5, 6
+        tick_size, title_size, legend_size = 12, 13, 11
+        legend_y = -0.28
+        hover_mode = "closest"
+        plotly_config = {
+            "responsive": True,
+            "displaylogo": False,
+            "modeBarButtonsToRemove": ["lasso2d", "select2d", "autoScale2d", "toggleSpikelines"]
+        }
+    elif display_mode == "Компьютер (широкий экран)":
+        fig_height = 520
+        margins = dict(l=64, r=24, t=32, b=115)
+        x_nticks, y_nticks = 8, 7
+        tick_size, title_size, legend_size = 12, 13, 12
+        legend_y = -0.21
+        hover_mode = "x unified"
+        plotly_config = {"responsive": True, "displaylogo": False}
+    else:
+        fig_height = 490
+        margins = dict(l=58, r=16, t=30, b=135)
+        x_nticks, y_nticks = 6, 6
+        tick_size, title_size, legend_size = 12, 13, 11
+        legend_y = -0.25
+        hover_mode = "closest"
+        plotly_config = {
+            "responsive": True,
+            "displaylogo": False,
+            "modeBarButtonsToRemove": ["lasso2d", "select2d"]
+        }
+
+    # 3. Расчёт соотношения масштабов осей для визуального угла ~45°
+    xaxis_cfg = dict(
+        title=dict(text=x_title, font=dict(size=title_size)),
+        range=x_range,
+        nticks=x_nticks,
+        tickfont=dict(size=tick_size),
+        automargin=True,
+        showgrid=True,
+        gridcolor="rgba(255,255,255,0.10)",
+        zerolinecolor="rgba(255,255,255,0.28)"
+    )
+    yaxis_cfg = dict(
+        title=dict(text=y_title, font=dict(size=title_size)),
+        range=y_range,
+        nticks=y_nticks,
+        tickfont=dict(size=tick_size),
+        automargin=True,
+        showgrid=True,
+        gridcolor="rgba(255,255,255,0.10)",
+        zerolinecolor="rgba(255,255,255,0.28)"
+    )
+
+    if dy_main < 1e-6 or dx_main < 1e-6:
+        angle_note = (
+            "Визуальный угол основной линии: 0° (физически горизонтальная прямая, ΔE = 0 мВ). "
+            "Фиксация наклона 45° физически неприменима — график отображён без искажения."
+        )
+    else:
+        target_scaleratio = dx_main / dy_main
+        needed_box_aspect = (r_y * target_scaleratio) / r_x
+
+        if 0.55 <= needed_box_aspect <= 1.75:
+            xaxis_cfg["constrain"] = "domain"
+            xaxis_cfg["constraintoward"] = "center"
+            yaxis_cfg["scaleanchor"] = "x"
+            yaxis_cfg["scaleratio"] = target_scaleratio
+            yaxis_cfg["constrain"] = "domain"
+            yaxis_cfg["constraintoward"] = "center"
+            angle_sign = "−45°" if (float(y_arr[-1]) < float(y_arr[0])) else "+45°"
+            angle_note = (
+                f"Масштаб осей согласован (scaleratio = {target_scaleratio:.2f} °C/мВ, constrain='domain'): "
+                f"расчётный визуальный наклон основной кривой составляет {angle_sign} без изменения исходных данных."
+            )
+        else:
+            angle_note = (
+                "Вспомогательная кривая существенно расширяет диапазон оси Y (расчётное соотношение сторон "
+                f"{needed_box_aspect:.2f} выходит за комфортный интервал 0.55…1.75). "
+                "Чтобы избежать сжатия области построения и потери информативности, принудительная фиксация 45° отключена."
+            )
+
+    fig.update_layout(
+        autosize=True,
+        height=fig_height,
+        margin=margins,
+        template="plotly_dark",
+        hovermode=hover_mode,
+        xaxis=xaxis_cfg,
+        yaxis=yaxis_cfg,
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=legend_y,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=legend_size),
+            bgcolor="rgba(14, 17, 23, 0.0)",
+            itemwidth=30
+        )
+    )
+
+    return plotly_config, angle_note
 
 
 # =====================================================================
@@ -893,6 +1065,16 @@ lab_mode = st.sidebar.radio(
     ]
 )
 
+chart_display_mode = st.sidebar.selectbox(
+    "📱 Режим отображения графиков:",
+    options=[
+        "Адаптивный (ПК + смартфон)",
+        "Смартфон (320–430 px)",
+        "Компьютер (широкий экран)"
+    ],
+    index=0
+)
+
 st.sidebar.markdown("---")
 st.sidebar.subheader("⚡ Физические нарушения цепи")
 circuit_fault_mode = st.sidebar.selectbox(
@@ -1109,45 +1291,66 @@ if lab_mode.startswith("Стенд №1"):
         t_curve = spec["temps"]
         e_curve_abs = spec["values"]
         e_curve_rel = e_curve_abs - e_cold
+        is_mobile_view = (chart_display_mode == "Смартфон (320–430 px)")
 
         fig_stand1 = go.Figure()
+        all_y_stand1 = [e_curve_rel, e_curve_abs, np.array([0.0, phys["e_gen_mv"]])]
 
         fig_stand1.add_trace(go.Scatter(
             x=t_curve, y=e_curve_rel, mode="lines",
             name=f"E(T) − E({t_cold:.0f} °C)",
-            line=dict(color=spec["color"], width=3)
+            line=dict(color=spec["color"], width=3),
+            hovertemplate="T = %{x:.0f} °C<br>E_ген = %{y:+.3f} мВ<extra>Основная НСХ</extra>"
         ))
 
         fig_stand1.add_trace(go.Scatter(
             x=t_curve, y=e_curve_abs, mode="lines+markers",
-            name="Табличная выборка E(T) при T₀ = 0 °C",
+            name="Таблица E(T) при T₀ = 0 °C",
             line=dict(color="#adb5bd", width=1.5, dash="dash"),
-            marker=dict(size=4, color="#ffffff")
+            marker=dict(size=3.5 if is_mobile_view else 4, color="#ffffff"),
+            hovertemplate="T = %{x:.0f} °C<br>E_табл = %{y:+.3f} мВ<extra>При T₀ = 0 °C</extra>"
         ))
 
         fig_stand1.add_trace(go.Scatter(
             x=[t_cold], y=[0.0],
             mode="markers+text", name="Холодный спай (T_cold)",
-            text=[f"  T_cold = {t_cold:.0f} °C (E_табл = {e_cold:.3f} мВ)"],
+            text=[f" T_cold ({t_cold:.0f}°C)"] if is_mobile_view else [f"  T_cold = {t_cold:.0f} °C"],
             textposition="bottom right",
-            marker=dict(size=11, color="#00b4d8", symbol="circle", line=dict(width=2, color="white"))
+            textfont=dict(size=11, color="#4cc9f0"),
+            marker=dict(size=10, color="#00b4d8", symbol="circle", line=dict(width=1.5, color="white")),
+            hovertemplate=(
+                f"Холодный спай T_cold = {t_cold:.0f} °C<br>"
+                f"E_табл(T_cold) = {e_cold:.3f} мВ<br>E_отн = 0.000 мВ<extra></extra>"
+            )
         ))
 
         fig_stand1.add_trace(go.Scatter(
             x=[t_hot], y=[phys["e_gen_mv"]],
-            mode="markers+text", name="Генерируемая ЭДС спая E_ген",
-            text=[f"  T_hot = {t_hot:.0f} °C (E_ген = {phys['e_gen_mv']:+.3f} мВ)"],
+            mode="markers+text", name="Рабочий спай (E_ген)",
+            text=[f"T_hot ({phys['e_gen_mv']:+.1f} мВ)"] if is_mobile_view else [f"  T_hot = {t_hot:.0f} °C ({phys['e_gen_mv']:+.2f} мВ)"],
             textposition="top left",
-            marker=dict(size=13, color="#ff4d4d", symbol="diamond", line=dict(width=2, color="white"))
+            textfont=dict(size=11, color="#ff6b6b"),
+            marker=dict(size=12, color="#ff4d4d", symbol="diamond", line=dict(width=1.5, color="white")),
+            hovertemplate=(
+                f"Горячий спай T_hot = {t_hot:.0f} °C<br>"
+                f"E_ген = {phys['e_gen_mv']:+.3f} мВ<br>"
+                f"E_табл(T_hot) = {e_hot:.3f} мВ<extra></extra>"
+            )
         ))
 
         if circuit_fault_mode == "Паразитный спай (КЗ)" and t_kz_stand1 is not None:
+            all_y_stand1.append(np.array([phys["u_meter_mv"]]))
             fig_stand1.add_trace(go.Scatter(
                 x=[t_kz_stand1], y=[phys["u_meter_mv"]],
-                mode="markers+text", name="Точка шунтирования КЗ (U_приб)",
-                text=[f"  T_кз = {t_kz_stand1:.0f} °C (U_приб = {phys['u_meter_mv']:+.3f} мВ)"],
-                textposition="bottom left",
-                marker=dict(size=13, color="#ff9f1c", symbol="x", line=dict(width=2, color="white"))
+                mode="markers+text", name="Точка КЗ (U_приб)",
+                text=[f"T_кз ({phys['u_meter_mv']:+.1f} мВ)"],
+                textposition="bottom right",
+                textfont=dict(size=11, color="#ff9f1c"),
+                marker=dict(size=12, color="#ff9f1c", symbol="x", line=dict(width=2, color="white")),
+                hovertemplate=(
+                    f"Паразитный спай T_кз = {t_kz_stand1:.0f} °C<br>"
+                    f"U_приб = {phys['u_meter_mv']:+.3f} мВ<extra></extra>"
+                )
             ))
 
         if "ai_alloy" in st.session_state:
@@ -1155,21 +1358,25 @@ if lab_mode.startswith("Стенд №1"):
             a1, a2, a3 = ai["coeffs"]["a1"], ai["coeffs"]["a2"], ai["coeffs"]["a3"]
             e_ai_cold = a1 * t_cold + a2 * (t_cold ** 2) + a3 * (t_cold ** 3)
             e_ai_curve = (a1 * t_curve + a2 * (t_curve ** 2) + a3 * (t_curve ** 3)) - e_ai_cold
+            all_y_stand1.append(e_ai_curve)
             fig_stand1.add_trace(go.Scatter(
                 x=t_curve, y=e_ai_curve, mode="lines",
-                name=f"Условная модель НСХ ({ai['s_target']} мкВ/°C)",
-                line=dict(color="#ff9f1c", width=2.5, dash="dot")
+                name=f"Условная НСХ ({ai['s_target']} мкВ/°C)",
+                line=dict(color="#ff9f1c", width=2.5, dash="dot"),
+                hovertemplate="T = %{x:.0f} °C<br>E_мод = %{y:+.3f} мВ<extra>Условная НСХ</extra>"
             ))
 
-        fig_stand1.update_layout(
-            xaxis_title="Температура T, °C",
-            yaxis_title="Термо-ЭДС E, мВ",
-            template="plotly_dark",
-            height=430,
-            margin=dict(l=20, r=20, t=30, b=20),
-            hovermode="x unified"
+        plotly_cfg1, angle_note1 = configure_adaptive_plotly_layout(
+            fig=fig_stand1,
+            x_main=t_curve,
+            y_main=e_curve_rel,
+            all_y_arrays=all_y_stand1,
+            x_title="Температура T, °C",
+            y_title="Термо-ЭДС E, мВ",
+            display_mode=chart_display_mode
         )
-        st.plotly_chart(fig_stand1, use_container_width=True)
+        st.plotly_chart(fig_stand1, use_container_width=True, config=plotly_cfg1)
+        st.caption(f"📐 {angle_note1}")
 
     with col_3d:
         st.subheader("3D-модель теплового градиента спаев")
@@ -1331,12 +1538,16 @@ else:
         st.subheader("Сравнение линейного приближения и нелинейной табличной НСХ")
         t_grid_s2 = np.linspace(-100, 800, 91)
         e_lin_arr = (s_pair * (t_grid_s2 - t_cold_s2)) / 1000.0
+        is_mobile_view = (chart_display_mode == "Смартфон (320–430 px)")
 
         fig_stand2 = go.Figure()
+        all_y_stand2 = [e_lin_arr, np.array([0.0, phys_s2["e_gen_mv"]])]
+
         fig_stand2.add_trace(go.Scatter(
             x=t_grid_s2, y=e_lin_arr, mode="lines",
-            name=f"Линейное приближение (S_пары = const = {s_pair:+.1f} мкВ/°C)",
-            line=dict(color="#80ed99", width=3.5)
+            name=f"Линейная (S = {s_pair:+.1f} мкВ/°C)",
+            line=dict(color="#80ed99", width=3.2),
+            hovertemplate="T_hot = %{x:.0f} °C<br>E_лин = %{y:+.3f} мВ<extra>Линейное приближение</extra>"
         ))
 
         pair_tuple = (metal_1.split("(")[0].strip(), metal_2.split("(")[0].strip())
@@ -1355,51 +1566,91 @@ else:
         elif pair_tuple == ("Константан", "Железо"):
             gost_match_key, gost_sign = "ТЖК (тип J, Железо-Константан, таблица с шагом 10 °C)", -1.0
 
+        comparison_caption = None
         if gost_match_key is not None:
             e_ref_cold = gost_sign * calculate_nominal_emf(gost_match_key, t_cold_s2)
-            e_gost_arr = [gost_sign * calculate_nominal_emf(gost_match_key, t_val) - e_ref_cold for t_val in t_grid_s2]
+            e_gost_arr = np.array([gost_sign * calculate_nominal_emf(gost_match_key, t_val) - e_ref_cold for t_val in t_grid_s2])
             e_gost_hot = gost_sign * calculate_nominal_emf(gost_match_key, t_hot_s2) - e_ref_cold
+            all_y_stand2.append(e_gost_arr)
             fig_stand2.add_trace(go.Scatter(
                 x=t_grid_s2, y=e_gost_arr, mode="lines",
-                name=f"Интегральная НСХ по таблице: ∫[S_A(T)−S_B(T)]dT ({THERMOCOUPLES_DB[gost_match_key]['short_code']})",
-                line=dict(color="#00b4d8", width=2.5, dash="dash")
+                name=f"Табличная НСХ ({THERMOCOUPLES_DB[gost_match_key]['short_code']})",
+                line=dict(color="#00b4d8", width=2.5, dash="dash"),
+                hovertemplate="T_hot = %{x:.0f} °C<br>E_табл = %{y:+.3f} мВ<extra>Табличная НСХ</extra>"
             ))
-            st.caption(
+            comparison_caption = (
                 f"📌 **Сравнение моделей при $T_{{\\text{{hot}}}} = {t_hot_s2:.0f}\\text{{ }}^\\circ\\text{{C}}$, "
                 f"$T_{{\\text{{cold}}}} = {t_cold_s2:.0f}\\text{{ }}^\\circ\\text{{C}}$:** "
                 f"линейное приближение даёт $E_{{\\text{{лин}}}} = {phys_s2['e_gen_mv']:+.3f}\\text{{ мВ}}$, "
-                f"тогда как табличная нелинейная характеристика даёт $E_{{\\text{{табл}}}} = {e_gost_hot:+.3f}\\text{{ мВ}}$ "
-                f"(расхождение из-за температурной зависимости $S(T)$ составляет ${abs(phys_s2['e_gen_mv'] - e_gost_hot):.3f}\\text{{ мВ}}$)."
+                f"табличная нелинейная характеристика даёт $E_{{\\text{{табл}}}} = {e_gost_hot:+.3f}\\text{{ мВ}}$ "
+                f"(расхождение из-за зависимости $S(T)$ составляет ${abs(phys_s2['e_gen_mv'] - e_gost_hot):.3f}\\text{{ мВ}}$)."
             )
 
         fig_stand2.add_trace(go.Scatter(
-            x=[t_hot_s2], y=[phys_s2["e_gen_mv"]],
-            mode="markers+text", name="Рабочая точка E_ген (лин.)",
-            text=[f"  T_hot = {t_hot_s2:.0f} °C (E_ген = {phys_s2['e_gen_mv']:+.3f} мВ)"],
-            textposition="top left",
-            marker=dict(size=14, color="#ff4d4d", symbol="diamond", line=dict(width=2, color="white"))
+            x=[t_cold_s2], y=[0.0],
+            mode="markers+text", name="Холодный спай (T_cold)",
+            text=[f"T_cold ({t_cold_s2:.0f}°C)"],
+            textposition="bottom right",
+            textfont=dict(size=11, color="#4cc9f0"),
+            marker=dict(size=10, color="#00b4d8", symbol="circle", line=dict(width=1.5, color="white")),
+            hovertemplate=f"Холодный спай T_cold = {t_cold_s2:.0f} °C<br>E = 0.000 мВ<extra></extra>"
         ))
+
+        fig_stand2.add_trace(go.Scatter(
+            x=[t_hot_s2], y=[phys_s2["e_gen_mv"]],
+            mode="markers+text", name="Рабочая точка (E_ген)",
+            text=[f"T_hot ({phys_s2['e_gen_mv']:+.1f} мВ)"] if is_mobile_view else [f"  T_hot = {t_hot_s2:.0f} °C ({phys_s2['e_gen_mv']:+.2f} мВ)"],
+            textposition="top left",
+            textfont=dict(size=11, color="#ff6b6b"),
+            marker=dict(size=12, color="#ff4d4d", symbol="diamond", line=dict(width=1.5, color="white")),
+            hovertemplate=(
+                f"Горячий спай T_hot = {t_hot_s2:.0f} °C<br>"
+                f"ΔT = {delta_t_val:+.0f} °C<br>"
+                f"E_ген (лин.) = {phys_s2['e_gen_mv']:+.3f} мВ<extra></extra>"
+            )
+        ))
+
+        if circuit_fault_mode == "Паразитный спай (КЗ)" and t_kz_s2 is not None:
+            all_y_stand2.append(np.array([phys_s2["u_meter_mv"]]))
+            fig_stand2.add_trace(go.Scatter(
+                x=[t_kz_s2], y=[phys_s2["u_meter_mv"]],
+                mode="markers+text", name="Точка КЗ (U_приб)",
+                text=[f"T_кз ({phys_s2['u_meter_mv']:+.1f} мВ)"],
+                textposition="bottom right",
+                textfont=dict(size=11, color="#ff9f1c"),
+                marker=dict(size=12, color="#ff9f1c", symbol="x", line=dict(width=2, color="white")),
+                hovertemplate=(
+                    f"Паразитный спай T_кз = {t_kz_s2:.0f} °C<br>"
+                    f"U_приб = {phys_s2['u_meter_mv']:+.3f} мВ<extra></extra>"
+                )
+            ))
 
         if "ai_alloy" in st.session_state:
             ai = st.session_state["ai_alloy"]
             a1, a2, a3 = ai["coeffs"]["a1"], ai["coeffs"]["a2"], ai["coeffs"]["a3"]
             e_ai_c = a1 * t_cold_s2 + a2 * (t_cold_s2 ** 2) + a3 * (t_cold_s2 ** 3)
             e_ai_arr = (a1 * t_grid_s2 + a2 * (t_grid_s2 ** 2) + a3 * (t_grid_s2 ** 3)) - e_ai_c
+            all_y_stand2.append(e_ai_arr)
             fig_stand2.add_trace(go.Scatter(
                 x=t_grid_s2, y=e_ai_arr, mode="lines",
-                name=f"Условная модель НСХ ({ai['s_target']} мкВ/°C)",
-                line=dict(color="#ff9f1c", width=2.5, dash="dot")
+                name=f"Условная НСХ ({ai['s_target']} мкВ/°C)",
+                line=dict(color="#ff9f1c", width=2.5, dash="dot"),
+                hovertemplate="T_hot = %{x:.0f} °C<br>E_мод = %{y:+.3f} мВ<extra>Условная НСХ</extra>"
             ))
 
-        fig_stand2.update_layout(
-            xaxis_title="Температура горячего спая T_hot, °C",
-            yaxis_title=f"Термо-ЭДС относительно T_cold = {t_cold_s2:.0f} °C, мВ",
-            template="plotly_dark",
-            height=430,
-            margin=dict(l=20, r=20, t=30, b=20),
-            hovermode="x unified"
+        plotly_cfg2, angle_note2 = configure_adaptive_plotly_layout(
+            fig=fig_stand2,
+            x_main=t_grid_s2,
+            y_main=e_lin_arr,
+            all_y_arrays=all_y_stand2,
+            x_title="Температура T_hot, °C",
+            y_title=f"Термо-ЭДС (отн. {t_cold_s2:.0f} °C), мВ",
+            display_mode=chart_display_mode
         )
-        st.plotly_chart(fig_stand2, use_container_width=True)
+        st.plotly_chart(fig_stand2, use_container_width=True, config=plotly_cfg2)
+        st.caption(f"📐 {angle_note2}")
+        if comparison_caption:
+            st.caption(comparison_caption)
 
         st.caption(
             f"**Справка по материалам:** 1) *{metal_1}*: {METALS_DB[metal_1]['description']} "
