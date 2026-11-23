@@ -18,451 +18,650 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Единая визуальная система KIP Simulator (Этап 1: типографика, палитра, карточки, элементы управления)
-st.markdown(
+ACCESSIBILITY_MODE_OPTIONS = [
+    "Стандартный",
+    "Повышенная читаемость",
+    "Высокая контрастность",
+]
+
+ACCESSIBILITY_PALETTES = {
+    "Стандартный": {
+        "bg_main": "#0E1117",
+        "bg_card": "#161B24",
+        "bg_nested": "#1F2633",
+        "bg_hover": "#293345",
+        "bg_active": "#192231",
+        "text_primary": "#EEF2F6",
+        "text_secondary": "#B8C4D4",
+        "border": "#70829A",
+        "border_strong": "#8294AD",
+        "border_width": "1px",
+        "accent": "#38BDF8",
+        "accent_hover": "#7DD3FC",
+        "accent_active": "#0EA5E9",
+        "accent_fg": "#0B111A",
+        "focus": "#FACC15",
+        "success": "#4ADE80",
+        "success_bg": "#12261E",
+        "warning": "#FBBF24",
+        "warning_bg": "#292011",
+        "error": "#F87171",
+        "error_bg": "#2B1418",
+        "disabled_bg": "#1B202B",
+        "disabled_text": "#8592A6",
+        "disabled_border": "#5B6B82",
+        "font_base": "17px",
+        "font_caption": "15px",
+        "font_btn": "16px",
+        "font_h1": "29px",
+        "font_h2": "25px",
+        "font_h3": "21px",
+        "font_h4": "19px",
+        "font_kpi": "21px",
+        "line_height": "1.55",
+        "touch_target": "44px",
+        "slider_thumb": "24px",
+        "card_pad": "1rem",
+        "gap": "0.85rem",
+        "caption_weight": "400",
+        "alert_border_w": "1px",
+        "kpi_1col_bp": "420px",
+    },
+    "Повышенная читаемость": {
+        "bg_main": "#0E1117",
+        "bg_card": "#161C26",
+        "bg_nested": "#202837",
+        "bg_hover": "#2C374C",
+        "bg_active": "#1A2436",
+        "text_primary": "#F5F8FC",
+        "text_secondary": "#CBD6E4",
+        "border": "#8DA2BD",
+        "border_strong": "#A6BCD6",
+        "border_width": "2px",
+        "accent": "#38BDF8",
+        "accent_hover": "#7DD3FC",
+        "accent_active": "#0EA5E9",
+        "accent_fg": "#0B111A",
+        "focus": "#FACC15",
+        "success": "#4ADE80",
+        "success_bg": "#12281F",
+        "warning": "#FBBF24",
+        "warning_bg": "#2D2312",
+        "error": "#F87171",
+        "error_bg": "#30151A",
+        "disabled_bg": "#1C222E",
+        "disabled_text": "#9BA8BC",
+        "disabled_border": "#6F829C",
+        "font_base": "20px",
+        "font_caption": "17px",
+        "font_btn": "18px",
+        "font_h1": "34px",
+        "font_h2": "29px",
+        "font_h3": "24px",
+        "font_h4": "22px",
+        "font_kpi": "24px",
+        "line_height": "1.65",
+        "touch_target": "52px",
+        "slider_thumb": "28px",
+        "card_pad": "1.25rem",
+        "gap": "1.15rem",
+        "caption_weight": "500",
+        "alert_border_w": "2px",
+        "kpi_1col_bp": "540px",
+    },
+    "Высокая контрастность": {
+        "bg_main": "#000000",
+        "bg_card": "#06080D",
+        "bg_nested": "#0E131E",
+        "bg_hover": "#1C2538",
+        "bg_active": "#27334D",
+        "text_primary": "#FFFFFF",
+        "text_secondary": "#F8FAFC",
+        "border": "#E2E8F0",
+        "border_strong": "#FFFFFF",
+        "border_width": "2px",
+        "accent": "#FFE600",
+        "accent_hover": "#FFF266",
+        "accent_active": "#FFD000",
+        "accent_fg": "#000000",
+        "focus": "#00FFFF",
+        "success": "#00FF85",
+        "success_bg": "#002914",
+        "warning": "#FFE600",
+        "warning_bg": "#332900",
+        "error": "#FF5C5C",
+        "error_bg": "#380008",
+        "disabled_bg": "#121722",
+        "disabled_text": "#D1D9E6",
+        "disabled_border": "#94A3B8",
+        "font_base": "18px",
+        "font_caption": "16px",
+        "font_btn": "17px",
+        "font_h1": "31px",
+        "font_h2": "27px",
+        "font_h3": "22px",
+        "font_h4": "20px",
+        "font_kpi": "22px",
+        "line_height": "1.60",
+        "touch_target": "48px",
+        "slider_thumb": "26px",
+        "card_pad": "1.1rem",
+        "gap": "0.95rem",
+        "caption_weight": "600",
+        "alert_border_w": "2px",
+        "kpi_1col_bp": "460px",
+    },
+}
+
+
+def get_visual_system_css(accessibility_mode: str = "Стандартный") -> str:
     """
+    Формирует единую таблицу стилей KIP Simulator для выбранного режима доступности
+    («Стандартный», «Повышенная читаемость», «Высокая контрастность») с адаптацией
+    под ширины 320 / 360 / 390 / 430 px, планшет, ПК и масштабирование браузера до 200%.
+    """
+    p = ACCESSIBILITY_PALETTES.get(accessibility_mode, ACCESSIBILITY_PALETTES["Стандартный"])
+    extra_hc_rules = ""
+    if accessibility_mode == "Высокая контрастность":
+        extra_hc_rules = """
+        /* Усиленное выделение активных состояний, предупреждений и подписей (Высокая контрастность) */
+        .stButton > button[kind="primary"],
+        .stFormSubmitButton > button[kind="primary"],
+        [data-testid="stBaseButton-primary"],
+        [data-baseweb="tab"][aria-selected="true"] {
+            box-shadow: 0 0 0 2px #FFFFFF;
+            font-weight: 800;
+        }
+        [data-testid="stAlert"] {
+            border-left-width: 6px !important;
+        }
+        .kip-nav-status,
+        .kip-stand-purpose,
+        .kip-section-intro {
+            border-left-width: 6px;
+        }
+        .kip-stage-step--active {
+            box-shadow: 0 0 0 2px #FFFFFF;
+        }
+        """
+    elif accessibility_mode == "Повышенная читаемость":
+        extra_hc_rules = """
+        /* Дополнительные интервалы и увеличенные элементы управления (Повышенная читаемость) */
+        .stMarkdown p,
+        .stMarkdown li {
+            margin-bottom: 0.65rem;
+        }
+        [data-testid="stExpander"],
+        [data-testid="stAlert"],
+        [data-testid="stVerticalBlockBorderWrapper"] {
+            margin-bottom: 1.15rem;
+        }
+        """
+
+    return f"""
     <style>
         /* =====================================================================
-           ЕДИНАЯ ВИЗУАЛЬНАЯ СИСТЕМА KIP SIMULATOR (ЭТАП 1)
-           Визуальная и эргономическая доработка с расчётной проверкой отдельных
-           критериев доступности (контрастность палитры, видимый фокус,
-           повышенный ориентир интерактивных областей 44x44 CSS px).
+           ЕДИНАЯ ВИЗУАЛЬНАЯ СИСТЕМА KIP SIMULATOR (ЭТАПЫ 1–5)
+           Активный режим доступности: {accessibility_mode}
            ===================================================================== */
-        :root {
-            /* Цветовая система (тёмная инженерная палитра) */
-            --kip-bg-main: #0E1117;
-            --kip-bg-card: #161B24;
-            --kip-bg-nested: #1F2633;
-            --kip-bg-hover: #293345;
-            --kip-bg-active: #192231;
-            --kip-text-primary: #EEF2F6;
-            --kip-text-secondary: #B8C4D4;
-            --kip-border: #70829A;
-            --kip-border-strong: #8294AD;
-            --kip-accent: #38BDF8;
-            --kip-accent-hover: #7DD3FC;
-            --kip-accent-active: #0EA5E9;
-            --kip-accent-fg: #0B111A;
-            --kip-focus: #FACC15;
-            --kip-success: #4ADE80;
-            --kip-success-bg: #12261E;
-            --kip-warning: #FBBF24;
-            --kip-warning-bg: #292011;
-            --kip-error: #F87171;
-            --kip-error-bg: #2B1418;
-            --kip-disabled-bg: #1B202B;
-            --kip-disabled-text: #8592A6;
-            --kip-disabled-border: #5B6B82;
+        :root {{
+            --kip-bg-main: {p["bg_main"]};
+            --kip-bg-card: {p["bg_card"]};
+            --kip-bg-nested: {p["bg_nested"]};
+            --kip-bg-hover: {p["bg_hover"]};
+            --kip-bg-active: {p["bg_active"]};
+            --kip-text-primary: {p["text_primary"]};
+            --kip-text-secondary: {p["text_secondary"]};
+            --kip-border: {p["border"]};
+            --kip-border-strong: {p["border_strong"]};
+            --kip-border-width: {p["border_width"]};
+            --kip-accent: {p["accent"]};
+            --kip-accent-hover: {p["accent_hover"]};
+            --kip-accent-active: {p["accent_active"]};
+            --kip-accent-fg: {p["accent_fg"]};
+            --kip-focus: {p["focus"]};
+            --kip-success: {p["success"]};
+            --kip-success-bg: {p["success_bg"]};
+            --kip-warning: {p["warning"]};
+            --kip-warning-bg: {p["warning_bg"]};
+            --kip-error: {p["error"]};
+            --kip-error-bg: {p["error_bg"]};
+            --kip-disabled-bg: {p["disabled_bg"]};
+            --kip-disabled-text: {p["disabled_text"]};
+            --kip-disabled-border: {p["disabled_border"]};
 
-            /* Типографика */
-            --kip-font-base: 17px;
-            --kip-font-caption: 15px;
-            --kip-font-h1: 29px;
-            --kip-font-h2: 26px;
-            --kip-font-h3: 21px;
-            --kip-font-h4: 19px;
-            --kip-line-height: 1.55;
+            --kip-font-base: {p["font_base"]};
+            --kip-font-caption: {p["font_caption"]};
+            --kip-font-btn: {p["font_btn"]};
+            --kip-font-h1: {p["font_h1"]};
+            --kip-font-h2: {p["font_h2"]};
+            --kip-font-h3: {p["font_h3"]};
+            --kip-font-h4: {p["font_h4"]};
+            --kip-font-kpi: {p["font_kpi"]};
+            --kip-line-height: {p["line_height"]};
+            --kip-caption-weight: {p["caption_weight"]};
+            --kip-alert-border-w: {p["alert_border_w"]};
 
-            /* Отступы и размеры интерактивных областей */
             --kip-radius: 10px;
             --kip-radius-sm: 8px;
-            --kip-touch-target: 44px;
-            --kip-slider-thumb: 24px;
-            --kip-card-pad: 1rem;
-        }
+            --kip-touch-target: {p["touch_target"]};
+            --kip-slider-thumb: {p["slider_thumb"]};
+            --kip-card-pad: {p["card_pad"]};
+            --kip-gap: {p["gap"]};
+        }}
 
         /* 1. Базовый фон, типографика и иерархия заголовков */
-        html, body, .stApp {
+        *, *::before, *::after {{
+            box-sizing: border-box;
+        }}
+
+        html, body, .stApp {{
             background-color: var(--kip-bg-main);
             color: var(--kip-text-primary);
             font-size: var(--kip-font-base);
             line-height: var(--kip-line-height);
-        }
+        }}
 
-        [data-testid="stSidebar"] {
+        [data-testid="stSidebar"] {{
             background-color: var(--kip-bg-card);
-            border-right: 1px solid var(--kip-border);
-        }
+            border-right: var(--kip-border-width) solid var(--kip-border);
+        }}
 
-        .stApp h1 {
+        .stApp h1 {{
             font-size: var(--kip-font-h1);
             line-height: 1.25;
             color: var(--kip-text-primary);
             font-weight: 700;
             margin-bottom: 0.75rem;
-        }
+            overflow-wrap: break-word;
+        }}
 
-        .stApp h2 {
+        .stApp h2 {{
             font-size: var(--kip-font-h2);
             line-height: 1.3;
             color: var(--kip-text-primary);
             font-weight: 700;
             margin-top: 1.1rem;
             margin-bottom: 0.65rem;
-        }
+            overflow-wrap: break-word;
+        }}
 
-        .stApp h3 {
+        .stApp h3 {{
             font-size: var(--kip-font-h3);
             line-height: 1.35;
             color: var(--kip-text-primary);
             font-weight: 600;
             margin-top: 0.9rem;
             margin-bottom: 0.5rem;
-        }
+            overflow-wrap: break-word;
+        }}
 
-        .stApp h4 {
+        .stApp h4 {{
             font-size: var(--kip-font-h4);
             line-height: 1.35;
             color: var(--kip-text-primary);
             font-weight: 600;
             margin-bottom: 0.45rem;
-        }
+            overflow-wrap: break-word;
+        }}
 
         .stMarkdown p,
         .stMarkdown li,
-        .stMarkdown blockquote {
+        .stMarkdown blockquote {{
             font-size: var(--kip-font-base);
             line-height: var(--kip-line-height);
             color: var(--kip-text-primary);
-        }
+            max-width: 78ch;
+            overflow-wrap: break-word;
+        }}
 
-        .stMarkdown blockquote {
+        .stMarkdown blockquote {{
             background-color: var(--kip-bg-nested);
             border-left: 4px solid var(--kip-accent);
             padding: 0.75rem 1rem;
             border-radius: 0 var(--kip-radius-sm) var(--kip-radius-sm) 0;
             margin: 0.75rem 0;
-        }
+        }}
 
-        /* Читаемые подписи вместо мелкого серого текста (15 px, без снижения прозрачности) */
+        /* Читаемые подписи без снижения прозрачности */
         [data-testid="stCaptionContainer"],
         [data-testid="stCaptionContainer"] p,
         .stCaption,
-        .stApp small {
+        .stApp small {{
             font-size: var(--kip-font-caption);
+            font-weight: var(--kip-caption-weight);
             line-height: 1.5;
             color: var(--kip-text-secondary);
             opacity: 1;
-        }
+            overflow-wrap: break-word;
+        }}
 
-        .stApp a {
+        .stApp a {{
             color: var(--kip-accent);
             text-decoration: underline;
             text-underline-offset: 3px;
-        }
+            overflow-wrap: anywhere;
+        }}
 
-        .stApp a:hover {
+        .stApp a:hover {{
             color: var(--kip-accent-hover);
-        }
+        }}
 
-        .stApp hr {
+        .stApp hr {{
             border-color: var(--kip-border);
             opacity: 1;
             margin: 1.25rem 0;
-        }
+        }}
 
-        /* Формулы LaTeX */
-        .katex-display {
+        /* Формулы LaTeX: горизонтальная прокрутка внутри контейнера формулы без растягивания страницы */
+        .katex-display {{
             background-color: var(--kip-bg-nested);
-            border: 1px solid var(--kip-border);
+            border: var(--kip-border-width) solid var(--kip-border);
             border-radius: var(--kip-radius-sm);
             padding: 0.75rem 1rem;
             margin: 0.75rem 0;
+            max-width: 100%;
             overflow-x: auto;
             overflow-y: hidden;
-        }
+        }}
+
+        .katex {{
+            max-width: 100%;
+        }}
 
         /* 2. Единая система карточек и контейнеров */
-        [data-testid="stVerticalBlockBorderWrapper"] {
+        [data-testid="stVerticalBlockBorderWrapper"] {{
             background-color: var(--kip-bg-card);
-            border: 1px solid var(--kip-border);
+            border: var(--kip-border-width) solid var(--kip-border);
             border-radius: var(--kip-radius);
             padding: var(--kip-card-pad);
-            margin-bottom: 0.9rem;
-        }
+            margin-bottom: var(--kip-gap);
+            max-width: 100%;
+        }}
 
-        [data-testid="stForm"] {
+        [data-testid="stForm"] {{
             background-color: var(--kip-bg-card);
-            border: 1px solid var(--kip-border);
+            border: var(--kip-border-width) solid var(--kip-border);
             border-radius: var(--kip-radius);
             padding: var(--kip-card-pad);
             margin-bottom: 1rem;
-        }
+            max-width: 100%;
+        }}
 
-        /* Карточки показателей (st.metric) */
-        [data-testid="stMetric"] {
+        [data-testid="stMetric"] {{
             background-color: var(--kip-bg-nested);
-            border: 1px solid var(--kip-border);
+            border: var(--kip-border-width) solid var(--kip-border);
             border-radius: var(--kip-radius);
             padding: 0.9rem 1rem;
             height: 100%;
-        }
+        }}
 
         [data-testid="stMetricLabel"],
-        [data-testid="stMetricLabel"] p {
+        [data-testid="stMetricLabel"] p {{
             font-size: var(--kip-font-caption);
             line-height: 1.4;
             color: var(--kip-text-secondary);
             font-weight: 600;
             white-space: normal;
-        }
+        }}
 
-        [data-testid="stMetricValue"] {
-            font-size: 22px;
+        [data-testid="stMetricValue"] {{
+            font-size: var(--kip-font-kpi);
             line-height: 1.3;
             color: var(--kip-text-primary);
             font-weight: 700;
             white-space: normal;
-        }
+        }}
 
-        [data-testid="stMetricDelta"] {
+        [data-testid="stMetricDelta"] {{
             font-size: var(--kip-font-caption);
             line-height: 1.4;
             white-space: normal;
-        }
+        }}
 
-        /* Раскрывающиеся блоки (теория, самопроверка, генератор НСХ, паспорта) */
-        [data-testid="stExpander"] {
+        [data-testid="stExpander"] {{
             background-color: var(--kip-bg-card);
-            border: 1px solid var(--kip-border);
+            border: var(--kip-border-width) solid var(--kip-border);
             border-radius: var(--kip-radius);
-            margin-bottom: 0.75rem;
-        }
+            margin-bottom: 0.85rem;
+            max-width: 100%;
+        }}
 
-        [data-testid="stExpander"] summary {
+        [data-testid="stExpander"] summary {{
             min-height: var(--kip-touch-target);
             padding: 0.55rem 0.9rem;
             font-size: var(--kip-font-base);
             font-weight: 600;
             color: var(--kip-text-primary);
             border-radius: var(--kip-radius);
-        }
+        }}
 
-        [data-testid="stExpander"] summary:hover {
+        [data-testid="stExpander"] summary:hover {{
             background-color: var(--kip-bg-nested);
-        }
+        }}
 
-        /* Блоки справочного помощника (чат) */
-        [data-testid="stChatMessage"] {
+        [data-testid="stChatMessage"] {{
             background-color: var(--kip-bg-card);
-            border: 1px solid var(--kip-border);
+            border: var(--kip-border-width) solid var(--kip-border);
             border-radius: var(--kip-radius);
             padding: 0.95rem 1.1rem;
             margin-bottom: 0.8rem;
-        }
+            max-width: 100%;
+        }}
 
         /* Статусные уведомления (инфо / успех / предупреждение / ошибка) */
-        [data-testid="stAlert"] {
+        [data-testid="stAlert"] {{
             border-radius: var(--kip-radius);
-            border-width: 1px;
+            border-width: var(--kip-alert-border-w);
             border-style: solid;
             font-size: var(--kip-font-base);
             line-height: var(--kip-line-height);
-        }
+            max-width: 100%;
+        }}
 
         [data-testid="stAlert"] p,
-        [data-testid="stAlert"] li {
+        [data-testid="stAlert"] li {{
             color: var(--kip-text-primary);
             font-size: var(--kip-font-base);
-        }
+            max-width: 100%;
+        }}
 
-        [data-testid="stAlert"]:has([data-testid="stNotificationContentInfo"]) {
+        [data-testid="stAlert"]:has([data-testid="stNotificationContentInfo"]) {{
             background-color: var(--kip-bg-nested);
             border-color: var(--kip-accent);
-        }
+        }}
 
-        [data-testid="stAlert"]:has([data-testid="stNotificationContentSuccess"]) {
+        [data-testid="stAlert"]:has([data-testid="stNotificationContentSuccess"]) {{
             background-color: var(--kip-success-bg);
             border-color: var(--kip-success);
-        }
+        }}
 
-        [data-testid="stAlert"]:has([data-testid="stNotificationContentWarning"]) {
+        [data-testid="stAlert"]:has([data-testid="stNotificationContentWarning"]) {{
             background-color: var(--kip-warning-bg);
             border-color: var(--kip-warning);
-        }
+        }}
 
-        [data-testid="stAlert"]:has([data-testid="stNotificationContentError"]) {
+        [data-testid="stAlert"]:has([data-testid="stNotificationContentError"]) {{
             background-color: var(--kip-error-bg);
             border-color: var(--kip-error);
-        }
+        }}
 
-        /* 3. Кнопки и элементы управления (повышенный ориентир 44x44 CSS px для кнопок и полей) */
+        /* 3. Кнопки и элементы управления (с безопасным переносом текста при 320 px и зуме 200%) */
         .stButton > button,
         .stFormSubmitButton > button,
-        [data-testid="stChatInputSubmitButton"] {
+        [data-testid="stChatInputSubmitButton"] {{
             min-height: var(--kip-touch-target);
             min-width: var(--kip-touch-target);
-            padding: 0.6rem 1.1rem;
-            font-size: 16px;
+            height: auto;
+            padding: 0.6rem 1.05rem;
+            font-size: var(--kip-font-btn);
             font-weight: 600;
             line-height: 1.35;
+            white-space: normal;
+            word-break: break-word;
             border-radius: var(--kip-radius-sm);
-            border: 1px solid var(--kip-border-strong);
+            border: var(--kip-border-width) solid var(--kip-border-strong);
             background-color: var(--kip-bg-nested);
             color: var(--kip-text-primary);
-            transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-        }
+            transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+        }}
 
-        [data-testid="stChatInputSubmitButton"] {
+        [data-testid="stChatInputSubmitButton"] {{
             padding: 0.45rem;
-        }
+        }}
 
         .stButton > button:hover:not(:disabled),
         .stFormSubmitButton > button:hover:not(:disabled),
-        [data-testid="stChatInputSubmitButton"]:hover:not(:disabled) {
+        [data-testid="stChatInputSubmitButton"]:hover:not(:disabled) {{
             background-color: var(--kip-bg-hover);
             border-color: var(--kip-accent);
             color: var(--kip-text-primary);
-        }
+        }}
 
         .stButton > button:active:not(:disabled),
         .stFormSubmitButton > button:active:not(:disabled),
-        [data-testid="stChatInputSubmitButton"]:active:not(:disabled) {
+        [data-testid="stChatInputSubmitButton"]:active:not(:disabled) {{
             background-color: var(--kip-bg-active);
             border-color: var(--kip-accent-active);
-            transform: translateY(1px);
-        }
+        }}
 
         .stButton > button[kind="primary"],
         .stFormSubmitButton > button[kind="primary"],
-        [data-testid="stBaseButton-primary"] {
+        [data-testid="stBaseButton-primary"] {{
             background-color: var(--kip-accent);
             border-color: var(--kip-accent);
             color: var(--kip-accent-fg);
-        }
+        }}
 
         .stButton > button[kind="primary"]:hover:not(:disabled),
         .stFormSubmitButton > button[kind="primary"]:hover:not(:disabled),
-        [data-testid="stBaseButton-primary"]:hover:not(:disabled) {
+        [data-testid="stBaseButton-primary"]:hover:not(:disabled) {{
             background-color: var(--kip-accent-hover);
             border-color: var(--kip-accent-hover);
             color: var(--kip-accent-fg);
-        }
+        }}
 
         .stButton > button[kind="primary"]:active:not(:disabled),
         .stFormSubmitButton > button[kind="primary"]:active:not(:disabled),
-        [data-testid="stBaseButton-primary"]:active:not(:disabled) {
+        [data-testid="stBaseButton-primary"]:active:not(:disabled) {{
             background-color: var(--kip-accent-active);
             border-color: var(--kip-accent-active);
             color: var(--kip-accent-fg);
-        }
+        }}
 
         .stButton > button:disabled,
         .stFormSubmitButton > button:disabled,
-        [data-testid="stChatInputSubmitButton"]:disabled {
+        [data-testid="stChatInputSubmitButton"]:disabled {{
             background-color: var(--kip-disabled-bg);
             border-color: var(--kip-disabled-border);
             color: var(--kip-disabled-text);
             cursor: not-allowed;
-        }
+        }}
 
-        /* Подписи полей ввода, селекторов, слайдеров и переключателей */
         .stSelectbox label,
         .stNumberInput label,
         .stTextInput label,
         .stSlider label,
         .stRadio > label,
-        .stCheckbox label {
-            font-size: 16px;
+        .stCheckbox label {{
+            font-size: var(--kip-font-btn);
             font-weight: 600;
             line-height: 1.4;
             color: var(--kip-text-primary);
             margin-bottom: 0.35rem;
-        }
+        }}
 
-        /* Поля ввода и выпадающие списки */
         .stTextInput input,
         .stNumberInput input,
         [data-testid="stChatInput"] textarea,
-        [data-baseweb="select"] > div {
+        [data-baseweb="select"] > div {{
             min-height: var(--kip-touch-target);
             font-size: var(--kip-font-base);
             background-color: var(--kip-bg-nested);
             color: var(--kip-text-primary);
-            border: 1px solid var(--kip-border-strong);
+            border: var(--kip-border-width) solid var(--kip-border-strong);
             border-radius: var(--kip-radius-sm);
-        }
+        }}
 
         .stTextInput input:hover:not(:disabled),
         .stNumberInput input:hover:not(:disabled),
-        [data-baseweb="select"] > div:hover {
+        [data-baseweb="select"] > div:hover {{
             border-color: var(--kip-accent);
-        }
+        }}
 
         .stTextInput input:disabled,
-        .stNumberInput input:disabled {
+        .stNumberInput input:disabled {{
             background-color: var(--kip-disabled-bg);
             color: var(--kip-disabled-text);
             border-color: var(--kip-disabled-border);
             cursor: not-allowed;
-        }
+        }}
 
-        .stNumberInput button {
+        .stNumberInput button {{
             min-height: var(--kip-touch-target);
             min-width: var(--kip-touch-target);
             border-color: var(--kip-border-strong);
             background-color: var(--kip-bg-nested);
             color: var(--kip-text-primary);
-        }
+        }}
 
-        .stNumberInput button:hover:not(:disabled) {
+        .stNumberInput button:hover:not(:disabled) {{
             background-color: var(--kip-bg-hover);
             border-color: var(--kip-accent);
-        }
+        }}
 
-        /* Слайдеры: увеличенный бегунок (24x24 px) и достаточная вертикальная зона захвата */
-        [data-testid="stSlider"] [data-baseweb="slider"] {
+        [data-testid="stSlider"] [data-baseweb="slider"] {{
             padding-top: 0.5rem;
             padding-bottom: 0.5rem;
-        }
+        }}
 
-        [data-testid="stSlider"] [role="slider"] {
+        [data-testid="stSlider"] [role="slider"] {{
             width: var(--kip-slider-thumb);
             height: var(--kip-slider-thumb);
             border: 2px solid var(--kip-text-primary);
-        }
+        }}
 
-        /* Радиокнопки и чекбоксы: кликабельная область строки >= 44 px по высоте */
         .stRadio [role="radiogroup"] label,
-        .stCheckbox label {
+        .stCheckbox label {{
             min-height: var(--kip-touch-target);
             padding: 0.35rem 0.5rem;
             border-radius: var(--kip-radius-sm);
             display: flex;
             align-items: center;
-        }
+        }}
 
         .stRadio [role="radiogroup"] label:hover,
-        .stCheckbox label:hover {
+        .stCheckbox label:hover {{
             background-color: var(--kip-bg-nested);
-        }
+        }}
 
-        [data-baseweb="tab-list"] {
+        [data-baseweb="tab-list"] {{
             gap: 0.45rem;
             flex-wrap: wrap;
-        }
+        }}
 
-        [data-baseweb="tab"] {
+        [data-baseweb="tab"] {{
             min-height: var(--kip-touch-target);
             padding: 0.5rem 0.95rem;
-            font-size: 16px;
+            font-size: var(--kip-font-btn);
             font-weight: 600;
             color: var(--kip-text-secondary);
             background-color: var(--kip-bg-nested);
-            border: 1px solid var(--kip-border);
+            border: var(--kip-border-width) solid var(--kip-border);
             border-radius: var(--kip-radius-sm) var(--kip-radius-sm) 0 0;
-        }
+            white-space: normal;
+        }}
 
-        [data-baseweb="tab"]:hover {
+        [data-baseweb="tab"]:hover {{
             color: var(--kip-text-primary);
             border-color: var(--kip-accent);
-        }
+        }}
 
-        [data-baseweb="tab"][aria-selected="true"] {
+        [data-baseweb="tab"][aria-selected="true"] {{
             color: var(--kip-accent-fg);
             background-color: var(--kip-accent);
             border-color: var(--kip-accent);
-        }
+        }}
 
         /* Видимый фокус клавиатуры */
         button:focus-visible,
@@ -475,80 +674,75 @@ st.markdown(
         [role="slider"]:focus-visible,
         [tabindex]:focus-visible,
         [data-baseweb="select"] > div:focus-within,
-        [data-testid="stChatInput"]:focus-within {
+        [data-testid="stChatInput"]:focus-within {{
             outline: 3px solid var(--kip-focus);
             outline-offset: 2px;
-        }
+        }}
 
-        /* 4. Таблицы и безопасная адаптация графиков Plotly без обрезания подписей и легенд */
-        [data-testid="stDataFrame"] {
-            border: 1px solid var(--kip-border);
+        /* 4. Таблицы, графики Plotly и 3D iframe без переполнения всей страницы */
+        [data-testid="stDataFrame"] {{
+            border: var(--kip-border-width) solid var(--kip-border);
             border-radius: var(--kip-radius-sm);
             max-width: 100%;
             overflow-x: auto;
-        }
+        }}
 
-        .stPlotlyChart {
+        .stMarkdown table {{
+            display: block;
+            max-width: 100%;
+            overflow-x: auto;
+            border-collapse: collapse;
+        }}
+
+        .stPlotlyChart {{
             max-width: 100%;
             overflow-x: auto;
             overflow-y: visible;
-        }
+        }}
 
         .stPlotlyChart .js-plotly-plot,
-        .stPlotlyChart .plot-container {
+        .stPlotlyChart .plot-container {{
             max-width: 100%;
             overflow: visible;
-        }
+        }}
 
-        @media (max-width: 640px) {
-            .block-container {
-                padding-left: 0.65rem !important;
-                padding-right: 0.65rem !important;
-            }
-            .stPlotlyChart {
-                margin-left: 0 !important;
-                margin-right: 0 !important;
-            }
-        }
+        iframe {{
+            max-width: 100% !important;
+            width: 100% !important;
+            border-radius: var(--kip-radius-sm);
+        }}
 
-        @media (prefers-reduced-motion: reduce) {
-            .stButton > button,
-            .stFormSubmitButton > button,
-            [data-testid="stChatInputSubmitButton"] {
-                transition: none;
-                transform: none;
-            }
-        }
-
-        /* 5. Навигационная панель и индикатор активного раздела (Этап 2) */
-        .kip-nav-status {
+        /* 5. Навигация и индикатор активного раздела */
+        .kip-nav-status {{
             background-color: var(--kip-bg-card);
-            border: 1px solid var(--kip-border);
+            border: var(--kip-border-width) solid var(--kip-border);
             border-left: 4px solid var(--kip-accent);
             border-radius: var(--kip-radius-sm);
             padding: 0.6rem 0.95rem;
             margin-bottom: 0.65rem;
             font-size: var(--kip-font-caption);
+            font-weight: var(--kip-caption-weight);
             line-height: 1.45;
             color: var(--kip-text-secondary);
-        }
+            overflow-wrap: break-word;
+        }}
 
-        .kip-nav-status strong {
+        .kip-nav-status strong {{
             color: var(--kip-text-primary);
-        }
+        }}
 
-        .kip-sidebar-group-title {
-            font-size: 16px;
+        .kip-sidebar-group-title {{
+            font-size: var(--kip-font-btn);
             font-weight: 700;
             color: var(--kip-text-primary);
             margin-top: 0.25rem;
             margin-bottom: 0.35rem;
-        }
+        }}
 
-        /* 6. Эргономика исследовательских стендов: назначение, KPI-сетка, неисправности и мобильная адаптация (Этап 3) */
-        .kip-stand-purpose {
+        /* 6. Эргономика исследовательских стендов */
+        .kip-stand-purpose {{
             background-color: var(--kip-bg-card);
-            border: 1px solid var(--kip-border);
+            border: var(--kip-border-width) solid var(--kip-border);
             border-left: 4px solid var(--kip-accent);
             border-radius: var(--kip-radius);
             padding: 0.85rem 1.1rem;
@@ -556,24 +750,26 @@ st.markdown(
             font-size: var(--kip-font-base);
             line-height: var(--kip-line-height);
             color: var(--kip-text-primary);
-        }
+            max-width: 100%;
+        }}
 
-        .kip-param-group-title {
+        .kip-param-group-title {{
             font-size: var(--kip-font-h4);
             font-weight: 700;
             color: var(--kip-text-primary);
             margin-top: 0;
             margin-bottom: 0.35rem;
-        }
+        }}
 
-        .kip-param-hint {
+        .kip-param-hint {{
             font-size: var(--kip-font-caption);
+            font-weight: var(--kip-caption-weight);
             line-height: 1.45;
             color: var(--kip-text-secondary);
             margin-bottom: 0.65rem;
-        }
+        }}
 
-        .kip-fault-banner {
+        .kip-fault-banner {{
             display: flex;
             flex-wrap: wrap;
             align-items: center;
@@ -581,142 +777,406 @@ st.markdown(
             gap: 0.5rem;
             padding: 0.6rem 0.85rem;
             border-radius: var(--kip-radius-sm);
-            border: 1px solid var(--kip-border);
+            border: var(--kip-border-width) solid var(--kip-border);
             margin-bottom: 0.75rem;
             font-size: var(--kip-font-caption);
             font-weight: 600;
             color: var(--kip-text-primary);
-        }
+        }}
 
-        .kip-fault-banner--ok {
+        .kip-fault-banner--ok {{
             background-color: var(--kip-success-bg);
             border-color: var(--kip-success);
-        }
+        }}
 
-        .kip-fault-banner--warn {
+        .kip-fault-banner--warn {{
             background-color: var(--kip-warning-bg);
             border-color: var(--kip-warning);
-        }
+        }}
 
-        .kip-fault-banner--err {
+        .kip-fault-banner--err {{
             background-color: var(--kip-error-bg);
             border-color: var(--kip-error);
-        }
+        }}
 
-        /* Адаптивная сетка 4 карточек числовых показателей (одинаковая высота, без сжатия текста) */
-        .kip-kpi-grid {
+        .kip-kpi-grid {{
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 0.85rem;
+            gap: var(--kip-gap);
             margin-top: 0.4rem;
             margin-bottom: 1.1rem;
             align-items: stretch;
-        }
+        }}
 
-        .kip-kpi-card {
+        .kip-kpi-card {{
             background-color: var(--kip-bg-nested);
-            border: 1px solid var(--kip-border);
+            border: var(--kip-border-width) solid var(--kip-border);
             border-radius: var(--kip-radius);
-            padding: 0.95rem 1.05rem;
+            padding: var(--kip-card-pad);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             gap: 0.45rem;
             min-width: 0;
-            box-sizing: border-box;
-        }
+        }}
 
-        .kip-kpi-card--alert {
+        .kip-kpi-card--alert {{
             border-color: var(--kip-warning);
             background-color: var(--kip-warning-bg);
-        }
+        }}
 
-        .kip-kpi-card--error {
+        .kip-kpi-card--error {{
             border-color: var(--kip-error);
             background-color: var(--kip-error-bg);
-        }
+        }}
 
-        .kip-kpi-label {
+        .kip-kpi-label {{
             font-size: var(--kip-font-caption);
             line-height: 1.35;
             font-weight: 600;
             color: var(--kip-text-secondary);
             overflow-wrap: break-word;
-        }
+        }}
 
-        .kip-kpi-value {
-            font-size: 21px;
+        .kip-kpi-value {{
+            font-size: var(--kip-font-kpi);
             line-height: 1.3;
             font-weight: 700;
             color: var(--kip-text-primary);
             overflow-wrap: anywhere;
-        }
+        }}
 
-        .kip-kpi-sub {
+        .kip-kpi-sub {{
             font-size: var(--kip-font-caption);
+            font-weight: var(--kip-caption-weight);
             line-height: 1.4;
             color: var(--kip-text-secondary);
             overflow-wrap: anywhere;
-        }
+        }}
 
-        .kip-notes-box {
+        .kip-notes-box {{
             background-color: var(--kip-bg-card);
-            border: 1px solid var(--kip-border);
+            border: var(--kip-border-width) solid var(--kip-border);
             border-radius: var(--kip-radius);
-            padding: 0.95rem 1.1rem;
+            padding: var(--kip-card-pad);
             margin-top: 0.5rem;
             margin-bottom: 0.85rem;
             font-size: var(--kip-font-base);
             line-height: var(--kip-line-height);
             color: var(--kip-text-primary);
-        }
+        }}
 
-        .kip-notes-box p {
+        .kip-notes-box p {{
             margin: 0.35rem 0;
             font-size: var(--kip-font-base);
             line-height: var(--kip-line-height);
             color: var(--kip-text-primary);
-        }
-
-        /* Защита от горизонтального переполнения на мобильных и планшетах */
-        .main .block-container {
             max-width: 100%;
-            box-sizing: border-box;
-        }
+        }}
 
-        @media (max-width: 1080px) {
-            .kip-kpi-grid {
+        /* 7. Эргономика теории, подбора термопар и справочного помощника */
+        .kip-section-intro {{
+            background-color: var(--kip-bg-card);
+            border: var(--kip-border-width) solid var(--kip-border);
+            border-left: 4px solid var(--kip-accent);
+            border-radius: var(--kip-radius);
+            padding: 0.9rem 1.15rem;
+            margin-bottom: 1rem;
+            font-size: var(--kip-font-base);
+            line-height: var(--kip-line-height);
+            color: var(--kip-text-primary);
+        }}
+
+        .kip-stage-header-card {{
+            background-color: var(--kip-bg-nested);
+            border: var(--kip-border-width) solid var(--kip-border);
+            border-radius: var(--kip-radius);
+            padding: 0.85rem 1.1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }}
+
+        .kip-stage-badge {{
+            display: inline-block;
+            background-color: var(--kip-accent);
+            color: var(--kip-accent-fg);
+            font-size: var(--kip-font-caption);
+            font-weight: 700;
+            padding: 0.25rem 0.7rem;
+            border-radius: var(--kip-radius-sm);
+        }}
+
+        .kip-stage-title-text {{
+            font-size: var(--kip-font-h4);
+            font-weight: 700;
+            color: var(--kip-text-primary);
+            overflow-wrap: break-word;
+        }}
+
+        .kip-stage-steps {{
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 0.4rem;
+            margin-bottom: 0.75rem;
+        }}
+
+        .kip-stage-step {{
+            text-align: center;
+            padding: 0.45rem 0.5rem;
+            line-height: 1.35;
+            border-radius: var(--kip-radius-sm);
+            border: var(--kip-border-width) solid var(--kip-border);
+            background-color: var(--kip-bg-card);
+            color: var(--kip-text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            overflow-wrap: break-word;
+        }}
+
+
+        .kip-stage-step--active {{
+            background-color: var(--kip-accent);
+            border-color: var(--kip-accent);
+            color: var(--kip-accent-fg);
+            font-weight: 700;
+        }}
+
+        .kip-theory-figure {{
+            text-align: center;
+            margin: 1.15rem auto;
+            max-width: 720px;
+            width: 100%;
+            background-color: var(--kip-bg-nested);
+            border: var(--kip-border-width) solid var(--kip-border);
+            border-radius: var(--kip-radius);
+            padding: 0.75rem;
+        }}
+
+        .kip-theory-figure img {{
+            max-width: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: var(--kip-radius-sm);
+            display: block;
+            margin: 0 auto;
+        }}
+
+        .kip-theory-figcaption {{
+            font-style: italic;
+            color: var(--kip-text-secondary);
+            font-size: var(--kip-font-caption);
+            font-weight: var(--kip-caption-weight);
+            line-height: 1.45;
+            margin-top: 0.55rem;
+            text-align: left;
+        }}
+
+        .kip-status-banner {{
+            padding: 0.8rem 1.05rem;
+            border-radius: var(--kip-radius);
+            border: var(--kip-alert-border-w) solid var(--kip-border);
+            margin-bottom: 0.9rem;
+            font-size: var(--kip-font-base);
+            font-weight: 700;
+            line-height: 1.45;
+            color: var(--kip-text-primary);
+            overflow-wrap: break-word;
+        }}
+
+        .kip-status-banner--ok {{
+            background-color: var(--kip-success-bg);
+            border-color: var(--kip-success);
+        }}
+
+        .kip-status-banner--conditional {{
+            background-color: var(--kip-warning-bg);
+            border-color: var(--kip-warning);
+        }}
+
+        .kip-status-banner--error {{
+            background-color: var(--kip-error-bg);
+            border-color: var(--kip-error);
+        }}
+
+        .kip-detail-card {{
+            background-color: var(--kip-bg-card);
+            border: var(--kip-border-width) solid var(--kip-border);
+            border-radius: var(--kip-radius);
+            padding: var(--kip-card-pad);
+            margin-bottom: 0.85rem;
+            max-width: 82ch;
+            overflow-wrap: break-word;
+        }}
+
+        .kip-detail-card--warn {{
+            background-color: var(--kip-warning-bg);
+            border-color: var(--kip-warning);
+            max-width: 100%;
+        }}
+
+        .kip-equip-svg-wrap {{
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            max-width: 100%;
+        }}
+
+        .kip-equip-svg-wrap svg {{
+            max-width: 100%;
+            height: auto;
+        }}
+
+        .kip-panel-badge {{
+            display: inline-block;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 0.2rem 0.6rem;
+            border-radius: var(--kip-radius-sm);
+            border: var(--kip-border-width) solid var(--kip-border);
+            background-color: var(--kip-bg-nested);
+            color: var(--kip-accent);
+            margin-bottom: 0.4rem;
+        }}
+
+        .kip-panel-badge--model {{
+            color: var(--kip-warning);
+            border-color: var(--kip-warning);
+            background-color: var(--kip-warning-bg);
+        }}
+
+        /* 8. Адаптивные брейкпоинты (ПК, планшет, 200% масштаб браузера, 430 / 390 / 360 / 320 px) */
+        .main .block-container {{
+            max-width: 100%;
+        }}
+
+        [data-testid="stVerticalBlock"] {{
+            min-width: 0;
+        }}
+
+        @media (max-width: 1120px) {{
+            .kip-kpi-grid {{
                 grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-        }
+            }}
+        }}
 
-        @media (max-width: 767px) {
-            [data-testid="stHorizontalBlock"] {
-                flex-direction: column;
-                gap: 0.65rem;
-            }
-            [data-testid="column"] {
+        /* Служебные маркеры контейнеров верхней навигации не занимают высоту */
+        [data-testid="stVerticalBlock"] > div:has(.kip-mobile-nav-2x2-marker),
+        [data-testid="stVerticalBlock"] > div:has(.kip-top-nav-wrap-marker) {{
+            margin: 0 !important;
+            padding: 0 !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+        }}
+
+        @media (max-width: 767px) {{
+            [data-testid="stHorizontalBlock"] {{
+                flex-direction: column !important;
+                gap: 0.7rem !important;
+            }}
+            [data-testid="column"],
+            [data-testid="stColumn"] {{
                 width: 100% !important;
                 flex: 1 1 100% !important;
                 min-width: 0 !important;
-            }
-            .kip-kpi-card {
-                padding: 0.8rem 0.9rem;
-            }
-            .kip-kpi-value {
-                font-size: 19px;
-            }
-        }
+            }}
+            /* Исключение для отдельного контейнера верхней мобильной навигации 2 × 2 */
+            [data-testid="stVerticalBlock"] > div:has(.kip-mobile-nav-2x2-marker) ~ [data-testid="stHorizontalBlock"] {{
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                gap: 0.45rem !important;
+            }}
+            [data-testid="stVerticalBlock"] > div:has(.kip-mobile-nav-2x2-marker) ~ [data-testid="stHorizontalBlock"] > [data-testid="column"],
+            [data-testid="stVerticalBlock"] > div:has(.kip-mobile-nav-2x2-marker) ~ [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {{
+                width: calc(50% - 0.25rem) !important;
+                flex: 1 1 calc(50% - 0.25rem) !important;
+                min-width: 0 !important;
+            }}
+            /* Адаптивное перестроение 4-кнопочного верхнего меню в сетку 2 × 2 на узком экране */
+            [data-testid="stVerticalBlock"] > div:has(.kip-top-nav-wrap-marker) ~ [data-testid="stHorizontalBlock"] {{
+                flex-direction: row !important;
+                flex-wrap: wrap !important;
+                gap: 0.45rem !important;
+            }}
+            [data-testid="stVerticalBlock"] > div:has(.kip-top-nav-wrap-marker) ~ [data-testid="stHorizontalBlock"] > [data-testid="column"],
+            [data-testid="stVerticalBlock"] > div:has(.kip-top-nav-wrap-marker) ~ [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {{
+                width: calc(50% - 0.25rem) !important;
+                flex: 1 1 calc(50% - 0.25rem) !important;
+                min-width: 0 !important;
+            }}
+            [data-testid="stVerticalBlock"] > div:has(.kip-mobile-nav-2x2-marker) ~ [data-testid="stHorizontalBlock"] .stButton > button,
+            [data-testid="stVerticalBlock"] > div:has(.kip-top-nav-wrap-marker) ~ [data-testid="stHorizontalBlock"] .stButton > button {{
+                padding: 0.5rem 0.55rem;
+            }}
+            .block-container {{
+                padding-left: 0.65rem !important;
+                padding-right: 0.65rem !important;
+            }}
+            .stMarkdown p,
+            .stMarkdown li,
+            .kip-detail-card {{
+                max-width: 100%;
+            }}
+            .kip-stage-steps {{
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }}
+            .kip-equip-svg-wrap {{
+                justify-content: flex-start;
+                margin-top: 0.35rem;
+            }}
+            .stPlotlyChart {{
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+            }}
+        }}
 
-        @media (max-width: 400px) {
-            .kip-kpi-grid {
+        @media (max-width: {p["kpi_1col_bp"]}) {{
+            .kip-kpi-grid {{
                 grid-template-columns: 1fr;
-            }
-        }
+            }}
+            .kip-kpi-card {{
+                padding: 0.8rem 0.85rem;
+            }}
+        }}
+
+        @media (max-width: 360px) {{
+            .block-container {{
+                padding-left: 0.45rem !important;
+                padding-right: 0.45rem !important;
+            }}
+            .kip-stage-steps {{
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }}
+            .stApp h1 {{
+                font-size: 24px;
+            }}
+            .stApp h2 {{
+                font-size: 21px;
+            }}
+        }}
+
+        @media (prefers-reduced-motion: reduce) {{
+            .stButton > button,
+            .stFormSubmitButton > button,
+            [data-testid="stChatInputSubmitButton"] {{
+                transition: none;
+                transform: none;
+            }}
+        }}
+        {extra_hc_rules}
     </style>
-    """,
-    unsafe_allow_html=True
-)
+    """
+
+
+def apply_visual_system_css(accessibility_mode: str = "Стандартный") -> None:
+    """Применяет CSS активного режима доступности без перезапуска приложения."""
+    st.markdown(get_visual_system_css(accessibility_mode), unsafe_allow_html=True)
+
 
 # =====================================================================
 # 2. СПРАВОЧНЫЕ ТАБЛИЦЫ НСХ ТЕРМОПАР И БАЗА МЕТАЛЛОВ (С ПАСПОРТАМИ ДАННЫХ)
@@ -1318,31 +1778,47 @@ def render_3d_stand1_gradient(
     <head>
         <meta charset="utf-8">
         <style>
+            * {{ box-sizing: border-box; }}
             body {{ margin: 0; overflow: hidden; background-color: #0e1117; font-family: sans-serif; }}
             #hud {{
-                position: absolute; top: 10px; left: 12px; color: #e0e6ed;
-                background: rgba(20, 24, 33, 0.92); padding: 10px 14px;
+                position: absolute; top: 10px; left: 10px; color: #e0e6ed;
+                max-width: calc(100vw - 20px);
+                background: rgba(20, 24, 33, 0.92); padding: 9px 12px;
                 border-radius: 8px; border-left: 4px solid {border_col}; font-size: 12px;
-                pointer-events: none; z-index: 10; line-height: 1.45;
+                pointer-events: none; z-index: 10; line-height: 1.42;
+                overflow-wrap: break-word; word-break: break-word;
+            }}
+            #bottom-overlay {{
+                position: absolute; bottom: 8px; left: 10px; right: 10px;
+                display: flex; flex-direction: column; align-items: flex-start; gap: 5px;
+                pointer-events: none; z-index: 10;
             }}
             #legend {{
-                position: absolute; bottom: 38px; left: 12px; color: #e0e6ed;
-                background: rgba(20, 24, 33, 0.85); padding: 6px 10px;
-                border-radius: 6px; font-size: 11px; pointer-events: none; z-index: 10;
+                max-width: 100%; color: #e0e6ed;
+                background: rgba(20, 24, 33, 0.85); padding: 5px 9px;
+                border-radius: 6px; font-size: 11px; line-height: 1.35;
+                overflow-wrap: break-word; word-break: break-word;
             }}
             #hint {{
-                position: absolute; bottom: 10px; left: 12px; color: #9aa5b1;
-                background: rgba(14, 17, 23, 0.75); padding: 5px 10px;
-                border-radius: 6px; font-size: 11px; pointer-events: none; z-index: 10;
+                max-width: 100%; color: #b8c4d4;
+                background: rgba(14, 17, 23, 0.82); padding: 5px 9px;
+                border-radius: 6px; font-size: 11px; line-height: 1.35;
+                overflow-wrap: break-word; word-break: break-word;
             }}
             #fallback2d {{
-                display: none; width: 100vw; height: 100vh;
+                display: none; width: 100vw; height: 100vh; padding: 10px;
                 align-items: center; justify-content: center; flex-direction: column;
                 background-color: #0e1117; color: #e0e6ed;
             }}
+            #fallback2d svg {{ max-width: 100%; height: auto; }}
             .hot-badge {{ color: #ff6b35; font-weight: bold; }}
             .cold-badge {{ color: #4cc9f0; font-weight: bold; }}
             #hud b {{ color: #ff9f1c; }}
+            @media (max-width: 480px) {{
+                #hud {{ top: 8px; left: 8px; max-width: calc(100vw - 16px); padding: 7px 9px; font-size: 11px; line-height: 1.35; }}
+                #bottom-overlay {{ bottom: 6px; left: 8px; right: 8px; gap: 4px; }}
+                #legend, #hint {{ padding: 4px 8px; font-size: 10.5px; }}
+            }}
         </style>
         {three_scripts}
     </head>
@@ -1354,10 +1830,12 @@ def render_3d_stand1_gradient(
             <div>На приборе U_приб: <b>{u_meter_str}</b></div>
             <div>Состояние цепи: <b>{fault_state}</b></div>
         </div>
-        <div id="legend">
-            🔴 Внизу: Горячий спай (T_hot) &nbsp;|&nbsp; 🔵 Вверху: Холодный спай (T_cold)
+        <div id="bottom-overlay">
+            <div id="legend">
+                🔴 Внизу: Горячий спай (T_hot) &nbsp;|&nbsp; 🔵 Вверху: Холодный спай (T_cold)
+            </div>
+            <div id="hint">🖱️ ЛКМ: вращать 3D | Колесо: масштаб | ПКМ: панорама</div>
         </div>
-        <div id="hint">🖱️ ЛКМ: вращать 3D | Колесо: масштаб | ПКМ: панорама</div>
 
         <!-- Автономный 2D SVG-fallback при недоступности Three.js, OrbitControls или WebGL -->
         <div id="fallback2d">
@@ -1407,12 +1885,31 @@ def render_3d_stand1_gradient(
                     renderer.setPixelRatio(window.devicePixelRatio || 1);
                     document.body.appendChild(renderer.domElement);
 
+                    const updateControlHint = function() {{
+                        const hintEl = document.getElementById('hint');
+                        const fb = document.getElementById('fallback2d');
+                        if (!hintEl || (fb && fb.style.display === 'flex')) return;
+                        const isTouch = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
+                            || ('ontouchstart' in window && window.innerWidth <= 768);
+                        hintEl.innerText = isTouch
+                            ? '👆 1 палец: вращать 3D | 2 пальца: масштаб и панорама'
+                            : '🖱️ ЛКМ: вращать 3D | Колесо: масштаб | ПКМ: панорама';
+                    }};
+                    updateControlHint();
+
+                    const reducedMotionQuery = window.matchMedia
+                        ? window.matchMedia('(prefers-reduced-motion: reduce)')
+                        : null;
+                    let prefersReducedMotion = Boolean(reducedMotionQuery && reducedMotionQuery.matches);
+                    let animFrameId = null;
+                    let isInteracting = false;
+                    let settleFrames = 0;
+
                     const controls = new THREE.OrbitControls(camera, renderer.domElement);
-                    controls.enableDamping = true;
+                    controls.enableDamping = !prefersReducedMotion;
                     controls.dampingFactor = 0.06;
-                    controls.autoRotate = true;
+                    controls.autoRotate = !prefersReducedMotion;
                     controls.autoRotateSpeed = 0.8;
-                    controls.addEventListener('start', function() {{ controls.autoRotate = false; }});
 
                     scene.add(new THREE.AmbientLight(0xffffff, 0.65));
                     const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
@@ -1515,17 +2012,102 @@ def render_3d_stand1_gradient(
 
                     scene.add(group);
 
-                    function animate() {{
-                        requestAnimationFrame(animate);
-                        controls.update();
+                    const prevCamPos = new THREE.Vector3();
+                    const prevTarget = new THREE.Vector3();
+
+                    function renderOnce() {{
                         renderer.render(scene, camera);
                     }}
-                    animate();
+
+                    function stopLoop() {{
+                        if (animFrameId !== null) {{
+                            cancelAnimationFrame(animFrameId);
+                            animFrameId = null;
+                        }}
+                    }}
+
+                    function startLoop() {{
+                        if (animFrameId === null && !prefersReducedMotion) {{
+                            settleFrames = 0;
+                            animFrameId = requestAnimationFrame(animate);
+                        }}
+                    }}
+
+                    function animate() {{
+                        if (prefersReducedMotion) {{
+                            animFrameId = null;
+                            return;
+                        }}
+                        prevCamPos.copy(camera.position);
+                        prevTarget.copy(controls.target);
+                        controls.update();
+                        renderer.render(scene, camera);
+
+                        const moved = prevCamPos.distanceToSquared(camera.position) > 1e-10
+                            || prevTarget.distanceToSquared(controls.target) > 1e-10;
+                        if (isInteracting || controls.autoRotate || moved) {{
+                            settleFrames = 0;
+                            animFrameId = requestAnimationFrame(animate);
+                        }} else if (settleFrames < 4) {{
+                            settleFrames += 1;
+                            animFrameId = requestAnimationFrame(animate);
+                        }} else {{
+                            animFrameId = null;
+                        }}
+                    }}
+
+                    controls.addEventListener('start', function() {{
+                        controls.autoRotate = false;
+                        isInteracting = true;
+                        startLoop();
+                    }});
+
+                    controls.addEventListener('end', function() {{
+                        isInteracting = false;
+                        if (!prefersReducedMotion) {{
+                            startLoop();
+                        }}
+                    }});
+
+                    controls.addEventListener('change', function() {{
+                        if (prefersReducedMotion) {{
+                            renderOnce();
+                        }} else {{
+                            startLoop();
+                        }}
+                    }});
+
+                    if (reducedMotionQuery) {{
+                        const handleMotionChange = function(event) {{
+                            prefersReducedMotion = Boolean(event.matches);
+                            controls.enableDamping = !prefersReducedMotion;
+                            controls.autoRotate = !prefersReducedMotion;
+                            if (prefersReducedMotion) {{
+                                stopLoop();
+                                renderOnce();
+                            }} else {{
+                                startLoop();
+                            }}
+                        }};
+                        if (typeof reducedMotionQuery.addEventListener === 'function') {{
+                            reducedMotionQuery.addEventListener('change', handleMotionChange);
+                        }} else if (typeof reducedMotionQuery.addListener === 'function') {{
+                            reducedMotionQuery.addListener(handleMotionChange);
+                        }}
+                    }}
+
+                    if (prefersReducedMotion) {{
+                        renderOnce();
+                    }} else {{
+                        startLoop();
+                    }}
 
                     window.addEventListener('resize', () => {{
                         camera.aspect = window.innerWidth / window.innerHeight;
                         camera.updateProjectionMatrix();
                         renderer.setSize(window.innerWidth, window.innerHeight);
+                        updateControlHint();
+                        renderOnce();
                     }});
                 }} catch (err) {{
                     activateFallback2D('ошибка инициализации WebGL: ' + (err && err.message ? err.message : 'неизвестная ошибка'));
@@ -1568,24 +2150,39 @@ def render_3d_stand2_pair(
     <head>
         <meta charset="utf-8">
         <style>
+            * {{ box-sizing: border-box; }}
             body {{ margin: 0; overflow: hidden; background-color: #0e1117; font-family: sans-serif; }}
             #hud {{
-                position: absolute; top: 10px; left: 12px; color: #e0e6ed;
-                background: rgba(20, 24, 33, 0.92); padding: 10px 14px;
+                position: absolute; top: 10px; left: 10px; color: #e0e6ed;
+                max-width: calc(100vw - 20px);
+                background: rgba(20, 24, 33, 0.92); padding: 9px 12px;
                 border-radius: 8px; border-left: 4px solid {border_col}; font-size: 12px;
-                pointer-events: none; z-index: 10; line-height: 1.45;
+                pointer-events: none; z-index: 10; line-height: 1.42;
+                overflow-wrap: break-word; word-break: break-word;
+            }}
+            #bottom-overlay {{
+                position: absolute; bottom: 8px; left: 10px; right: 10px;
+                display: flex; flex-direction: column; align-items: flex-start; gap: 5px;
+                pointer-events: none; z-index: 10;
             }}
             #hint {{
-                position: absolute; bottom: 10px; left: 12px; color: #9aa5b1;
-                background: rgba(14, 17, 23, 0.75); padding: 5px 10px;
-                border-radius: 6px; font-size: 11px; pointer-events: none; z-index: 10;
+                max-width: 100%; color: #b8c4d4;
+                background: rgba(14, 17, 23, 0.82); padding: 5px 9px;
+                border-radius: 6px; font-size: 11px; line-height: 1.35;
+                overflow-wrap: break-word; word-break: break-word;
             }}
             #fallback2d {{
-                display: none; width: 100vw; height: 100vh;
+                display: none; width: 100vw; height: 100vh; padding: 10px;
                 align-items: center; justify-content: center; flex-direction: column;
                 background-color: #0e1117; color: #e0e6ed;
             }}
+            #fallback2d svg {{ max-width: 100%; height: auto; }}
             #hud b {{ color: #80ed99; }}
+            @media (max-width: 480px) {{
+                #hud {{ top: 8px; left: 8px; max-width: calc(100vw - 16px); padding: 7px 9px; font-size: 11px; line-height: 1.35; }}
+                #bottom-overlay {{ bottom: 6px; left: 8px; right: 8px; }}
+                #hint {{ padding: 4px 8px; font-size: 10.5px; }}
+            }}
         </style>
         {three_scripts}
     </head>
@@ -1597,7 +2194,9 @@ def render_3d_stand2_pair(
             <div>Показание вольтметра U_приб: <b>{u_meter_str}</b></div>
             <div>Состояние контура: <b>{fault_state}</b></div>
         </div>
-        <div id="hint">🖱️ ЛКМ: вращать 3D | Колесо: масштаб | ПКМ: панорама</div>
+        <div id="bottom-overlay">
+            <div id="hint">🖱️ ЛКМ: вращать 3D | Колесо: масштаб | ПКМ: панорама</div>
+        </div>
 
         <div id="fallback2d">
             <svg width="320" height="360" viewBox="0 0 320 360">
@@ -1640,8 +2239,28 @@ def render_3d_stand2_pair(
                     renderer.setPixelRatio(window.devicePixelRatio || 1);
                     document.body.appendChild(renderer.domElement);
 
+                    const updateControlHint = function() {{
+                        const hintEl = document.getElementById('hint');
+                        const fb = document.getElementById('fallback2d');
+                        if (!hintEl || (fb && fb.style.display === 'flex')) return;
+                        const isTouch = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
+                            || ('ontouchstart' in window && window.innerWidth <= 768);
+                        hintEl.innerText = isTouch
+                            ? '👆 1 палец: вращать 3D | 2 пальца: масштаб и панорама'
+                            : '🖱️ ЛКМ: вращать 3D | Колесо: масштаб | ПКМ: панорама';
+                    }};
+                    updateControlHint();
+
+                    const reducedMotionQuery = window.matchMedia
+                        ? window.matchMedia('(prefers-reduced-motion: reduce)')
+                        : null;
+                    let prefersReducedMotion = Boolean(reducedMotionQuery && reducedMotionQuery.matches);
+                    let animFrameId = null;
+                    let isInteracting = false;
+                    let settleFrames = 0;
+
                     const controls = new THREE.OrbitControls(camera, renderer.domElement);
-                    controls.enableDamping = true;
+                    controls.enableDamping = !prefersReducedMotion;
                     controls.dampingFactor = 0.06;
 
                     scene.add(new THREE.AmbientLight(0xffffff, 0.75));
@@ -1730,17 +2349,94 @@ def render_3d_stand2_pair(
 
                     scene.add(group);
 
-                    function animate() {{
-                        requestAnimationFrame(animate);
-                        controls.update();
+                    const prevCamPos = new THREE.Vector3();
+                    const prevTarget = new THREE.Vector3();
+
+                    function renderOnce() {{
                         renderer.render(scene, camera);
                     }}
-                    animate();
+
+                    function stopLoop() {{
+                        if (animFrameId !== null) {{
+                            cancelAnimationFrame(animFrameId);
+                            animFrameId = null;
+                        }}
+                    }}
+
+                    function startLoop() {{
+                        if (animFrameId === null && !prefersReducedMotion) {{
+                            settleFrames = 0;
+                            animFrameId = requestAnimationFrame(animate);
+                        }}
+                    }}
+
+                    function animate() {{
+                        if (prefersReducedMotion) {{
+                            animFrameId = null;
+                            return;
+                        }}
+                        prevCamPos.copy(camera.position);
+                        prevTarget.copy(controls.target);
+                        controls.update();
+                        renderer.render(scene, camera);
+
+                        const moved = prevCamPos.distanceToSquared(camera.position) > 1e-10
+                            || prevTarget.distanceToSquared(controls.target) > 1e-10;
+                        if (isInteracting || moved) {{
+                            settleFrames = 0;
+                            animFrameId = requestAnimationFrame(animate);
+                        }} else if (settleFrames < 4) {{
+                            settleFrames += 1;
+                            animFrameId = requestAnimationFrame(animate);
+                        }} else {{
+                            animFrameId = null;
+                        }}
+                    }}
+
+                    controls.addEventListener('start', function() {{
+                        isInteracting = true;
+                        startLoop();
+                    }});
+
+                    controls.addEventListener('end', function() {{
+                        isInteracting = false;
+                        if (!prefersReducedMotion) {{
+                            startLoop();
+                        }}
+                    }});
+
+                    controls.addEventListener('change', function() {{
+                        if (prefersReducedMotion) {{
+                            renderOnce();
+                        }} else {{
+                            startLoop();
+                        }}
+                    }});
+
+                    if (reducedMotionQuery) {{
+                        const handleMotionChange = function(event) {{
+                            prefersReducedMotion = Boolean(event.matches);
+                            controls.enableDamping = !prefersReducedMotion;
+                            if (prefersReducedMotion) {{
+                                stopLoop();
+                                renderOnce();
+                            }}
+                        }};
+                        if (typeof reducedMotionQuery.addEventListener === 'function') {{
+                            reducedMotionQuery.addEventListener('change', handleMotionChange);
+                        }} else if (typeof reducedMotionQuery.addListener === 'function') {{
+                            reducedMotionQuery.addListener(handleMotionChange);
+                        }}
+                    }}
+
+                    renderOnce();
 
                     window.addEventListener('resize', () => {{
                         camera.aspect = window.innerWidth / window.innerHeight;
                         camera.updateProjectionMatrix();
                         renderer.setSize(window.innerWidth, window.innerHeight);
+                        updateControlHint();
+                        renderOnce();
                     }});
                 }} catch (err) {{
                     activateFallback2D('ошибка инициализации WebGL: ' + (err && err.message ? err.message : 'неизвестная ошибка'));
@@ -1801,6 +2497,18 @@ KZ_CONTACT_OPTIONS = [
     "Перемычка из третьего металла C (изотермическая при T_кз)",
 ]
 
+DEFAULT_STAND2_METAL_1 = "Хромель (Ni90-Cr10)"
+DEFAULT_STAND2_METAL_2 = "Копель (Cu56-Ni44-Mn)"
+
+
+def _resolve_metal_default(metal_names: list[str], preferred_name: str, fallback_idx: int = 0) -> str:
+    """Выбирает металл по названию независимо от порядка элементов в METALS_DB."""
+    if preferred_name in metal_names:
+        return preferred_name
+    if metal_names:
+        return metal_names[min(fallback_idx, len(metal_names) - 1)]
+    return preferred_name
+
 
 def init_app_session_state() -> None:
     """Инициализирует устойчивые ключи st.session_state для сохранения параметров при смене разделов."""
@@ -1812,8 +2520,9 @@ def init_app_session_state() -> None:
         "active_section": MAIN_SECTIONS[0],
         "nav_history": [],
         "active_lab_stand": LAB_STAND_OPTIONS[0],
-        # Настройки отображения
+        # Настройки отображения и доступности
         "chart_display_mode": CHART_DISPLAY_OPTIONS[0],
+        "accessibility_mode": ACCESSIBILITY_MODE_OPTIONS[0],
         # Общие параметры физических неисправностей
         "fault_mode": FAULT_MODE_OPTIONS[0],
         "open_meter_mode": OPEN_METER_OPTIONS[0],
@@ -1827,16 +2536,16 @@ def init_app_session_state() -> None:
         "stand1_t_kz": 260,
         "stand1_kz_contact_type": KZ_CONTACT_OPTIONS[0],
         # Параметры Стенда №2
-        "stand2_metal_1": metal_names[0],
-        "stand2_metal_2": metal_names[6],
+        "stand2_metal_1": _resolve_metal_default(metal_names, DEFAULT_STAND2_METAL_1, 0),
+        "stand2_metal_2": _resolve_metal_default(metal_names, DEFAULT_STAND2_METAL_2, len(metal_names) - 1),
         "stand2_t_hot": 520,
         "stand2_t_cold": 20,
         "stand2_t_kz": 270,
         # Параметры теории и справочника
         "theory_stage_idx": 0,
-        "theory_view_mode": "Пошаговое изучение (с навигацией между этапами)",
         "glossary_search": "",
         "gen_desired_s": 75.0,
+        "theory_subtab": "Изучение по этапам (1–6)",
     }
     for key, val in defaults.items():
         if key not in st.session_state:
@@ -1892,13 +2601,27 @@ def _on_main_fault_change(widget_key: str) -> None:
         st.session_state["fault_mode"] = chosen_fault
 
 
+def _on_sidebar_a11y_change() -> None:
+    """Синхронизирует режим доступности при переключении из боковой панели (без перезапуска)."""
+    chosen_mode = st.session_state.get("_sidebar_a11y_radio")
+    if chosen_mode in ACCESSIBILITY_MODE_OPTIONS:
+        st.session_state["accessibility_mode"] = chosen_mode
+
+
+def _on_top_a11y_change() -> None:
+    """Синхронизирует режим доступности при переключении из верхней панели (без перезапуска)."""
+    chosen_mode = st.session_state.get("_top_a11y_radio")
+    if chosen_mode in ACCESSIBILITY_MODE_OPTIONS:
+        st.session_state["accessibility_mode"] = chosen_mode
+
+
 def render_sidebar_navigation_and_controls() -> dict:
     """
     Отрисовывает компактную боковую панель, разделённую на четыре логические группы:
     1. Навигация.
     2. Параметры эксперимента (выбор стенда и сводка; подробные настройки вынесены на страницу стенда).
     3. Физические неисправности (быстрый синхронизированный переключатель состояния контура).
-    4. Настройки отображения (общие настройки приложения).
+    4. Настройки отображения (режим доступности и режим отображения графиков).
     """
     st.sidebar.title("⚛️ KIP Simulator")
     st.sidebar.caption("Тема: «Термо-ЭДС. Эффект Зеебека»")
@@ -1984,10 +2707,20 @@ def render_sidebar_navigation_and_controls() -> dict:
         )
 
     # -----------------------------------------------------------------
-    # ГРУППА 4: НАСТРОЙКИ ОТОБРАЖЕНИЯ (общие настройки приложения)
+    # ГРУППА 4: НАСТРОЙКИ ОТОБРАЖЕНИЯ И ДОСТУПНОСТИ (общие настройки приложения)
     # -----------------------------------------------------------------
     st.sidebar.markdown("---")
     st.sidebar.subheader("🎛️ Настройки отображения")
+
+    st.session_state["_sidebar_a11y_radio"] = st.session_state["accessibility_mode"]
+    st.sidebar.radio(
+        "👁️ Режим доступности интерфейса:",
+        options=ACCESSIBILITY_MODE_OPTIONS,
+        key="_sidebar_a11y_radio",
+        on_change=_on_sidebar_a11y_change,
+        help="Переключает размер шрифта, толщину границ и контрастность темы без перезапуска приложения.",
+    )
+
     cur_chart_mode = st.session_state["chart_display_mode"]
     chart_mode = st.sidebar.selectbox(
         "Режим отображения графиков:",
@@ -2000,16 +2733,17 @@ def render_sidebar_navigation_and_controls() -> dict:
         "lab_mode": st.session_state["active_lab_stand"],
         "chart_display_mode": chart_mode,
         "circuit_fault_mode": st.session_state["fault_mode"],
+        "accessibility_mode": st.session_state["accessibility_mode"],
     }
 
 
 def render_top_navigation_bar() -> None:
     """
-    Компактная верхняя панель навигации по четырём основным разделам.
-    Обеспечивает удобные переходы на компьютере и смартфоне, показывает текущий раздел
-    и позволяет вернуться в предыдущий раздел одним нажатием.
+    Компактная верхняя панель навигации по четырём основным разделам с быстрым
+    переключением режима доступности (удобно на смартфоне без открытия боковой панели).
     """
     active_section = st.session_state["active_section"]
+    a11y_mode = st.session_state["accessibility_mode"]
     history = st.session_state.get("nav_history", [])
 
     status_suffix = ""
@@ -2020,12 +2754,14 @@ def render_top_navigation_bar() -> None:
         )
         status_suffix = f" &nbsp;→&nbsp; <strong>{active_stand_short}</strong>"
 
+    a11y_badge = f" &nbsp;|&nbsp; Режим: <strong>{html.escape(a11y_mode)}</strong>"
+
     if history:
         prev_section = history[-1]
         bar_left, bar_right = st.columns([3, 1])
         with bar_left:
             st.markdown(
-                f'<div class="kip-nav-status">Открытый раздел: <strong>{active_section}</strong>{status_suffix}</div>',
+                f'<div class="kip-nav-status">Открытый раздел: <strong>{active_section}</strong>{status_suffix}{a11y_badge}</div>',
                 unsafe_allow_html=True,
             )
         with bar_right:
@@ -2038,23 +2774,46 @@ def render_top_navigation_bar() -> None:
                 st.rerun()
     else:
         st.markdown(
-            f'<div class="kip-nav-status">Открытый раздел: <strong>{active_section}</strong>{status_suffix}</div>',
+            f'<div class="kip-nav-status">Открытый раздел: <strong>{active_section}</strong>{status_suffix}{a11y_badge}</div>',
             unsafe_allow_html=True,
         )
 
-    nav_cols = st.columns(4)
-    for idx, section_name in enumerate(MAIN_SECTIONS):
-        is_current = (section_name == active_section)
-        with nav_cols[idx]:
-            if st.button(
-                MAIN_SECTION_LABELS[section_name],
-                key=f"top_nav_btn_{idx}",
-                type="primary" if is_current else "secondary",
-                use_container_width=True,
-            ):
-                if not is_current:
-                    navigate_to_section(section_name)
-                    st.rerun()
+    is_mobile_nav = (st.session_state.get("chart_display_mode") == "Смартфон (320–430 px)")
+    if is_mobile_nav:
+        with st.container():
+            st.markdown('<div class="kip-mobile-nav-2x2-marker" aria-hidden="true"></div>', unsafe_allow_html=True)
+            for row_start in range(0, len(MAIN_SECTIONS), 2):
+                row_secs = MAIN_SECTIONS[row_start:row_start + 2]
+                nav_row = st.columns(2)
+                for c_i, section_name in enumerate(row_secs):
+                    idx = row_start + c_i
+                    is_current = (section_name == active_section)
+                    with nav_row[c_i]:
+                        if st.button(
+                            MAIN_SECTION_LABELS[section_name],
+                            key=f"top_nav_btn_{idx}",
+                            type="primary" if is_current else "secondary",
+                            use_container_width=True,
+                        ):
+                            if not is_current:
+                                navigate_to_section(section_name)
+                                st.rerun()
+    else:
+        with st.container():
+            st.markdown('<div class="kip-top-nav-wrap-marker" aria-hidden="true"></div>', unsafe_allow_html=True)
+            nav_cols = st.columns(4)
+            for idx, section_name in enumerate(MAIN_SECTIONS):
+                is_current = (section_name == active_section)
+                with nav_cols[idx]:
+                    if st.button(
+                        MAIN_SECTION_LABELS[section_name],
+                        key=f"top_nav_btn_{idx}",
+                        type="primary" if is_current else "secondary",
+                        use_container_width=True,
+                    ):
+                        if not is_current:
+                            navigate_to_section(section_name)
+                            st.rerun()
 
     if active_section == "Исследовательские стенды":
         stand_cols = st.columns(2)
@@ -2071,15 +2830,25 @@ def render_top_navigation_bar() -> None:
                         st.session_state["active_lab_stand"] = stand_full
                         st.rerun()
 
+    with st.expander(f"👁️ Режим доступности: {a11y_mode}", expanded=False):
+        st.session_state["_top_a11y_radio"] = st.session_state["accessibility_mode"]
+        st.radio(
+            "Выберите режим отображения интерфейса:",
+            options=ACCESSIBILITY_MODE_OPTIONS,
+            key="_top_a11y_radio",
+            on_change=_on_top_a11y_change,
+            horizontal=True,
+        )
+
     st.markdown("---")
 
 
 def render_kpi_cards_grid(cards: list[dict]) -> None:
     """
     Отрисовывает адаптивную сетку из 4 карточек числовых показателей одинаковой высоты:
-    - широкий экран: 4 колонки;
-    - планшет и стандартный смартфон (>= 401 px): 2 колонки;
-    - компактный смартфон (<= 400 px): 1 колонка.
+    - широкий экран (> 1120 px): 4 колонки;
+    - планшет / промежуточная ширина (<= 1120 px): 2 колонки;
+    - компактный экран (<= 420 / 460 / 540 px в зависимости от режима доступности): 1 колонка.
     """
     items_html = []
     for card in cards:
@@ -2164,10 +2933,14 @@ def render_stand_fault_panel(stand_id: str, t_cold: float, t_hot: float) -> dict
             kz_min = int(min(t_cold, t_hot))
             kz_max = int(max(t_cold, t_hot))
             state_kz_key = "stand1_t_kz" if stand_id == "stand1" else "stand2_t_kz"
+            kz_slider_key = "stand1_t_kz_slider" if stand_id == "stand1" else "stand2_t_kz_slider"
+            if kz_slider_key in st.session_state and not (kz_min <= int(st.session_state[kz_slider_key]) <= kz_max):
+                del st.session_state[kz_slider_key]
 
+            is_mob_kz = (st.session_state.get("chart_display_mode") == "Смартфон (320–430 px)")
             if stand_id == "stand1":
-                kz_c1, kz_c2 = st.columns(2)
-                with kz_c1:
+                cur_contact = st.session_state["stand1_kz_contact_type"]
+                if is_mob_kz:
                     if kz_min == kz_max:
                         t_kz_int = kz_min
                         st.info(f"Температура перемычки T_кз зафиксирована на {kz_min} °C (T_hot = T_cold).")
@@ -2182,10 +2955,6 @@ def render_stand_fault_panel(stand_id: str, t_cold: float, t_hot: float) -> dict
                             key="stand1_t_kz_slider",
                             help="Температура в промежуточной зоне, где термоэлектроды замкнулись между собой.",
                         )
-                    st.session_state[state_kz_key] = t_kz_int
-                    t_kz_val = float(t_kz_int)
-                with kz_c2:
-                    cur_contact = st.session_state["stand1_kz_contact_type"]
                     kz_contact_type = st.selectbox(
                         "Характер паразитного контакта:",
                         options=KZ_CONTACT_OPTIONS,
@@ -2193,7 +2962,34 @@ def render_stand_fault_panel(stand_id: str, t_cold: float, t_hot: float) -> dict
                         key="stand1_kz_contact_select",
                         help="Непосредственное касание проводов A и B или изотермическая перемычка из третьего металла C.",
                     )
-                    st.session_state["stand1_kz_contact_type"] = kz_contact_type
+                else:
+                    kz_c1, kz_c2 = st.columns(2)
+                    with kz_c1:
+                        if kz_min == kz_max:
+                            t_kz_int = kz_min
+                            st.info(f"Температура перемычки T_кз зафиксирована на {kz_min} °C (T_hot = T_cold).")
+                        else:
+                            t_kz_init = int(np.clip(int(st.session_state[state_kz_key]), kz_min, kz_max))
+                            t_kz_int = st.slider(
+                                "Температура в точке перемычки (T_кз), °C:",
+                                min_value=kz_min,
+                                max_value=kz_max,
+                                value=t_kz_init,
+                                step=10,
+                                key="stand1_t_kz_slider",
+                                help="Температура в промежуточной зоне, где термоэлектроды замкнулись между собой.",
+                            )
+                    with kz_c2:
+                        kz_contact_type = st.selectbox(
+                            "Характер паразитного контакта:",
+                            options=KZ_CONTACT_OPTIONS,
+                            index=KZ_CONTACT_OPTIONS.index(cur_contact) if cur_contact in KZ_CONTACT_OPTIONS else 0,
+                            key="stand1_kz_contact_select",
+                            help="Непосредственное касание проводов A и B или изотермическая перемычка из третьего металла C.",
+                        )
+                st.session_state[state_kz_key] = t_kz_int
+                t_kz_val = float(t_kz_int)
+                st.session_state["stand1_kz_contact_type"] = kz_contact_type
             else:
                 if kz_min == kz_max:
                     t_kz_int = kz_min
@@ -2212,8 +3008,8 @@ def render_stand_fault_panel(stand_id: str, t_cold: float, t_hot: float) -> dict
                 st.session_state[state_kz_key] = t_kz_int
                 t_kz_val = float(t_kz_int)
 
-            rc1, rc2, rc3 = st.columns(3)
-            with rc1:
+            is_mob_fault = (st.session_state.get("chart_display_mode") == "Смартфон (320–430 px)")
+            if is_mob_fault:
                 r_cold_branch_input = float(st.number_input(
                     "R_уч1 (до КЗ), Ом:",
                     min_value=0.1,
@@ -2223,7 +3019,6 @@ def render_stand_fault_panel(stand_id: str, t_cold: float, t_hot: float) -> dict
                     key=f"{stand_id}_r_cold_input",
                     help="Сопротивление проводов на холодном участке от клемм прибора (T_cold) до точки КЗ (T_кз).",
                 ))
-            with rc2:
                 r_hot_loop_input = float(st.number_input(
                     "R_уч2 (от КЗ до спая), Ом:",
                     min_value=0.1,
@@ -2233,7 +3028,6 @@ def render_stand_fault_panel(stand_id: str, t_cold: float, t_hot: float) -> dict
                     key=f"{stand_id}_r_hot_input",
                     help="Сопротивление горячего участка проводов от точки КЗ (T_кз) до рабочего спая (T_hot).",
                 ))
-            with rc3:
                 r_bridge_input = float(st.number_input(
                     "Перемычка R_кз, Ом:",
                     min_value=0.0,
@@ -2243,6 +3037,38 @@ def render_stand_fault_panel(stand_id: str, t_cold: float, t_hot: float) -> dict
                     key=f"{stand_id}_r_bridge_input",
                     help="Переходное сопротивление в точке контакта (0 Ом — глухое металлическое замыкание).",
                 ))
+            else:
+                rc1, rc2, rc3 = st.columns(3)
+                with rc1:
+                    r_cold_branch_input = float(st.number_input(
+                        "R_уч1 (до КЗ), Ом:",
+                        min_value=0.1,
+                        max_value=500.0,
+                        value=float(st.session_state["r_cold_branch_ohm"]),
+                        step=0.5,
+                        key=f"{stand_id}_r_cold_input",
+                        help="Сопротивление проводов на холодном участке от клемм прибора (T_cold) до точки КЗ (T_кз).",
+                    ))
+                with rc2:
+                    r_hot_loop_input = float(st.number_input(
+                        "R_уч2 (от КЗ до спая), Ом:",
+                        min_value=0.1,
+                        max_value=500.0,
+                        value=float(st.session_state["r_hot_loop_ohm"]),
+                        step=0.5,
+                        key=f"{stand_id}_r_hot_input",
+                        help="Сопротивление горячего участка проводов от точки КЗ (T_кз) до рабочего спая (T_hot).",
+                    ))
+                with rc3:
+                    r_bridge_input = float(st.number_input(
+                        "Перемычка R_кз, Ом:",
+                        min_value=0.0,
+                        max_value=100.0,
+                        value=float(st.session_state["r_bridge_ohm"]),
+                        step=0.5,
+                        key=f"{stand_id}_r_bridge_input",
+                        help="Переходное сопротивление в точке контакта (0 Ом — глухое металлическое замыкание).",
+                    ))
             st.session_state["r_cold_branch_ohm"] = r_cold_branch_input
             st.session_state["r_hot_loop_ohm"] = r_hot_loop_input
             st.session_state["r_bridge_ohm"] = r_bridge_input
@@ -2301,13 +3127,17 @@ def render_stand_1_section(params: dict) -> None:
         st.session_state["stand1_sensor_name"] = sensor_name
         spec = THERMOCOUPLES_DB[sensor_name]
 
-        t_col1, t_col2 = st.columns(2)
-        with t_col1:
-            t_hot_clamped = int(np.clip(
-                int(st.session_state["stand1_t_hot"]),
-                int(spec["min_t"]),
-                int(spec["max_t"]),
-            ))
+        t_hot_clamped = int(np.clip(
+            int(st.session_state["stand1_t_hot"]),
+            int(spec["min_t"]),
+            int(spec["max_t"]),
+        ))
+        if "stand1_t_hot_slider" in st.session_state and not (
+            int(spec["min_t"]) <= int(st.session_state["stand1_t_hot_slider"]) <= int(spec["max_t"])
+        ):
+            del st.session_state["stand1_t_hot_slider"]
+        t_cold_clamped = int(np.clip(int(st.session_state["stand1_t_cold"]), -50, 100))
+        if is_mobile_view:
             t_hot = float(st.slider(
                 "Температура горячего (рабочего) спая T_hot, °C:",
                 min_value=int(spec["min_t"]),
@@ -2317,9 +3147,6 @@ def render_stand_1_section(params: dict) -> None:
                 key="stand1_t_hot_slider",
                 help="Температура измеряемой среды в зоне рабочего спая термопары.",
             ))
-            st.session_state["stand1_t_hot"] = int(t_hot)
-        with t_col2:
-            t_cold_clamped = int(np.clip(int(st.session_state["stand1_t_cold"]), -50, 100))
             t_cold = float(st.slider(
                 "Температура холодного спая T_cold, °C:",
                 min_value=-50,
@@ -2329,7 +3156,30 @@ def render_stand_1_section(params: dict) -> None:
                 key="stand1_t_cold_slider",
                 help="Температура свободных концов (клеммной колодки прибора), относительно которой формируется разность ЭДС.",
             ))
-            st.session_state["stand1_t_cold"] = int(t_cold)
+        else:
+            t_col1, t_col2 = st.columns(2)
+            with t_col1:
+                t_hot = float(st.slider(
+                    "Температура горячего (рабочего) спая T_hot, °C:",
+                    min_value=int(spec["min_t"]),
+                    max_value=int(spec["max_t"]),
+                    value=t_hot_clamped,
+                    step=10,
+                    key="stand1_t_hot_slider",
+                    help="Температура измеряемой среды в зоне рабочего спая термопары.",
+                ))
+            with t_col2:
+                t_cold = float(st.slider(
+                    "Температура холодного спая T_cold, °C:",
+                    min_value=-50,
+                    max_value=100,
+                    value=t_cold_clamped,
+                    step=10,
+                    key="stand1_t_cold_slider",
+                    help="Температура свободных концов (клеммной колодки прибора), относительно которой формируется разность ЭДС.",
+                ))
+        st.session_state["stand1_t_hot"] = int(t_hot)
+        st.session_state["stand1_t_cold"] = int(t_cold)
 
     fault_cfg = render_stand_fault_panel("stand1", t_cold=t_cold, t_hot=t_hot)
     circuit_fault_mode = fault_cfg["circuit_fault_mode"]
@@ -2610,31 +3460,28 @@ def render_stand_2_section(params: dict) -> None:
         )
 
         metal_names = list(METALS_DB.keys())
+        default_m1 = _resolve_metal_default(metal_names, DEFAULT_STAND2_METAL_1, 0)
+        default_m2 = _resolve_metal_default(metal_names, DEFAULT_STAND2_METAL_2, len(metal_names) - 1)
         cur_m1 = st.session_state["stand2_metal_1"]
         cur_m2 = st.session_state["stand2_metal_2"]
+        idx_m1 = metal_names.index(cur_m1) if cur_m1 in metal_names else metal_names.index(default_m1)
+        idx_m2 = metal_names.index(cur_m2) if cur_m2 in metal_names else metal_names.index(default_m2)
 
-        m_col1, m_col2 = st.columns(2)
-        with m_col1:
+        if is_mobile_view:
             metal_1 = st.selectbox(
                 "Металл / сплав ветви А (Термоэлектрод 1):",
                 options=metal_names,
-                index=metal_names.index(cur_m1) if cur_m1 in metal_names else 0,
+                index=idx_m1,
                 key="stand2_metal1_select",
                 help="Материал первой ветви (положительный электрод при S₁ > S₂).",
             )
-            st.session_state["stand2_metal_1"] = metal_1
-        with m_col2:
             metal_2 = st.selectbox(
                 "Металл / сплав ветви B (Термоэлектрод 2):",
                 options=metal_names,
-                index=metal_names.index(cur_m2) if cur_m2 in metal_names else 6,
+                index=idx_m2,
                 key="stand2_metal2_select",
                 help="Материал второй ветви (отрицательный электрод при S₁ > S₂).",
             )
-            st.session_state["stand2_metal_2"] = metal_2
-
-        t2_col1, t2_col2 = st.columns(2)
-        with t2_col1:
             t_hot_s2 = float(st.slider(
                 "Температура горячего спая T_hot, °C:",
                 min_value=-100,
@@ -2644,8 +3491,6 @@ def render_stand_2_section(params: dict) -> None:
                 key="stand2_t_hot_slider",
                 help="Температура рабочего спая двух выбранных проводников.",
             ))
-            st.session_state["stand2_t_hot"] = int(t_hot_s2)
-        with t2_col2:
             t_cold_s2 = float(st.slider(
                 "Температура холодного спая T_cold, °C:",
                 min_value=-100,
@@ -2655,7 +3500,49 @@ def render_stand_2_section(params: dict) -> None:
                 key="stand2_t_cold_slider",
                 help="Температура клемм подключения к измерительному вольтметру.",
             ))
-            st.session_state["stand2_t_cold"] = int(t_cold_s2)
+        else:
+            m_col1, m_col2 = st.columns(2)
+            with m_col1:
+                metal_1 = st.selectbox(
+                    "Металл / сплав ветви А (Термоэлектрод 1):",
+                    options=metal_names,
+                    index=idx_m1,
+                    key="stand2_metal1_select",
+                    help="Материал первой ветви (положительный электрод при S₁ > S₂).",
+                )
+            with m_col2:
+                metal_2 = st.selectbox(
+                    "Металл / сплав ветви B (Термоэлектрод 2):",
+                    options=metal_names,
+                    index=idx_m2,
+                    key="stand2_metal2_select",
+                    help="Материал второй ветви (отрицательный электрод при S₁ > S₂).",
+                )
+            t2_col1, t2_col2 = st.columns(2)
+            with t2_col1:
+                t_hot_s2 = float(st.slider(
+                    "Температура горячего спая T_hot, °C:",
+                    min_value=-100,
+                    max_value=800,
+                    value=int(np.clip(int(st.session_state["stand2_t_hot"]), -100, 800)),
+                    step=10,
+                    key="stand2_t_hot_slider",
+                    help="Температура рабочего спая двух выбранных проводников.",
+                ))
+            with t2_col2:
+                t_cold_s2 = float(st.slider(
+                    "Температура холодного спая T_cold, °C:",
+                    min_value=-100,
+                    max_value=200,
+                    value=int(np.clip(int(st.session_state["stand2_t_cold"]), -100, 200)),
+                    step=10,
+                    key="stand2_t_cold_slider",
+                    help="Температура клемм подключения к измерительному вольтметру.",
+                ))
+        st.session_state["stand2_metal_1"] = metal_1
+        st.session_state["stand2_metal_2"] = metal_2
+        st.session_state["stand2_t_hot"] = int(t_hot_s2)
+        st.session_state["stand2_t_cold"] = int(t_cold_s2)
 
     fault_cfg2 = render_stand_fault_panel("stand2", t_cold=t_cold_s2, t_hot=t_hot_s2)
     circuit_fault_mode = fault_cfg2["circuit_fault_mode"]
@@ -2904,6 +3791,8 @@ def render_stand_2_section(params: dict) -> None:
         f'<p><strong>Статус измерения:</strong> {html.escape(phys_s2["measurement_state"])}</p>'
         f'<p><strong>Ветвь А ({html.escape(metal_1)}):</strong> {html.escape(METALS_DB[metal_1]["description"])}</p>'
         f'<p><strong>Ветвь B ({html.escape(metal_2)}):</strong> {html.escape(METALS_DB[metal_2]["description"])}</p>'
+        '<p><strong>Примечание о единицах измерения:</strong> в интерфейсе используется обозначение мкВ/°C; '
+        'для температурных приращений (ΔT) числовые значения чувствительности в мкВ/°C и мкВ/К эквивалентны.</p>'
         '</div>',
         unsafe_allow_html=True,
     )
@@ -2912,6 +3801,22 @@ def render_stand_2_section(params: dict) -> None:
 # =====================================================================
 # 8. СПРАВОЧНЫЙ ПОМОЩНИК И ГЕНЕРАТОР УСЛОВНОЙ НСХ
 # =====================================================================
+HYPO_SEEBECK_MIN = -250.0
+HYPO_SEEBECK_MAX = 250.0
+MAX_ASSISTANT_QA_PAIRS = 50
+
+
+def _format_hypothetical_nsh_name(target_s_uv: float) -> str:
+    """Формирует отображаемое название условной НСХ с сохранением знака S0 (S−85 / S+85 / S0)."""
+    s_rounded = round(float(target_s_uv), 2)
+    if s_rounded == 0.0:
+        return "Условная-НСХ-S0"
+    mag_str = f"{abs(s_rounded):g}"
+    if s_rounded < 0.0:
+        return f"Условная-НСХ-S−{mag_str}"
+    return f"Условная-НСХ-S+{mag_str}"
+
+
 def build_hypothetical_thermoelectric(target_s_uv: float) -> dict:
     """
     Генератор условной НСХ: формирует учебную полиномиальную модель E(T) = a1*T + a2*T^2 + a3*T^3
@@ -2924,7 +3829,7 @@ def build_hypothetical_thermoelectric(target_s_uv: float) -> dict:
     t_vec = np.linspace(0, 1000, 200)
     e_vec = a1 * t_vec + a2 * (t_vec ** 2) + a3 * (t_vec ** 3)
     return {
-        "name": f"Условная-НСХ-S{int(abs(target_s_uv))}",
+        "name": _format_hypothetical_nsh_name(target_s_uv),
         "s_target": round(target_s_uv, 2),
         "coeffs": {"a1": a1, "a2": a2, "a3": a3},
         "t": t_vec,
@@ -2932,74 +3837,116 @@ def build_hypothetical_thermoelectric(target_s_uv: float) -> dict:
     }
 
 
-def render_reference_assistant_section() -> None:
-    """Отрисовывает раздел «Справочный помощник» (чат, практикум и генератор условной НСХ)."""
-    st.header("📘 Справочный помощник по термоэлектрическим явлениям и Генератор условной НСХ")
-    st.caption(
-        "Раздел работает на основе локальной базы проверенных физических разборов и расчётных формул "
-        "(внешняя генеративная языковая модель не используется)."
-    )
+def _trim_assistant_history(max_pairs: int = MAX_ASSISTANT_QA_PAIRS) -> None:
+    """Ограничивает историю диалога помощника последними max_pairs парами «вопрос — ответ»."""
+    msgs = st.session_state.get("messages", [])
+    max_dialog_msgs = max_pairs * 2
+    if not msgs:
+        return
+    if msgs[0].get("role") == "assistant":
+        welcome = [msgs[0]]
+        dialog = msgs[1:]
+        if len(dialog) > max_dialog_msgs:
+            st.session_state["messages"] = welcome + dialog[-max_dialog_msgs:]
+    elif len(msgs) > max_dialog_msgs:
+        st.session_state["messages"] = msgs[-max_dialog_msgs:]
 
-    with st.expander("🎓 Справочный практикум: случайный качественный вопрос", expanded=False):
-        if st.button("🧠 Случайный качественный вопрос", key="assistant_random_q_btn"):
-            physics_questions = [
-                {
-                    "title": "Равенство температур спаев",
-                    "question": "Почему при равенстве температур горячего и холодного спаев (T_hot = T_cold) результирующая Термо-ЭДС равна нулю?",
-                    "hint": "Рассмотрите интеграл по замкнутому контуру и Второе начало термодинамики: возможен ли вечный двигатель второго рода?"
-                },
-                {
-                    "title": "Влияние длины проводников",
-                    "question": "Как изменится Термо-ЭДС термопары, если удлинить её провода в 3 раза при неизменных T_hot и T_cold?",
-                    "hint": "Зависит ли интеграл E = ∫ S(T) dT от геометрической длины пути, или меняется только внутреннее омическое сопротивление контура?"
-                },
-                {
-                    "title": "Закон Вольта (третьего металла)",
-                    "question": "Что такое закон Вольта для последовательной цепи металлов и почему медные щупы вольтметра не искажают измеряемую Термо-ЭДС?",
-                    "hint": "Запишите алгебраическую сумму потенциалов при условии, что оба контакта с третьим металлом имеют одинаковую температуру T_cold."
-                }
-            ]
-            st.session_state["prof_question"] = np.random.choice(physics_questions)
-        if "prof_question" in st.session_state:
-            pq = st.session_state["prof_question"]
-            st.info(f"**Тема: {pq['title']}**\n\n{pq['question']}")
-            st.caption(f"💡 *Подсказка:* {pq['hint']}")
 
-    with st.expander("📐 Генератор условной НСХ (расчёт учебной полиномиальной модели)", expanded=False):
-        st.warning(
-            "⚠️ **Предупреждение:** Полученная характеристика является математической моделью "
-            "и не подтверждает существование реального термоэлектрического материала с такими свойствами."
+def _process_reference_assistant_query(user_query: str) -> None:
+    """
+    Обрабатывает вопрос пользователя по локальной базе проверенных разборов и формул
+    без использования внешней языковой модели. Приоритет отдаётся более специфическим намерениям.
+    """
+    st.session_state["messages"].append({"role": "user", "content": user_query})
+
+    q_low = user_query.lower()
+    num_match = re.search(r"([-+−]?\d+(?:[.,]\d+)?)", q_low)
+
+    # 1. Наиболее специфическое намерение: расчёт условной полиномиальной НСХ по числу
+    if num_match and any(k in q_low for k in ["модел", "нсх", "сплав", "зеебек", "мкв", "коэфф", "постро"]):
+        s_raw = float(num_match.group(1).replace(",", ".").replace("−", "-"))
+        s_val = float(np.clip(s_raw, HYPO_SEEBECK_MIN, HYPO_SEEBECK_MAX))
+        clamp_note = ""
+        if s_raw != s_val:
+            clamp_note = (
+                f"> *Примечание: введённое значение $S_0 = {s_raw:g}$ мкВ/°C выходит за допустимый "
+                f"диапазон генератора (${HYPO_SEEBECK_MIN:g}\ldots+{HYPO_SEEBECK_MAX:g}$ мкВ/°C) "
+                f"и ограничено значением ${s_val:g}$ мкВ/°C.*\n\n"
+            )
+        alloy_data = build_hypothetical_thermoelectric(s_val)
+        st.session_state["ai_alloy"] = alloy_data
+        st.session_state["gen_desired_s"] = s_val
+        c1, c2, c3 = alloy_data["coeffs"]["a1"], alloy_data["coeffs"]["a2"], alloy_data["coeffs"]["a3"]
+
+        reply = (
+            f"{clamp_note}"
+            f"Построена условная математическая характеристика **`{alloy_data['name']}`** для $S_0 = {alloy_data['s_target']}$ мкВ/°C "
+            f"(кривая добавлена на графики Стенда №1 и Стенда №2):\n\n"
+            f"- **Линейный коэффициент $a_1 = S_0 / 1000$:** `{c1:.5f}` мВ/°C\n"
+            f"- **Заданный модельный коэффициент $a_2$:** `{c2:.2e}` мВ/°C²\n"
+            f"- **Заданный модельный коэффициент $a_3$:** `{c3:.2e}` мВ/°C³\n\n"
+            f"$$E(T) = {c1:.5f}\\,T + ({c2:.2e})\\,T^2 + ({c3:.2e})\\,T^3\\text{{ [мВ]}}$$\n\n"
+            f"> *Предупреждение: полученная характеристика является математической моделью и не подтверждает "
+            f"существование реального термоэлектрического материала с такими свойствами.*"
         )
-        col_gen1, col_gen2 = st.columns([2, 1])
-        with col_gen1:
-            desired_s = st.number_input(
-                "Задайте начальный коэффициент Зеебека S₀ при 0 °C (мкВ/°C):",
-                min_value=-250.0,
-                max_value=250.0,
-            value=float(st.session_state.get("gen_desired_s", 75.0)),
-                step=5.0
-            )
-        with col_gen2:
-            st.write("")
-            st.write("")
-            st.session_state["gen_desired_s"] = desired_s
-            if st.button("Построить условную НСХ"):
-                st.session_state["ai_alloy"] = build_hypothetical_thermoelectric(desired_s)
-                st.rerun()
+    # 2. Закон Вольта / промежуточных металлов (проверяется раньше общих вопросов о проводах)
+    elif any(k in q_low for k in ["вольт", "третьего", "третий", "третьем", "промежуточн", "последоват", "медн", "щуп"]):
+        reply = (
+            "**Физическое объяснение (Закон Вольта / Закон промежуточных металлов):**\n\n"
+            "Согласно закону промежуточных металлов, включение в термоэлектрический контур любого третьего проводника $C$ (например, медных выводов "
+            "и входной цепи вольтметра) **не изменяет результирующую Термо-ЭДС**, если оба конца этого третьего проводника находятся "
+            "при одинаковой температуре $T_{\\text{cold}}$:\n"
+            "$$\\int_{T_{\\text{cold}}}^{T_{\\text{cold}}} S_C(T)\\,dT = 0$$\n"
+            "Дополнительные термо-ЭДС на контактах «Металл А — Медь» и «Медь — Металл B» взаимно компенсируют друг друга."
+        )
+    # 3. Влияние длины и сечения проводников (убрано слишком общее ключевое слово «провод»)
+    elif any(k in q_low for k in ["удлин", "длин", "сечен"]):
+        reply = (
+            "**Физическое объяснение (Влияние длины и сечения проводников):**\n\n"
+            "Если проводники термопары однородны по химическому составу, то **генерируемая Термо-ЭДС не изменится** при удлинении проводов. "
+            "Причина в том, что $E = \\int_{T_{\\text{cold}}}^{T_{\\text{hot}}} S_{AB}(T)\\,dT$ является функцией только граничных температур "
+            "концов $T_{\\text{hot}}$ и $T_{\\text{cold}}$, а не градиента $\\nabla T$ по отдельности. Однако при увеличении длины $l$ возрастает "
+            "внутреннее омическое сопротивление контура $R_{\\text{тп}} = \\rho \\frac{l}{S_{\\text{сеч}}}$, что увеличивает падение напряжения "
+            "при протекании тока через низкоомный прибор."
+        )
+    # 4. Равенство температур спаев (T_hot = T_cold)
+    elif any(k in q_low for k in ["равенств", "нулю", "ноль", "одинаков"]):
+        reply = (
+            "**Физическое объяснение (Равенство температур спаев $T_{\\text{hot}} = T_{\\text{cold}}$):**\n\n"
+            "В замкнутом контуре из двух металлов $A$ и $B$ результирующая Термо-ЭДС определяется интегралом:\n"
+            "$$E = \\int_{T_{\\text{cold}}}^{T_{\\text{hot}}} \\left(S_A(T) - S_B(T)\\right) dT$$\n"
+            "При $T_{\\text{hot}} = T_{\\text{cold}}$ верхний и нижний пределы интегрирования совпадают, поэтому интеграл "
+            "тождественно равен нулю ($E = 0$). Термодинамически это прямое следствие **Второго начала термодинамики**: "
+            "в изотермическом контуре невозможно непрерывное преобразование теплоты в электрическую работу без перепада температур."
+        )
+    # 5. Неподдерживаемые вопросы — штатный ответ без выдумывания новых тем
+    else:
+        reply = (
+            "В справочной базе помощника доступны разборы тем: **равенство температур спаев**, **влияние длины проводников**, "
+            "**закон промежуточных металлов (Вольта)**, а также расчёт **условной полиномиальной модели НСХ** по заданному "
+            "коэффициенту Зеебека (например: *«Модель НСХ 65 мкВ/°C»*)."
+        )
 
-        if "ai_alloy" in st.session_state:
-            ai_cur = st.session_state["ai_alloy"]
-            c_a1 = ai_cur["coeffs"]["a1"]
-            c_a2 = ai_cur["coeffs"]["a2"]
-            c_a3 = ai_cur["coeffs"]["a3"]
-            st.info(
-                f"Построена условная математическая модель **{ai_cur['name']}** ($S_0 = {ai_cur['s_target']}$ мкВ/°C, "
-                f"где $a_1 = S_0 / 1000$, а коэффициенты $a_2, a_3$ заданы как учебные константы нелинейности)."
-            )
-            st.latex(
-                rf"E(T) = a_1 T + a_2 T^2 + a_3 T^3 = "
-                rf"{c_a1:.5f}\,T + ({c_a2:.2e})\,T^2 + ({c_a3:.2e})\,T^3 \text{{ [мВ]}}"
-            )
+    st.session_state["messages"].append({"role": "assistant", "content": reply})
+    _trim_assistant_history()
+
+
+def render_reference_assistant_section() -> None:
+    """
+    Отрисовывает раздел «Справочный помощник» с чётким визуальным разделением двух инструментов:
+    1. Интерактивный справочный помощник (локальная база физических разборов + практикум).
+    2. Генератор условной НСХ (самостоятельный расчётный блок учебной полиномиальной модели).
+    """
+    is_mobile_view = (st.session_state.get("chart_display_mode") == "Смартфон (320–430 px)")
+
+    st.header("📘 Справочный помощник и Генератор условной НСХ")
+    st.markdown(
+        '<div class="kip-section-intro">'
+        '<strong>Локальный справочный модуль:</strong> все ответы и расчёты формируются строго по встроенной базе '
+        'проверенных физических разборов и формул (внешняя генеративная языковая модель не используется).'
+        '</div>',
+        unsafe_allow_html=True,
+    )
 
     if "messages" not in st.session_state:
         st.session_state["messages"] = [
@@ -3016,76 +3963,132 @@ def render_reference_assistant_section() -> None:
             }
         ]
 
-    for msg in st.session_state["messages"]:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
-
+    # Обрабатываем ввод из нижнего поля st.chat_input() до отрисовки ленты сообщений, чтобы ответ сразу появился в карточке
     user_query = st.chat_input(
         "Введите вопрос по теме (например: 'Что такое закон Вольта?' или 'Модель НСХ 90 мкВ/°C')..."
     )
-
     if user_query:
-        st.session_state["messages"].append({"role": "user", "content": user_query})
-        with st.chat_message("user"):
-            st.markdown(user_query)
+        _process_reference_assistant_query(user_query)
 
-        q_low = user_query.lower()
-        num_match = re.search(r"([-+]?\d+(?:[.,]\d+)?)", q_low)
-
-        if any(k in q_low for k in ["равенств", "нулю", "ноль", "одинаков"]):
-            reply = (
-                "**Физическое объяснение (Равенство температур спаев $T_{\\text{hot}} = T_{\\text{cold}}$):**\n\n"
-                "В замкнутом контуре из двух металлов $A$ и $B$ результирующая Термо-ЭДС определяется интегралом:\n"
-                "$$E = \\int_{T_{\\text{cold}}}^{T_{\\text{hot}}} \\left(S_A(T) - S_B(T)\\right) dT$$\n"
-                "При $T_{\\text{hot}} = T_{\\text{cold}}$ верхний и нижний пределы интегрирования совпадают, поэтому интеграл "
-                "тождественно равен нулю ($E = 0$). Термодинамически это прямое следствие **Второго начала термодинамики**: "
-                "в изотермическом контуре невозможно непрерывное преобразование теплоты в электрическую работу без перепада температур."
-            )
-        elif any(k in q_low for k in ["удлин", "длин", "провод", "сечен"]):
-            reply = (
-                "**Физическое объяснение (Влияние длины и сечения проводников):**\n\n"
-                "Если проводники термопары однородны по химическому составу, то **генерируемая Термо-ЭДС не изменится** при удлинении проводов. "
-                "Причина в том, что $E = \\int_{T_{\\text{cold}}}^{T_{\\text{hot}}} S_{AB}(T)\\,dT$ является функцией только граничных температур "
-                "концов $T_{\\text{hot}}$ и $T_{\\text{cold}}$, а не градиента $\\nabla T$ по отдельности. Однако при увеличении длины $l$ возрастает "
-                "внутреннее омическое сопротивление контура $R_{\\text{тп}} = \\rho \\frac{l}{S_{\\text{сеч}}}$, что увеличивает падение напряжения "
-                "при протекании тока через низкоомный прибор."
-            )
-        elif any(k in q_low for k in ["вольт", "третьего", "третий", "последоват"]):
-            reply = (
-                "**Физическое объяснение (Закон Вольта / Закон промежуточных металлов):**\n\n"
-                "Согласно закону промежуточных металлов, включение в термоэлектрический контур любого третьего проводника $C$ (например, медных выводов "
-                "и входной цепи вольтметра) **не изменяет результирующую Термо-ЭДС**, если оба конца этого третьего проводника находятся "
-                "при одинаковой температуре $T_{\\text{cold}}$:\n"
-                "$$\\int_{T_{\\text{cold}}}^{T_{\\text{cold}}} S_C(T)\\,dT = 0$$\n"
-                "Дополнительные термо-ЭДС на контактах «Металл А — Медь» и «Медь — Металл B» взаимно компенсируют друг друга."
-            )
-        elif num_match and any(k in q_low for k in ["модел", "нсх", "сплав", "зеебек", "мкв", "коэфф", "постро"]):
-            s_val = float(num_match.group(1).replace(",", "."))
-            s_val = float(np.clip(s_val, -300.0, 300.0))
-            alloy_data = build_hypothetical_thermoelectric(s_val)
-            st.session_state["ai_alloy"] = alloy_data
-            c1, c2, c3 = alloy_data["coeffs"]["a1"], alloy_data["coeffs"]["a2"], alloy_data["coeffs"]["a3"]
-
-            reply = (
-                f"Построена условная математическая характеристика **`{alloy_data['name']}`** для $S_0 = {alloy_data['s_target']}$ мкВ/°C "
-                f"(кривая добавлена на графики Стенда №1 и Стенда №2):\n\n"
-                f"- **Линейный коэффициент $a_1 = S_0 / 1000$:** `{c1:.5f}` мВ/°C\n"
-                f"- **Заданный модельный коэффициент $a_2$:** `{c2:.2e}` мВ/°C²\n"
-                f"- **Заданный модельный коэффициент $a_3$:** `{c3:.2e}` мВ/°C³\n\n"
-                f"$$E(T) = {c1:.5f}\\,T + ({c2:.2e})\\,T^2 + ({c3:.2e})\\,T^3\\text{{ [мВ]}}$$\n\n"
-                f"> *Предупреждение: полученная характеристика является математической моделью и не подтверждает "
-                f"существование реального термоэлектрического материала с такими свойствами.*"
-            )
-        else:
-            reply = (
-                "В справочной базе помощника доступны разборы тем: **равенство температур спаев**, **влияние длины проводников**, "
-                "**закон промежуточных металлов (Вольта)**, а также расчёт **условной полиномиальной модели НСХ** по заданному "
-                "коэффициенту Зеебека (например: *«Модель НСХ 65 мкВ/°C»*)."
+    def _draw_assistant_panel() -> None:
+        with st.container(border=True):
+            st.markdown('<span class="kip-panel-badge">ИНСТРУМЕНТ 1 • ЛОКАЛЬНАЯ БАЗА РАЗБОРОВ</span>', unsafe_allow_html=True)
+            st.subheader("💬 Интерактивный справочный помощник")
+            st.caption(
+                "Нажмите на готовую тему ниже или введите вопрос в поле внизу экрана — помощник вернёт "
+                "проверенное физическое объяснение с формулами."
             )
 
-        st.session_state["messages"].append({"role": "assistant", "content": reply})
-        with st.chat_message("assistant"):
-            st.markdown(reply)
+            quick_queries = [
+                ("Равенство температур спаев (T_hot = T_cold)", "Почему при равенстве температур спаев Термо-ЭДС равна нулю?"),
+                ("Влияние длины проводов термопары", "Как изменится ЭДС, если удлинить провода?"),
+                ("Закон Вольта (третьего металла)", "Что такое закон Вольта для последовательной цепи металлов?"),
+                ("Построить модель НСХ 85 мкВ/°C", "Построй условную НСХ для 85 мкВ/°C"),
+            ]
+            if is_mobile_view:
+                for q_idx, (btn_label, q_text) in enumerate(quick_queries):
+                    if st.button(btn_label, key=f"quick_q_btn_{q_idx}", use_container_width=True):
+                        _process_reference_assistant_query(q_text)
+                        st.rerun()
+            else:
+                q_cols = st.columns(2)
+                for q_idx, (btn_label, q_text) in enumerate(quick_queries):
+                    with q_cols[q_idx % 2]:
+                        if st.button(btn_label, key=f"quick_q_btn_{q_idx}", use_container_width=True):
+                            _process_reference_assistant_query(q_text)
+                            st.rerun()
+
+            st.markdown("---")
+            for msg in st.session_state["messages"]:
+                with st.chat_message(msg["role"]):
+                    st.markdown(msg["content"])
+
+    def _draw_generator_and_practicum_panel() -> None:
+        # Самостоятельный, визуально отделённый блок Генератора условной НСХ
+        with st.container(border=True):
+            st.markdown('<span class="kip-panel-badge kip-panel-badge--model">ИНСТРУМЕНТ 2 • УЧЕБНАЯ МАТЕМАТИЧЕСКАЯ МОДЕЛЬ</span>', unsafe_allow_html=True)
+            st.subheader("📐 Генератор условной НСХ")
+            st.warning(
+                "⚠️ **Предупреждение:** Полученная характеристика является математической моделью "
+                "и не подтверждает существование реального термоэлектрического материала с такими свойствами."
+            )
+            gen_default_s = float(np.clip(
+                float(st.session_state.get("gen_desired_s", 75.0)),
+                HYPO_SEEBECK_MIN,
+                HYPO_SEEBECK_MAX,
+            ))
+            if "gen_desired_s_input" in st.session_state and not (
+                HYPO_SEEBECK_MIN <= float(st.session_state["gen_desired_s_input"]) <= HYPO_SEEBECK_MAX
+            ):
+                del st.session_state["gen_desired_s_input"]
+            desired_s = st.number_input(
+                "Задайте начальный коэффициент Зеебека S₀ при 0 °C (мкВ/°C):",
+                min_value=HYPO_SEEBECK_MIN,
+                max_value=HYPO_SEEBECK_MAX,
+                value=gen_default_s,
+                step=5.0,
+                key="gen_desired_s_input",
+                help="Начальный наклон полиномиальной характеристики E(T) = a₁T + a₂T² + a₃T³. Допустимый диапазон: от −250 до +250 мкВ/°C.",
+            )
+            desired_s = float(np.clip(float(desired_s), HYPO_SEEBECK_MIN, HYPO_SEEBECK_MAX))
+            st.session_state["gen_desired_s"] = desired_s
+            if st.button("📐 Построить условную НСХ", key="build_hypo_nsh_btn", type="primary", use_container_width=True):
+                st.session_state["ai_alloy"] = build_hypothetical_thermoelectric(desired_s)
+                st.rerun()
+
+            if "ai_alloy" in st.session_state:
+                ai_cur = st.session_state["ai_alloy"]
+                c_a1 = ai_cur["coeffs"]["a1"]
+                c_a2 = ai_cur["coeffs"]["a2"]
+                c_a3 = ai_cur["coeffs"]["a3"]
+                st.info(
+                    f"Построена условная математическая модель **{ai_cur['name']}** ($S_0 = {ai_cur['s_target']}$ мкВ/°C, "
+                    f"где $a_1 = S_0 / 1000$, а коэффициенты $a_2, a_3$ заданы как учебные константы нелинейности)."
+                )
+                st.latex(
+                    rf"E(T) = a_1 T + a_2 T^2 + a_3 T^3 = "
+                    rf"{c_a1:.5f}\,T + ({c_a2:.2e})\,T^2 + ({c_a3:.2e})\,T^3 \text{{ [мВ]}}"
+                )
+            else:
+                st.caption("После нажатия кнопки расчётная кривая автоматически добавится пунктиром на графики Стенда №1 и Стенда №2.")
+
+        # Отдельный компактный блок практикума с качественными вопросами
+        with st.container(border=True):
+            st.subheader("🎓 Справочный практикум")
+            st.caption("Случайный качественный вопрос для быстрой проверки понимания темы:")
+            if st.button("🧠 Случайный качественный вопрос", key="assistant_random_q_btn", use_container_width=True):
+                physics_questions = [
+                    {
+                        "title": "Равенство температур спаев",
+                        "question": "Почему при равенстве температур горячего и холодного спаев (T_hot = T_cold) результирующая Термо-ЭДС равна нулю?",
+                        "hint": "Рассмотрите интеграл по замкнутому контуру и Второе начало термодинамики: возможен ли вечный двигатель второго рода?"
+                    },
+                    {
+                        "title": "Влияние длины проводников",
+                        "question": "Как изменится Термо-ЭДС термопары, если удлинить её провода в 3 раза при неизменных T_hot и T_cold?",
+                        "hint": "Зависит ли интеграл E = ∫ S(T) dT от геометрической длины пути, или меняется только внутреннее омическое сопротивление контура?"
+                    },
+                    {
+                        "title": "Закон Вольта (третьего металла)",
+                        "question": "Что такое закон Вольта для последовательной цепи металлов и почему медные щупы вольтметра не искажают измеряемую Термо-ЭДС?",
+                        "hint": "Запишите алгебраическую сумму потенциалов при условии, что оба контакта с третьим металлом имеют одинаковую температуру T_cold."
+                    }
+                ]
+                st.session_state["prof_question"] = np.random.choice(physics_questions)
+            if "prof_question" in st.session_state:
+                pq = st.session_state["prof_question"]
+                st.info(f"**Тема: {pq['title']}**\n\n{pq['question']}")
+                st.caption(f"💡 *Подсказка:* {pq['hint']}")
+
+    if is_mobile_view:
+        _draw_assistant_panel()
+        _draw_generator_and_practicum_panel()
+    else:
+        col_assist, col_gen = st.columns([3, 2])
+        with col_assist:
+            _draw_assistant_panel()
+        with col_gen:
+            _draw_generator_and_practicum_panel()
 
 
 # =====================================================================
@@ -3096,22 +4099,19 @@ def render_reference_assistant_section() -> None:
 def render_theory_image(rel_path: str, caption: str) -> None:
     """
     Отображает иллюстрацию из папки assets с сохранением пропорций, без растягивания
-    и с поддержкой мобильных и настольных экранов.
+    и с корректным масштабированием на мобильных и настольных экранах.
     """
     found_path = resolve_asset_path(rel_path)
+    safe_caption = html.escape(caption)
     if found_path is not None:
         img_bytes = found_path.read_bytes()
         b64_encoded = base64.b64encode(img_bytes).decode("utf-8")
         st.markdown(
             f"""
-            <div style="text-align: center; margin: 1.0rem auto; max-width: 760px;">
-                <img src="data:image/png;base64,{b64_encoded}"
-                     alt="{caption}"
-                     style="max-width: 100%; height: auto; object-fit: contain; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12);" />
-                <div style="font-style: italic; color: #adb5bd; font-size: 0.92rem; margin-top: 0.45rem;">
-                    {caption}
-                </div>
-            </div>
+            <figure class="kip-theory-figure">
+                <img src="data:image/png;base64,{b64_encoded}" alt="{safe_caption}" />
+                <figcaption class="kip-theory-figcaption">{safe_caption}</figcaption>
+            </figure>
             """,
             unsafe_allow_html=True
         )
@@ -3546,15 +4546,37 @@ def render_stage_6() -> None:
     )
 
 
+def _on_theory_stage_select_change(stage_titles: list[str]) -> None:
+    """Синхронизирует theory_stage_idx при выборе этапа через выпадающий список."""
+    chosen_title = st.session_state.get("theory_stage_selectbox")
+    if chosen_title in stage_titles:
+        st.session_state["theory_stage_idx"] = stage_titles.index(chosen_title)
+
+
+def _step_theory_stage(delta: int, stage_titles: list[str]) -> None:
+    """Обновляет оба ключа (theory_stage_idx и theory_stage_selectbox) до повторной отрисовки виджета."""
+    curr = int(st.session_state.get("theory_stage_idx", 0))
+    new_idx = int(np.clip(curr + delta, 0, len(stage_titles) - 1))
+    st.session_state["theory_stage_idx"] = new_idx
+    st.session_state["theory_stage_selectbox"] = stage_titles[new_idx]
+
+
 def render_theory_section() -> None:
-    """Главный учебный модуль «Теория: Термо-ЭДС. Эффект Зеебека»."""
+    """
+    Главный учебный модуль «Теория: Термо-ЭДС. Эффект Зеебека».
+    Разделён на три компактных подраздела (Этапы 1–6 последовательно, Самопроверка, Словарь терминов),
+    чтобы не выводить весь материал одной длинной страницей.
+    """
     st.header("📚 Теория: Термо-ЭДС. Эффект Зеебека")
     st.markdown(
-        "**Теоретический материал для KIP Simulator**  \n"
-        "**Основа:** загруженный реферат «Термо-ЭДС. Эффект Зеебека» (17 страниц).  \n"
-        "**Принцип подготовки:** текст сокращён и структурирован для изучения внутри приложения. "
-        "Физические положения, формулы, исторические сведения и числовые данные взяты из реферата. "
-        "Внешние сведения не добавлялись."
+        '<div class="kip-section-intro">'
+        '<strong>Теоретический материал для KIP Simulator</strong><br/>'
+        '<strong>Основа:</strong> загруженный реферат «Термо-ЭДС. Эффект Зеебека» (17 страниц).<br/>'
+        '<strong>Принцип подготовки:</strong> текст сокращён и структурирован для изучения внутри приложения. '
+        'Физические положения, формулы, исторические сведения и числовые данные взяты из реферата. '
+        'Внешние сведения не добавлялись.'
+        '</div>',
+        unsafe_allow_html=True,
     )
     st.markdown(
         "> Иллюстрации в файле служат поясняющими схемами к материалу. Подписи к рисункам не заменяют "
@@ -3573,178 +4595,267 @@ def render_theory_section() -> None:
     if "theory_stage_idx" not in st.session_state:
         st.session_state["theory_stage_idx"] = 0
 
-    theory_view_options = [
-        "Пошаговое изучение (с навигацией между этапами)",
-        "Все этапы списком (раскрывающиеся карточки)"
+    theory_subtabs = [
+        ("Изучение по этапам (1–6)", "📖 Этапы теории (1–6)"),
+        ("Самопроверка", "✅ Самопроверка (10)"),
+        ("Словарь терминов", "🗂️ Словарь терминов (12)"),
     ]
-    cur_theory_view = st.session_state.get("theory_view_mode", theory_view_options[0])
-    view_mode = st.radio(
-        "Режим отображения этапов теории:",
-        options=theory_view_options,
-        index=theory_view_options.index(cur_theory_view) if cur_theory_view in theory_view_options else 0,
-        horizontal=True
-    )
-    st.session_state["theory_view_mode"] = view_mode
+    cur_subtab = st.session_state.get("theory_subtab", theory_subtabs[0][0])
+    valid_keys = [k for k, _ in theory_subtabs]
+    if cur_subtab not in valid_keys:
+        cur_subtab = valid_keys[0]
+        st.session_state["theory_subtab"] = cur_subtab
 
-    if view_mode.startswith("Пошаговое"):
+    sub_cols = st.columns(3)
+    for s_idx, (sub_key, sub_label) in enumerate(theory_subtabs):
+        is_sub_active = (cur_subtab == sub_key)
+        with sub_cols[s_idx]:
+            if st.button(
+                sub_label,
+                key=f"theory_subtab_btn_{s_idx}",
+                type="primary" if is_sub_active else "secondary",
+                use_container_width=True,
+            ):
+                if not is_sub_active:
+                    st.session_state["theory_subtab"] = sub_key
+                    st.rerun()
+
+    st.markdown("---")
+
+    # -----------------------------------------------------------------
+    # ПОДРАЗДЕЛ 1: ПОСЛЕДОВАТЕЛЬНОЕ ИЗУЧЕНИЕ (ЭТАПЫ 1–6)
+    # -----------------------------------------------------------------
+    if cur_subtab == "Изучение по этапам (1–6)":
         stage_titles = [s[0] for s in stages_list]
-        selected_title = st.selectbox(
-            "Выберите этап для изучения:",
+        curr_idx = int(np.clip(int(st.session_state["theory_stage_idx"]), 0, len(stages_list) - 1))
+        st.session_state["theory_stage_idx"] = curr_idx
+        if st.session_state.get("theory_stage_selectbox") != stage_titles[curr_idx]:
+            st.session_state["theory_stage_selectbox"] = stage_titles[curr_idx]
+
+        # Быстрый выбор этапа + наглядный индикатор прогресса (синхронизация через on_change)
+        st.selectbox(
+            "Переход к этапу изучения:",
             options=stage_titles,
-            index=st.session_state["theory_stage_idx"]
+            key="theory_stage_selectbox",
+            on_change=_on_theory_stage_select_change,
+            args=(stage_titles,),
         )
-        st.session_state["theory_stage_idx"] = stage_titles.index(selected_title)
-        curr_idx = st.session_state["theory_stage_idx"]
 
-        st.progress((curr_idx + 1) / len(stages_list), text=f"Этап {curr_idx + 1} из {len(stages_list)}")
+        st.markdown(
+            f'<div class="kip-stage-header-card">'
+            f'<span class="kip-stage-badge">Текущий этап: {curr_idx + 1} из {len(stages_list)}</span>'
+            f'<span class="kip-stage-title-text">{html.escape(stage_titles[curr_idx])}</span>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
 
-        with st.container(border=True):
-            stages_list[curr_idx][1]()
+        step_cells = []
+        for idx_s in range(len(stages_list)):
+            if idx_s == curr_idx:
+                s_cls = "kip-stage-step kip-stage-step--active"
+                s_prefix = "● "
+            else:
+                s_cls = "kip-stage-step"
+                s_prefix = ""
+            step_cells.append(f'<div class="{s_cls}">{s_prefix}Этап {idx_s + 1}</div>')
+        st.markdown(f'<div class="kip-stage-steps">{"".join(step_cells)}</div>', unsafe_allow_html=True)
+        st.progress(
+            (curr_idx + 1) / len(stages_list),
+            text=f"Текущий этап: {curr_idx + 1} из {len(stages_list)}"
+        )
 
-        nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
+        # Разумная ширина текстового блока на широком экране (центрированная читаемая колонка)
+        is_mobile_view = (st.session_state.get("chart_display_mode") == "Смартфон (320–430 px)")
+        if is_mobile_view:
+            with st.container(border=True):
+                stages_list[curr_idx][1]()
+        else:
+            _, read_col, _ = st.columns([0.06, 0.88, 0.06])
+            with read_col:
+                with st.container(border=True):
+                    stages_list[curr_idx][1]()
+
+        # Кнопки перехода назад / вперёд (синхронизация через on_click до отрисовки виджетов)
+        nav_col1, nav_col2, nav_col3 = st.columns([1, 1, 1])
         with nav_col1:
-            if st.button("⬅️ Предыдущий этап", disabled=(curr_idx == 0), use_container_width=True):
-                st.session_state["theory_stage_idx"] -= 1
+            st.button(
+                "⬅️ Предыдущий этап",
+                key="theory_prev_btn",
+                disabled=(curr_idx == 0),
+                use_container_width=True,
+                on_click=_step_theory_stage,
+                args=(-1, stage_titles),
+            )
+        with nav_col2:
+            if st.button("✅ Перейти к самопроверке", key="theory_goto_qa_btn", use_container_width=True):
+                st.session_state["theory_subtab"] = "Самопроверка"
                 st.rerun()
         with nav_col3:
-            if st.button("Следующий этап ➡️", disabled=(curr_idx == len(stages_list) - 1), use_container_width=True):
-                st.session_state["theory_stage_idx"] += 1
-                st.rerun()
-    else:
-        for idx, (title, render_fn) in enumerate(stages_list):
-            with st.expander(title, expanded=(idx == 0)):
-                render_fn()
+            st.button(
+                "Следующий этап ➡️",
+                key="theory_next_btn",
+                disabled=(curr_idx == len(stages_list) - 1),
+                use_container_width=True,
+                on_click=_step_theory_stage,
+                args=(1, stage_titles),
+            )
 
-    st.markdown("---")
-
-    st.subheader("✅ Самопроверка по материалу")
-    qa_pairs = [
-        (
-            "1. Что называют термо-ЭДС?",
-            "Электродвижущая сила, возникающая в цепи из разнородных проводников при разных температурах спаев."
-        ),
-        (
-            "2. Какие условия необходимы для возникновения эффекта Зеебека в цепи из двух разнородных проводников?",
-            "Нужны два разнородных проводника и разная температура мест их соединения."
-        ),
-        (
-            "3. Какие проводники использовал Зеебек в известном опыте и что наблюдал при нагревании одного спая?",
-            "Висмутовый и медный проводники; при нагревании одного спая магнитная стрелка отклонялась, а при перестановке горячего и холодного спаев направление отклонения менялось."
-        ),
-        (
-            "4. Как объясняется физическая причина возникновения термо-ЭДС в реферате?",
-            "Из-за диффузии носителей заряда от нагретой части к холодной, накопления заряда и возникновения электрического поля."
-        ),
-        (
-            "5. Что обозначают $T_1$, $T_2$ и $\\alpha$ в приближённой формуле термо-ЭДС?",
-            "$T_1$ и $T_2$ — температуры спаев; $\\alpha$ — коэффициент термо-ЭДС данной пары проводников."
-        ),
-        (
-            "6. Чем эффект Пельтье отличается от эффекта Зеебека?",
-            "Эффект Пельтье проявляется как выделение или поглощение дополнительной тепловой мощности ($\\dot{Q} = \\Pi I$) при прохождении тока через контакт разнородных проводников."
-        ),
-        (
-            "7. Что называют горячим и холодным спаями термопары?",
-            "Горячий (рабочий) спай находится в зоне измерения; холодный спай образован свободными концами, подключаемыми к измерительному прибору."
-        ),
-        (
-            "8. Для чего нужна компенсация холодного спая?",
-            "Чтобы учитывать температуру свободных концов, поскольку измеряемая термо-ЭДС зависит от разности температур спаев."
-        ),
-        (
-            "9. Какие три закона термоэлектрических цепей перечислены в реферате?",
-            "Закон однородной цепи, закон промежуточных металлов и закон промежуточных температур."
-        ),
-        (
-            "10. Где применяются термопары и другие термоэлектрические устройства согласно реферату?",
-            "В измерении температуры, регистрации теплового излучения, термоэлектрических генераторах и охладителях, а также в перечисленных промышленных и научных областях."
-        )
-    ]
-
-    for q_text, a_text in qa_pairs:
-        with st.expander(q_text):
-            st.markdown(f"**Ответ для проверки:** {a_text}")
-
-    with st.expander("📋 Ответы для проверки (полный список)"):
-        st.markdown("### Ответы для проверки")
-        for idx, (_, a_text) in enumerate(qa_pairs, start=1):
-            st.markdown(f"{idx}. {a_text}")
-
-    st.markdown("---")
-
-    st.subheader("📖 Словарь терминов")
-    glossary_data = [
-        {
-            "Термин": "Термоэлектрические явления",
-            "Значение по материалу реферата": "Группа эффектов, связывающих тепловые и электрические процессы в проводниках и полупроводниках."
-        },
-        {
-            "Термин": "Эффект Зеебека",
-            "Значение по материалу реферата": "Возникновение ЭДС в цепи из разнородных проводников при разной температуре спаев."
-        },
-        {
-            "Термин": "Термо-ЭДС",
-            "Значение по материалу реферата": "Электродвижущая сила, возникающая при эффекте Зеебека."
-        },
-        {
-            "Термин": "Спай",
-            "Значение по материалу реферата": "Место соединения двух термоэлектродов."
-        },
-        {
-            "Термин": "Термоэлектрод",
-            "Значение по материалу реферата": "Проводник, входящий в состав термопары."
-        },
-        {
-            "Термин": "Коэффициент Зеебека",
-            "Значение по материалу реферата": "Коэффициент, характеризующий термо-ЭДС пары проводников."
-        },
-        {
-            "Термин": "Термоток",
-            "Значение по материалу реферата": "Ток в замкнутой цепи, возникающий вследствие термо-ЭДС."
-        },
-        {
-            "Термин": "Термопара",
-            "Значение по материалу реферата": "Термоэлектрический преобразователь температуры из двух разнородных проводников."
-        },
-        {
-            "Термин": "Компенсация холодного спая",
-            "Значение по материалу реферата": "Учёт температуры свободных концов термопары при измерении."
-        },
-        {
-            "Термин": "Термобатарея (термостолбик)",
-            "Значение по материалу реферата": "Последовательное соединение нескольких термопар."
-        },
-        {
-            "Термин": "Эффект Пельтье",
-            "Значение по материалу реферата": "Выделение или поглощение дополнительной теплоты при прохождении тока через контакт разнородных проводников."
-        },
-        {
-            "Термин": "Эффект Томсона",
-            "Значение по материалу реферата": "Выделение или поглощение теплоты в однородном проводнике при прохождении тока и наличии градиента температуры."
-        }
-    ]
-
-    search_term = st.text_input("🔍 Поиск по словарю терминов:", value=st.session_state.get("glossary_search", ""))
-    st.session_state["glossary_search"] = search_term
-    filtered_glossary = [
-        row for row in glossary_data
-        if search_term.lower() in row["Термин"].lower()
-        or search_term.lower() in row["Значение по материалу реферата"].lower()
-    ]
-    st.dataframe(
-        pd.DataFrame(filtered_glossary if filtered_glossary else glossary_data),
-        use_container_width=True,
-        hide_index=True
-    )
-
-    with st.expander("ℹ️ Примечание для интеграции в приложение"):
+    # -----------------------------------------------------------------
+    # ПОДРАЗДЕЛ 2: САМОПРОВЕРКА ПО МАТЕРИАЛУ
+    # -----------------------------------------------------------------
+    elif cur_subtab == "Самопроверка":
+        st.subheader("✅ Самопроверка по материалу")
         st.markdown(
-            "Материал разбит на шесть самостоятельных этапов. Каждый этап можно разместить отдельной "
-            "раскрывающейся карточкой или вкладкой. Изображения находятся в папке `assets`; пути к ним "
-            "указаны непосредственно в этом Markdown-файле. Таблицу типов термопар, формулы, самопроверку "
-            "и словарь терминов следует переносить как структурированные элементы, а не как сплошной текст."
+            "**Порядок работы с вопросами:**\n"
+            "1. Сначала самостоятельно ответьте на вопрос.\n"
+            "2. Затем раскройте правильный ответ.\n"
+            "3. Сравните свой ответ с приведённым объяснением."
         )
+        qa_pairs = [
+            (
+                "1. Что называют термо-ЭДС?",
+                "Электродвижущая сила, возникающая в цепи из разнородных проводников при разных температурах спаев."
+            ),
+            (
+                "2. Какие условия необходимы для возникновения эффекта Зеебека в цепи из двух разнородных проводников?",
+                "Нужны два разнородных проводника и разная температура мест их соединения."
+            ),
+            (
+                "3. Какие проводники использовал Зеебек в известном опыте и что наблюдал при нагревании одного спая?",
+                "Висмутовый и медный проводники; при нагревании одного спая магнитная стрелка отклонялась, а при перестановке горячего и холодного спаев направление отклонения менялось."
+            ),
+            (
+                "4. Как объясняется физическая причина возникновения термо-ЭДС в реферате?",
+                "Из-за диффузии носителей заряда от нагретой части к холодной, накопления заряда и возникновения электрического поля."
+            ),
+            (
+                "5. Что обозначают $T_1$, $T_2$ и $\\alpha$ в приближённой формуле термо-ЭДС?",
+                "$T_1$ и $T_2$ — температуры спаев; $\\alpha$ — коэффициент термо-ЭДС данной пары проводников."
+            ),
+            (
+                "6. Чем эффект Пельтье отличается от эффекта Зеебека?",
+                "Эффект Пельтье проявляется как выделение или поглощение дополнительной тепловой мощности ($\\dot{Q} = \\Pi I$) при прохождении тока через контакт разнородных проводников."
+            ),
+            (
+                "7. Что называют горячим и холодным спаями термопары?",
+                "Горячий (рабочий) спай находится в зоне измерения; холодный спай образован свободными концами, подключаемыми к измерительному прибору."
+            ),
+            (
+                "8. Для чего нужна компенсация холодного спая?",
+                "Чтобы учитывать температуру свободных концов, поскольку измеряемая термо-ЭДС зависит от разности температур спаев."
+            ),
+            (
+                "9. Какие три закона термоэлектрических цепей перечислены в реферате?",
+                "Закон однородной цепи, закон промежуточных металлов и закон промежуточных температур."
+            ),
+            (
+                "10. Где применяются термопары и другие термоэлектрические устройства согласно реферату?",
+                "В измерении температуры, регистрации теплового излучения, термоэлектрических генераторах и охладителях, а также в перечисленных промышленных и научных областях."
+            )
+        ]
 
+        for q_text, a_text in qa_pairs:
+            with st.expander(q_text):
+                st.markdown(f"**Ответ для проверки:** {a_text}")
+
+        with st.expander("📋 Ответы для проверки (полный список)"):
+            st.markdown("### Ответы для проверки")
+            for idx, (_, a_text) in enumerate(qa_pairs, start=1):
+                st.markdown(f"{idx}. {a_text}")
+
+        qa_nav1, qa_nav2 = st.columns(2)
+        with qa_nav1:
+            if st.button("⬅️ Вернуться к этапам теории", key="qa_back_stages_btn", use_container_width=True):
+                st.session_state["theory_subtab"] = "Изучение по этапам (1–6)"
+                st.rerun()
+        with qa_nav2:
+            if st.button("Открыть словарь терминов ➡️", key="qa_goto_glossary_btn", use_container_width=True):
+                st.session_state["theory_subtab"] = "Словарь терминов"
+                st.rerun()
+
+    # -----------------------------------------------------------------
+    # ПОДРАЗДЕЛ 3: СЛОВАРЬ ТЕРМИНОВ
+    # -----------------------------------------------------------------
+    else:
+        st.subheader("📖 Словарь терминов")
+        glossary_data = [
+            {
+                "Термин": "Термоэлектрические явления",
+                "Значение по материалу реферата": "Группа эффектов, связывающих тепловые и электрические процессы в проводниках и полупроводниках."
+            },
+            {
+                "Термин": "Эффект Зеебека",
+                "Значение по материалу реферата": "Возникновение ЭДС в цепи из разнородных проводников при разной температуре спаев."
+            },
+            {
+                "Термин": "Термо-ЭДС",
+                "Значение по материалу реферата": "Электродвижущая сила, возникающая при эффекте Зеебека."
+            },
+            {
+                "Термин": "Спай",
+                "Значение по материалу реферата": "Место соединения двух термоэлектродов."
+            },
+            {
+                "Термин": "Термоэлектрод",
+                "Значение по материалу реферата": "Проводник, входящий в состав термопары."
+            },
+            {
+                "Термин": "Коэффициент Зеебека",
+                "Значение по материалу реферата": "Коэффициент, характеризующий термо-ЭДС пары проводников."
+            },
+            {
+                "Термин": "Термоток",
+                "Значение по материалу реферата": "Ток в замкнутой цепи, возникающий вследствие термо-ЭДС."
+            },
+            {
+                "Термин": "Термопара",
+                "Значение по материалу реферата": "Термоэлектрический преобразователь температуры из двух разнородных проводников."
+            },
+            {
+                "Термин": "Компенсация холодного спая",
+                "Значение по материалу реферата": "Учёт температуры свободных концов термопары при измерении."
+            },
+            {
+                "Термин": "Термобатарея (термостолбик)",
+                "Значение по материалу реферата": "Последовательное соединение нескольких термопар."
+            },
+            {
+                "Термин": "Эффект Пельтье",
+                "Значение по материалу реферата": "Выделение или поглощение дополнительной теплоты при прохождении тока через контакт разнородных проводников."
+            },
+            {
+                "Термин": "Эффект Томсона",
+                "Значение по материалу реферата": "Выделение или поглощение теплоты в однородном проводнике при прохождении тока и наличии градиента температуры."
+            }
+        ]
+
+        search_term = st.text_input("🔍 Поиск по словарю терминов:", value=st.session_state.get("glossary_search", ""), key="glossary_search_input")
+        st.session_state["glossary_search"] = search_term
+        query_clean = search_term.strip().casefold()
+        if not query_clean:
+            st.dataframe(
+                pd.DataFrame(glossary_data),
+                use_container_width=True,
+                hide_index=True
+            )
+        else:
+            filtered_glossary = [
+                row for row in glossary_data
+                if query_clean in row["Термин"].casefold()
+                or query_clean in row["Значение по материалу реферата"].casefold()
+            ]
+            if filtered_glossary:
+                st.dataframe(
+                    pd.DataFrame(filtered_glossary),
+                    use_container_width=True,
+                    hide_index=True
+                )
+            else:
+                st.info("По вашему запросу ничего не найдено.")
+
+        if st.button("⬅️ Вернуться к этапам теории", key="glossary_back_stages_btn"):
+            st.session_state["theory_subtab"] = "Изучение по этапам (1–6)"
+            st.rerun()
 
 
 # =====================================================================
@@ -4948,8 +6059,12 @@ def render_single_tc_examples_grid(
     environment: str,
     is_conditional: bool
 ) -> None:
-    """Отрисовывает сетку карточек производственного применения для одного типа термопары."""
+    """
+    Отрисовывает карточки производственного применения для одного типа термопары:
+    на компьютере — в две колонки, на телефоне — в одну колонку.
+    """
     examples = filter_industrial_examples(tc_code, t_min, t_max, environment)
+    is_mobile_view = (st.session_state.get("chart_display_mode") == "Смартфон (320–430 px)")
 
     if is_conditional:
         if tc_code == "B":
@@ -4975,29 +6090,37 @@ def render_single_tc_examples_grid(
         )
         return
 
-    # Выводим карточки аккуратной сеткой по 2 в ряд
-    for row_start in range(0, len(examples), 2):
-        row_items = examples[row_start:row_start + 2]
-        cols = st.columns(len(row_items))
-        for col, ex in zip(cols, row_items):
-            with col:
-                with st.container(border=True):
-                    top_l, top_r = st.columns([3, 1])
-                    with top_l:
-                        st.markdown(f"#### {ex['equipment']}")
-                        st.caption(f"🏭 **Отрасль:** {ex['industry']}")
-                    with top_r:
-                        svg_markup = get_equipment_svg(ex["icon"])
-                        st.markdown(
-                            f'<div style="display:flex;justify-content:flex-end;align-items:center;">{svg_markup}</div>',
-                            unsafe_allow_html=True
-                        )
+    def _draw_example_card(ex: dict) -> None:
+        with st.container(border=True):
+            svg_markup = get_equipment_svg(ex["icon"])
+            if is_mobile_view:
+                st.markdown(f"#### {ex['equipment']}")
+                st.caption(f"🏭 **Отрасль:** {ex['industry']}")
+                st.markdown(f'<div class="kip-equip-svg-wrap">{svg_markup}</div>', unsafe_allow_html=True)
+            else:
+                top_l, top_r = st.columns([3, 1])
+                with top_l:
+                    st.markdown(f"#### {ex['equipment']}")
+                    st.caption(f"🏭 **Отрасль:** {ex['industry']}")
+                with top_r:
+                    st.markdown(f'<div class="kip-equip-svg-wrap">{svg_markup}</div>', unsafe_allow_html=True)
 
-                    st.markdown(f"- **Место установки:** {ex['install_point']}")
-                    st.markdown(f"- **Контролируемая температура:** {ex['controlled_temp']}")
-                    st.markdown(f"- **Что контролируют и почему подходит:** {ex['explanation']}")
-                    st.caption(f"⚠️ *Инженерные ограничения:* {ex['limitations']}")
-                    st.caption("ℹ️ *Типовой производственный пример; требует подбора конкретного исполнения датчика и защитной гильзы.*")
+            st.markdown(f"- **Место установки:** {ex['install_point']}")
+            st.markdown(f"- **Контролируемая температура:** {ex['controlled_temp']}")
+            st.markdown(f"- **Что контролируют и почему подходит:** {ex['explanation']}")
+            st.caption(f"⚠️ *Инженерные ограничения:* {ex['limitations']}")
+            st.caption("ℹ️ *Типовой производственный пример; требует подбора конкретного исполнения датчика и защитной гильзы.*")
+
+    if is_mobile_view:
+        for ex in examples:
+            _draw_example_card(ex)
+    else:
+        for row_start in range(0, len(examples), 2):
+            row_items = examples[row_start:row_start + 2]
+            cols = st.columns(len(row_items))
+            for col, ex in zip(cols, row_items):
+                with col:
+                    _draw_example_card(ex)
 
 
 def render_industrial_applications_block(
@@ -5023,7 +6146,6 @@ def render_industrial_applications_block(
     is_cond = result["status"] in ("warning", "conditional")
     primary_sp = result["primary"]
 
-    # Собираем вкладки: основной рекомендованный тип + альтернативы (чтобы видеть примеры и для K, и для N при 700–1000 °C, и для S/R при 1200–1500 °C)
     tab_entries = [
         (f"Основной: {primary_sp['code']} ({primary_sp['gost'].split(' ')[0]})", primary_sp, is_cond)
     ]
@@ -5061,12 +6183,27 @@ def render_industrial_applications_block(
 
 
 def render_thermocouple_selector() -> None:
-    """Интерактивный модуль «Подбор термопары по условиям эксплуатации»."""
+    """
+    Интерактивный модуль «Подбор термопары по условиям эксплуатации».
+    Последовательная структура результата:
+    1) Рекомендуемый тип, температурный диапазон, материалы электродов, чувствительность (4 карточки + статус).
+    2) Обоснование выбора.
+    3) Ограничения эксплуатации и важные предупреждения.
+    4) Производственное применение и типовое оборудование.
+    5) Альтернативные варианты.
+    """
+    is_mobile_view = (st.session_state.get("chart_display_mode") == "Смартфон (320–430 px)")
+
     st.header("🧭 Подбор термопары по условиям эксплуатации")
     st.markdown(
-        "Инженерный модуль для выбора типа термопары по полному диапазону температур $[T_{\\min}, T_{\\max}]$, "
-        "характеру рабочей среды и приоритету измерения. Алгоритм разделяет **справочный диапазон таблиц НСХ**, "
-        "**фактический рекомендуемый рабочий диапазон** и связывает выбранный тип с реальным промышленным оборудованием."
+        '<div class="kip-section-intro">'
+        'Инженерный модуль для выбора типа термопары по полному диапазону температур '
+        '<strong>[T_min, T_max]</strong>, характеру рабочей среды и приоритету измерения. '
+        'Алгоритм разделяет <strong>справочный диапазон таблиц НСХ</strong>, '
+        '<strong>фактический рекомендуемый рабочий диапазон</strong> и связывает выбранный тип '
+        'с реальным промышленным оборудованием.'
+        '</div>',
+        unsafe_allow_html=True,
     )
 
     if "sel_t_min" not in st.session_state:
@@ -5096,9 +6233,8 @@ def render_thermocouple_selector() -> None:
 
     with st.expander("⚡ Контрольные тестовые сценарии (включая производственные кейсы)", expanded=False):
         st.caption("Нажмите на кнопку любого сценария для загрузки в форму или запустите сводную таблицу исполнения тестов:")
-        sc_cols = st.columns(2)
-        for idx, (label, s_min, s_max, s_env, s_prio) in enumerate(scenarios_preset):
-            with sc_cols[idx % 2]:
+        if is_mobile_view:
+            for idx, (label, s_min, s_max, s_env, s_prio) in enumerate(scenarios_preset):
                 if st.button(label, key=f"preset_btn_{idx}", use_container_width=True):
                     st.session_state["sel_t_min"] = s_min
                     st.session_state["sel_t_max"] = s_max
@@ -5111,6 +6247,22 @@ def render_thermocouple_selector() -> None:
                         "prio": s_prio
                     }
                     st.rerun()
+        else:
+            sc_cols = st.columns(2)
+            for idx, (label, s_min, s_max, s_env, s_prio) in enumerate(scenarios_preset):
+                with sc_cols[idx % 2]:
+                    if st.button(label, key=f"preset_btn_{idx}", use_container_width=True):
+                        st.session_state["sel_t_min"] = s_min
+                        st.session_state["sel_t_max"] = s_max
+                        st.session_state["sel_env"] = s_env
+                        st.session_state["sel_prio"] = s_prio
+                        st.session_state["selector_committed"] = {
+                            "t_min": s_min,
+                            "t_max": s_max,
+                            "env": s_env,
+                            "prio": s_prio
+                        }
+                        st.rerun()
 
         if st.button("🧪 Выполнить все сценарии и показать сводный протокол", use_container_width=True):
             protocol_rows = []
@@ -5132,8 +6284,23 @@ def render_thermocouple_selector() -> None:
             st.dataframe(pd.DataFrame(protocol_rows), use_container_width=True, hide_index=True)
 
     with st.form("thermocouple_selector_form"):
-        col_in1, col_in2, col_in3, col_in4 = st.columns(4)
-        with col_in1:
+        st.markdown('<div class="kip-param-group-title">🔧 Параметры условий эксплуатации</div>', unsafe_allow_html=True)
+        env_options = [
+            "воздушная / окислительная",
+            "инертная",
+            "восстановительная",
+            "среда с пониженным содержанием кислорода",
+            "вакуум",
+            "неизвестная"
+        ]
+        current_env = st.session_state["sel_env"] if st.session_state["sel_env"] in env_options else env_options[0]
+        prio_options = [
+            "универсальность",
+            "стабильность и точность",
+            "повышенная чувствительность"
+        ]
+
+        if is_mobile_view:
             t_min_in = st.number_input(
                 "Минимальная температура, °C:",
                 min_value=-270.0,
@@ -5141,7 +6308,6 @@ def render_thermocouple_selector() -> None:
                 value=float(st.session_state["sel_t_min"]),
                 step=10.0
             )
-        with col_in2:
             t_max_in = st.number_input(
                 "Максимальная температура, °C:",
                 min_value=-270.0,
@@ -5149,32 +6315,47 @@ def render_thermocouple_selector() -> None:
                 value=float(st.session_state["sel_t_max"]),
                 step=10.0
             )
-        with col_in3:
-            env_options = [
-                "воздушная / окислительная",
-                "инертная",
-                "восстановительная",
-                "среда с пониженным содержанием кислорода",
-                "вакуум",
-                "неизвестная"
-            ]
-            current_env = st.session_state["sel_env"] if st.session_state["sel_env"] in env_options else env_options[0]
             env_in = st.selectbox(
                 "Рабочая среда:",
                 options=env_options,
                 index=env_options.index(current_env)
             )
-        with col_in4:
-            prio_options = [
-                "универсальность",
-                "стабильность и точность",
-                "повышенная чувствительность"
-            ]
             prio_in = st.selectbox(
                 "Приоритет выбора:",
                 options=prio_options,
                 index=prio_options.index(st.session_state["sel_prio"])
             )
+        else:
+            col_in1, col_in2 = st.columns(2)
+            with col_in1:
+                t_min_in = st.number_input(
+                    "Минимальная температура, °C:",
+                    min_value=-270.0,
+                    max_value=3000.0,
+                    value=float(st.session_state["sel_t_min"]),
+                    step=10.0
+                )
+            with col_in2:
+                t_max_in = st.number_input(
+                    "Максимальная температура, °C:",
+                    min_value=-270.0,
+                    max_value=3000.0,
+                    value=float(st.session_state["sel_t_max"]),
+                    step=10.0
+                )
+            col_in3, col_in4 = st.columns(2)
+            with col_in3:
+                env_in = st.selectbox(
+                    "Рабочая среда:",
+                    options=env_options,
+                    index=env_options.index(current_env)
+                )
+            with col_in4:
+                prio_in = st.selectbox(
+                    "Приоритет выбора:",
+                    options=prio_options,
+                    index=prio_options.index(st.session_state["sel_prio"])
+                )
 
         run_selection = st.form_submit_button(
             "🔍 Подобрать термопару",
@@ -5207,51 +6388,86 @@ def render_thermocouple_selector() -> None:
     )
 
     if result["status"] == "error":
+        st.markdown(
+            '<div class="kip-status-banner kip-status-banner--error">'
+            '🚫 Статус подбора: ОТКАЗ В РЕКОМЕНДАЦИИ (подходящий тип термопары не найден)'
+            '</div>',
+            unsafe_allow_html=True,
+        )
         st.error(f"🚫 **Подходящий тип термопары не найден (отказ в рекомендации):**\n\n{result['message']}")
         for w in result["warnings"]:
             st.warning(f"⚠️ {w}")
     else:
         p = result["primary"]
-        header_prefix = (
-            "⚠️ Условная рекомендация (требуется проверка паспорта датчика / условий среды)"
-            if result["status"] in ("warning", "conditional")
-            else "🏆 Рекомендуемый тип термопары"
-        )
+        is_cond = result["status"] in ("warning", "conditional")
+
+        # 1. ЗАМЕТНЫЙ СТАТУС РЕКОМЕНДАЦИИ (условный статус никогда не скрывается)
+        if is_cond:
+            st.markdown(
+                f'<div class="kip-status-banner kip-status-banner--conditional">'
+                f'⚠️ УСЛОВНАЯ РЕКОМЕНДАЦИЯ: {html.escape(p["title"])} — требуется обязательная проверка паспорта датчика и условий среды'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                f'<div class="kip-status-banner kip-status-banner--ok">'
+                f'🏆 РЕКОМЕНДУЕМЫЙ ТИП ТЕРМОПАРЫ: {html.escape(p["title"])}'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+        # 2. ПЕРВЫЙ БЛОК: Рекомендуемый тип, Температурный диапазон, Материалы электродов, Чувствительность
+        st.subheader("1. Ключевые характеристики рекомендуемой термопары")
+        render_kpi_cards_grid([
+            {
+                "label": "Рекомендуемый тип",
+                "value": p["title"],
+                "sub": f"Обозначение ГОСТ Р 8.585-2001: {p['gost']}",
+                "tone": "warn" if is_cond else "normal",
+            },
+            {
+                "label": "Температурный диапазон",
+                "value": p["table_range_str"].split("(")[0].strip(),
+                "sub": p["work_range_str"],
+                "tone": "normal",
+            },
+            {
+                "label": "Материалы электродов",
+                "value": p["electrodes"],
+                "sub": p["sim_nsh_str"],
+                "tone": "normal",
+            },
+            {
+                "label": "Чувствительность",
+                "value": p["sensitivity_str"],
+                "sub": f"Заданный режим: {committed['t_min']:.0f}…{committed['t_max']:.0f} °C ({committed['env']})",
+                "tone": "normal",
+            },
+        ])
+
+        # 3. ОБОСНОВАНИЕ ВЫБОРА
+        st.subheader("2. Обоснование выбора")
         with st.container(border=True):
-            st.subheader(f"{header_prefix}: {p['title']}")
-            k1, k2, k3 = st.columns(3)
-            k1.metric("Обозначение по ГОСТ Р 8.585-2001", p["gost"])
-            k2.metric("Ориентировочная чувствительность", p["sensitivity_str"])
-            k3.metric("Справочный диапазон таблицы", p["table_range_str"].split("(")[0].strip())
+            st.markdown(result["justification"])
+            st.caption(
+                f"**Табличный диапазон:** {p['table_range_str']}  |  "
+                f"**Статус в расчётной базе (Стенд №1):** {p['sim_nsh_str']}"
+            )
 
-            st.markdown(f"- **1. Материалы электродов:** {p['electrodes']}")
-            st.markdown(f"- **2. Практический рабочий диапазон (по источнику):** {p['work_range_str']}")
-            st.markdown(f"- **3. Справочный диапазон стандартной таблицы:** {p['table_range_str']}")
-            st.markdown(f"- **4. Статус в расчётной базе симулятора (Стенд №1):** {p['sim_nsh_str']}")
-            st.markdown(f"- **5. Обоснование выбора:** {result['justification']}")
-            st.markdown(f"- **6. Ограничения применения и возможные проблемы:** {p['limitations']}")
-
+        # 4. ОГРАНИЧЕНИЯ ЭКСПЛУАТАЦИИ И ВАЖНЫЕ ПРЕДУПРЕЖДЕНИЯ
+        st.subheader("3. Ограничения эксплуатации и предупреждения")
+        st.markdown(
+            f'<div class="kip-detail-card kip-detail-card--warn">'
+            f'<strong>Ограничения применения ({html.escape(p["title"])}):</strong><br/>'
+            f'{html.escape(p["limitations"])}'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
         for w in result["warnings"]:
-            st.warning(f"⚠️ **Предупреждение:** {w}")
+            st.warning(f"⚠️ **Важное предупреждение:** {w}")
 
-        if result["alternatives"]:
-            st.subheader("🔄 Возможные альтернативные варианты")
-            alt_cols = st.columns(len(result["alternatives"]))
-            for idx, alt_item in enumerate(result["alternatives"]):
-                alt_sp = alt_item["spec"]
-                with alt_cols[idx]:
-                    with st.container(border=True):
-                        st.markdown(f"#### {alt_sp['title']}")
-                        st.markdown(f"- **Обозначение ГОСТ:** `{alt_sp['gost']}`")
-                        st.markdown(f"- **Материалы электродов:** {alt_sp['electrodes']}")
-                        st.markdown(f"- **Рабочий диапазон:** {alt_sp['work_range_str']}")
-                        st.markdown(f"- **Табличный диапазон:** {alt_sp['table_range_str']}")
-                        st.markdown(f"- **Статус в симуляторе:** {alt_sp['sim_nsh_str']}")
-                        st.markdown(f"- **Чувствительность:** {alt_sp['sensitivity_str']}")
-                        st.markdown(f"- **Пояснение:** {alt_item['note']}")
-                        st.caption(f"*Ограничения:* {alt_sp['limitations']}")
-
-        # Вызов нового блока производственного применения (строго после подбора)
+        # 5. ПРОИЗВОДСТВЕННОЕ ПРИМЕНЕНИЕ И ТИПОВОЕ ОБОРУДОВАНИЕ
         st.markdown("---")
         render_industrial_applications_block(
             result=result,
@@ -5260,7 +6476,35 @@ def render_thermocouple_selector() -> None:
             environment=committed["env"]
         )
 
+        # 6. АЛЬТЕРНАТИВНЫЕ ВАРИАНТЫ
+        if result["alternatives"]:
+            st.markdown("---")
+            st.subheader("🔄 Возможные альтернативные варианты")
+
+            def _draw_alt_card(alt_item: dict) -> None:
+                alt_sp = alt_item["spec"]
+                with st.container(border=True):
+                    st.markdown(f"#### {alt_sp['title']}")
+                    st.markdown(f"- **Обозначение ГОСТ:** `{alt_sp['gost']}`")
+                    st.markdown(f"- **Материалы электродов:** {alt_sp['electrodes']}")
+                    st.markdown(f"- **Рабочий диапазон:** {alt_sp['work_range_str']}")
+                    st.markdown(f"- **Табличный диапазон:** {alt_sp['table_range_str']}")
+                    st.markdown(f"- **Статус в симуляторе:** {alt_sp['sim_nsh_str']}")
+                    st.markdown(f"- **Чувствительность:** {alt_sp['sensitivity_str']}")
+                    st.markdown(f"- **Пояснение:** {alt_item['note']}")
+                    st.caption(f"⚠️ *Ограничения:* {alt_sp['limitations']}")
+
+            if is_mobile_view:
+                for alt_item in result["alternatives"]:
+                    _draw_alt_card(alt_item)
+            else:
+                alt_cols = st.columns(len(result["alternatives"]))
+                for idx, alt_item in enumerate(result["alternatives"]):
+                    with alt_cols[idx]:
+                        _draw_alt_card(alt_item)
+
     if result.get("rejected_reasons"):
+        st.markdown("---")
         with st.expander("📋 Причины отклонения остальных типов термопар для заданного режима"):
             rej_rows = [
                 {
@@ -5279,14 +6523,14 @@ def render_thermocouple_selector() -> None:
     )
 
 
-
 # =====================================================================
 # 11. ГЛАВНЫЙ УСЛОВНЫЙ МАРШРУТИЗАТОР ПРИЛОЖЕНИЯ
 # =====================================================================
 def run_kip_simulator() -> None:
-    """Условный маршрутизатор: выполняет и отображает исключительно активный раздел приложения."""
+    """Условный маршрутизатор: применяет режим доступности и отображает только активный раздел."""
     init_app_session_state()
     stand_params = render_sidebar_navigation_and_controls()
+    apply_visual_system_css(st.session_state["accessibility_mode"])
     render_top_navigation_bar()
 
     active_section = st.session_state["active_section"]
