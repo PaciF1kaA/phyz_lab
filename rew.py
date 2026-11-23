@@ -518,6 +518,31 @@ st.markdown(
                 transform: none;
             }
         }
+
+        /* 5. Навигационная панель и индикатор активного раздела (Этап 2) */
+        .kip-nav-status {
+            background-color: var(--kip-bg-card);
+            border: 1px solid var(--kip-border);
+            border-left: 4px solid var(--kip-accent);
+            border-radius: var(--kip-radius-sm);
+            padding: 0.6rem 0.95rem;
+            margin-bottom: 0.65rem;
+            font-size: var(--kip-font-caption);
+            line-height: 1.45;
+            color: var(--kip-text-secondary);
+        }
+
+        .kip-nav-status strong {
+            color: var(--kip-text-primary);
+        }
+
+        .kip-sidebar-group-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--kip-text-primary);
+            margin-top: 0.25rem;
+            margin-bottom: 0.35rem;
+        }
     </style>
     """,
     unsafe_allow_html=True
@@ -1558,160 +1583,494 @@ def render_3d_stand2_pair(
 
 
 # =====================================================================
-# 5. БОКОВАЯ ПАНЕЛЬ: ВЫБОР СТЕНДА, МОДЕЛИ НЕИСПРАВНОСТЕЙ И ПРАКТИКУМ
+# 5. НАВИГАЦИЯ, УПРАВЛЕНИЕ СОСТОЯНИЕМ И СТРУКТУРИРОВАННАЯ БОКОВАЯ ПАНЕЛЬ
 # =====================================================================
-st.sidebar.title("⚛️ Физическая лаборатория")
-st.sidebar.caption("Тема: «Термо-ЭДС. Эффект Зеебека»")
+MAIN_SECTIONS = [
+    "Исследовательские стенды",
+    "Теоретическая часть",
+    "Подбор термопары",
+    "Справочный помощник",
+]
 
-lab_mode = st.sidebar.radio(
-    "Выберите исследовательский стенд:",
-    options=[
-        "Стенд №1: Визуализация градиента температур и генерация Термо-ЭДС",
-        "Стенд №2: Исследование эффекта Зеебека в разнородных металлах (Термоэлектрические пары)"
-    ]
-)
+MAIN_SECTION_LABELS = {
+    "Исследовательские стенды": "🔬 Стенды",
+    "Теоретическая часть": "📚 Теория",
+    "Подбор термопары": "🧭 Подбор термопары",
+    "Справочный помощник": "📘 Помощник",
+}
 
-chart_display_mode = st.sidebar.selectbox(
-    "📱 Режим отображения графиков:",
-    options=[
-        "Адаптивный (ПК + смартфон)",
-        "Смартфон (320–430 px)",
-        "Компьютер (широкий экран)"
-    ],
-    index=0
-)
+LAB_STAND_OPTIONS = [
+    "Стенд №1: Визуализация градиента температур и генерация Термо-ЭДС",
+    "Стенд №2: Исследование эффекта Зеебека в разнородных металлах (Термоэлектрические пары)",
+]
 
-st.sidebar.markdown("---")
-st.sidebar.subheader("⚡ Физические нарушения цепи")
-circuit_fault_mode = st.sidebar.selectbox(
-    "Состояние термоэлектрического контура:",
-    options=[
-        "Норма",
-        "Обрыв термоэлектрического контура",
-        "Паразитный спай (КЗ)"
-    ]
-)
+LAB_STAND_SHORT_LABELS = {
+    LAB_STAND_OPTIONS[0]: "Стенд №1: Градиент и НСХ",
+    LAB_STAND_OPTIONS[1]: "Стенд №2: Пары металлов",
+}
 
-open_circuit_meter_mode = "Вторичный прибор с контролем обрыва (шунт входа)"
-if circuit_fault_mode == "Обрыв термоэлектрического контура":
-    open_circuit_meter_mode = st.sidebar.radio(
-        "Режим измерительного прибора при обрыве:",
-        options=[
-            "Вторичный прибор с контролем обрыва (шунт входа)",
-            "Идеальный высокоомный вольтметр на разрыве (измерение U_хх)"
-        ]
+CHART_DISPLAY_OPTIONS = [
+    "Адаптивный (ПК + смартфон)",
+    "Смартфон (320–430 px)",
+    "Компьютер (широкий экран)",
+]
+
+FAULT_MODE_OPTIONS = [
+    "Норма",
+    "Обрыв термоэлектрического контура",
+    "Паразитный спай (КЗ)",
+]
+
+OPEN_METER_OPTIONS = [
+    "Вторичный прибор с контролем обрыва (шунт входа)",
+    "Идеальный высокоомный вольтметр на разрыве (измерение U_хх)",
+]
+
+KZ_CONTACT_OPTIONS = [
+    "Непосредственное соприкосновение электродов A и B",
+    "Перемычка из третьего металла C (изотермическая при T_кз)",
+]
+
+
+def init_app_session_state() -> None:
+    """Инициализирует устойчивые ключи st.session_state для сохранения параметров при смене разделов."""
+    sensor_keys = list(THERMOCOUPLES_DB.keys())
+    metal_names = list(METALS_DB.keys())
+
+    defaults = {
+        # Навигация и история переходов
+        "active_section": MAIN_SECTIONS[0],
+        "nav_history": [],
+        "active_lab_stand": LAB_STAND_OPTIONS[0],
+        # Настройки отображения
+        "chart_display_mode": CHART_DISPLAY_OPTIONS[0],
+        # Общие параметры физических неисправностей
+        "fault_mode": FAULT_MODE_OPTIONS[0],
+        "open_meter_mode": OPEN_METER_OPTIONS[0],
+        "r_cold_branch_ohm": 8.0,
+        "r_hot_loop_ohm": 5.0,
+        "r_bridge_ohm": 0.0,
+        # Параметры Стенда №1
+        "stand1_sensor_name": sensor_keys[0],
+        "stand1_t_hot": int(THERMOCOUPLES_DB[sensor_keys[0]]["default_hot"]),
+        "stand1_t_cold": 20,
+        "stand1_t_kz": 260,
+        "stand1_kz_contact_type": KZ_CONTACT_OPTIONS[0],
+        # Параметры Стенда №2
+        "stand2_metal_1": metal_names[0],
+        "stand2_metal_2": metal_names[6],
+        "stand2_t_hot": 520,
+        "stand2_t_cold": 20,
+        "stand2_t_kz": 270,
+        # Параметры теории и справочника
+        "theory_stage_idx": 0,
+        "theory_view_mode": "Пошаговое изучение (с навигацией между этапами)",
+        "glossary_search": "",
+        "gen_desired_s": 75.0,
+    }
+    for key, val in defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = val
+
+
+def navigate_to_section(target_section: str) -> None:
+    """Выполняет переход в выбранный основной раздел с сохранением предыдущего раздела в истории."""
+    if target_section not in MAIN_SECTIONS:
+        return
+    current = st.session_state.get("active_section", MAIN_SECTIONS[0])
+    if target_section != current:
+        history = list(st.session_state.get("nav_history", []))
+        history.append(current)
+        st.session_state["nav_history"] = history[-20:]
+        st.session_state["active_section"] = target_section
+
+
+def navigate_back() -> None:
+    """Возвращает пользователя в предыдущий открытый раздел из истории переходов."""
+    history = list(st.session_state.get("nav_history", []))
+    if history:
+        prev_section = history.pop()
+        st.session_state["nav_history"] = history
+        st.session_state["active_section"] = prev_section
+
+
+def _on_sidebar_nav_change() -> None:
+    """Обработчик переключения основного раздела из боковой панели."""
+    chosen = st.session_state.get("_sidebar_nav_radio")
+    if chosen in MAIN_SECTIONS:
+        navigate_to_section(chosen)
+
+
+def _on_sidebar_stand_change() -> None:
+    """Обработчик переключения активного стенда из боковой панели."""
+    chosen_stand = st.session_state.get("_sidebar_stand_radio")
+    if chosen_stand in LAB_STAND_OPTIONS:
+        st.session_state["active_lab_stand"] = chosen_stand
+
+
+def render_sidebar_navigation_and_controls() -> dict:
+    """
+    Отрисовывает боковую панель, разделённую на четыре логические группы:
+    1. Навигация.
+    2. Параметры эксперимента (только для активного стенда).
+    3. Физические неисправности (только для исследовательских стендов).
+    4. Настройки отображения (общие настройки приложения).
+    """
+    st.sidebar.title("⚛️ KIP Simulator")
+    st.sidebar.caption("Тема: «Термо-ЭДС. Эффект Зеебека»")
+
+    # -----------------------------------------------------------------
+    # ГРУППА 1: НАВИГАЦИЯ
+    # -----------------------------------------------------------------
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🧭 Навигация")
+    st.session_state["_sidebar_nav_radio"] = st.session_state["active_section"]
+    st.sidebar.radio(
+        "Основной раздел приложения:",
+        options=MAIN_SECTIONS,
+        key="_sidebar_nav_radio",
+        on_change=_on_sidebar_nav_change,
     )
 
-# Независимые параметры сопротивлений участков цепи (п. 2 ревизии)
-r_cold_branch_input = 8.0
-r_hot_loop_input = 7.0
-r_bridge_input = 0.0
-if circuit_fault_mode == "Паразитный спай (КЗ)":
-    st.sidebar.markdown("**Сопротивления участков цепи при КЗ:**")
-    r_cold_branch_input = float(st.sidebar.number_input(
-        "Сопротивление холодного участка R_уч1 (до КЗ), Ом:",
-        min_value=0.1,
-        max_value=500.0,
-        value=8.0,
-        step=0.5
-    ))
-    r_hot_loop_input = float(st.sidebar.number_input(
-        "Сопротивление горячего участка R_уч2 (от КЗ до спая), Ом:",
-        min_value=0.1,
-        max_value=500.0,
-        value=5.0,
-        step=0.5
-    ))
-    r_bridge_input = float(st.sidebar.number_input(
-        "Переходное сопротивление перемычки R_кз, Ом:",
-        min_value=0.0,
-        max_value=100.0,
-        value=0.0,
-        step=0.5
-    ))
+    history = st.session_state.get("nav_history", [])
+    if history:
+        prev_sec = history[-1]
+        if st.sidebar.button(
+            f"⬅️ Назад: {prev_sec}",
+            key="sidebar_nav_back_btn",
+            use_container_width=True
+        ):
+            navigate_back()
+            st.rerun()
 
-st.sidebar.markdown("---")
-st.sidebar.subheader("🎓 Справочный практикум")
-if st.sidebar.button("🧠 Случайный качественный вопрос"):
-    physics_questions = [
-        {
-            "title": "Равенство температур спаев",
-            "question": "Почему при равенстве температур горячего и холодного спаев (T_hot = T_cold) результирующая Термо-ЭДС равна нулю?",
-            "hint": "Рассмотрите интеграл по замкнутому контуру и Второе начало термодинамики: возможен ли вечный двигатель второго рода?"
-        },
-        {
-            "title": "Влияние длины проводников",
-            "question": "Как изменится Термо-ЭДС термопары, если удлинить её провода в 3 раза при неизменных T_hot и T_cold?",
-            "hint": "Зависит ли интеграл E = ∫ S(T) dT от геометрической длины пути, или меняется только внутреннее омическое сопротивление контура?"
-        },
-        {
-            "title": "Закон Вольта (третьего металла)",
-            "question": "Что такое закон Вольта для последовательной цепи металлов и почему медные щупы вольтметра не искажают измеряемую Термо-ЭДС?",
-            "hint": "Запишите алгебраическую сумму потенциалов при условии, что оба контакта с третьим металлом имеют одинаковую температуру T_cold."
-        }
-    ]
-    st.session_state["prof_question"] = np.random.choice(physics_questions)
+    active_section = st.session_state["active_section"]
+    params = {
+        "lab_mode": st.session_state["active_lab_stand"],
+        "chart_display_mode": st.session_state["chart_display_mode"],
+        "circuit_fault_mode": st.session_state["fault_mode"],
+        "open_circuit_meter_mode": st.session_state["open_meter_mode"],
+        "r_cold_branch_input": float(st.session_state["r_cold_branch_ohm"]),
+        "r_hot_loop_input": float(st.session_state["r_hot_loop_ohm"]),
+        "r_bridge_input": float(st.session_state["r_bridge_ohm"]),
+        "sensor_name": st.session_state["stand1_sensor_name"],
+        "t_hot": float(st.session_state["stand1_t_hot"]),
+        "t_cold": float(st.session_state["stand1_t_cold"]),
+        "t_kz_stand1": None,
+        "kz_contact_type": st.session_state["stand1_kz_contact_type"],
+        "metal_1": st.session_state["stand2_metal_1"],
+        "metal_2": st.session_state["stand2_metal_2"],
+        "t_hot_s2": float(st.session_state["stand2_t_hot"]),
+        "t_cold_s2": float(st.session_state["stand2_t_cold"]),
+        "t_kz_s2": None,
+    }
 
-if "prof_question" in st.session_state:
-    pq = st.session_state["prof_question"]
-    st.sidebar.info(f"**Тема: {pq['title']}**\n\n{pq['question']}")
-    st.sidebar.caption(f"💡 *Подсказка:* {pq['hint']}")
+    # -----------------------------------------------------------------
+    # ГРУППА 2: ПАРАМЕТРЫ ЭКСПЕРИМЕНТА (только в разделе стендов)
+    # -----------------------------------------------------------------
+    if active_section == "Исследовательские стенды":
+        st.sidebar.markdown("---")
+        st.sidebar.subheader("🔬 Параметры эксперимента")
+
+        st.session_state["_sidebar_stand_radio"] = st.session_state["active_lab_stand"]
+        st.sidebar.radio(
+            "Активный исследовательский стенд:",
+            options=LAB_STAND_OPTIONS,
+            key="_sidebar_stand_radio",
+            on_change=_on_sidebar_stand_change,
+        )
+        lab_mode = st.session_state["active_lab_stand"]
+        params["lab_mode"] = lab_mode
+
+        if lab_mode.startswith("Стенд №1"):
+            sensor_keys = list(THERMOCOUPLES_DB.keys())
+            cur_sensor = st.session_state["stand1_sensor_name"]
+            if cur_sensor not in sensor_keys:
+                cur_sensor = sensor_keys[0]
+            sensor_name = st.sidebar.selectbox(
+                "Выберите термопару из расчётной базы симулятора:",
+                options=sensor_keys,
+                index=sensor_keys.index(cur_sensor),
+            )
+            st.session_state["stand1_sensor_name"] = sensor_name
+            spec = THERMOCOUPLES_DB[sensor_name]
+
+            t_hot_clamped = int(np.clip(
+                int(st.session_state["stand1_t_hot"]),
+                int(spec["min_t"]),
+                int(spec["max_t"])
+            ))
+            t_hot_val = st.sidebar.slider(
+                "Температура горячего спая (T_hot), °C:",
+                min_value=int(spec["min_t"]),
+                max_value=int(spec["max_t"]),
+                value=t_hot_clamped,
+                step=10,
+            )
+            st.session_state["stand1_t_hot"] = t_hot_val
+
+            t_cold_clamped = int(np.clip(int(st.session_state["stand1_t_cold"]), -50, 100))
+            t_cold_val = st.sidebar.slider(
+                "Температура холодного спая (T_cold), °C:",
+                min_value=-50,
+                max_value=100,
+                value=t_cold_clamped,
+                step=10,
+            )
+            st.session_state["stand1_t_cold"] = t_cold_val
+
+            params["sensor_name"] = sensor_name
+            params["t_hot"] = float(t_hot_val)
+            params["t_cold"] = float(t_cold_val)
+        else:
+            metal_names = list(METALS_DB.keys())
+            cur_m1 = st.session_state["stand2_metal_1"]
+            cur_m2 = st.session_state["stand2_metal_2"]
+            metal_1 = st.sidebar.selectbox(
+                "Металл / сплав ветви А (Термоэлектрод 1):",
+                options=metal_names,
+                index=metal_names.index(cur_m1) if cur_m1 in metal_names else 0,
+            )
+            metal_2 = st.sidebar.selectbox(
+                "Металл / сплав ветви B (Термоэлектрод 2):",
+                options=metal_names,
+                index=metal_names.index(cur_m2) if cur_m2 in metal_names else 6,
+            )
+            st.session_state["stand2_metal_1"] = metal_1
+            st.session_state["stand2_metal_2"] = metal_2
+
+            t_hot_s2_val = st.sidebar.slider(
+                "Температура горячего спая (T_hot), °C:",
+                min_value=-100,
+                max_value=800,
+                value=int(np.clip(int(st.session_state["stand2_t_hot"]), -100, 800)),
+                step=10,
+            )
+            t_cold_s2_val = st.sidebar.slider(
+                "Температура холодного спая (T_cold), °C:",
+                min_value=-100,
+                max_value=200,
+                value=int(np.clip(int(st.session_state["stand2_t_cold"]), -100, 200)),
+                step=10,
+            )
+            st.session_state["stand2_t_hot"] = t_hot_s2_val
+            st.session_state["stand2_t_cold"] = t_cold_s2_val
+
+            params["metal_1"] = metal_1
+            params["metal_2"] = metal_2
+            params["t_hot_s2"] = float(t_hot_s2_val)
+            params["t_cold_s2"] = float(t_cold_s2_val)
+
+        # -------------------------------------------------------------
+        # ГРУППА 3: ФИЗИЧЕСКИЕ НЕИСПРАВНОСТИ (только в разделе стендов)
+        # -------------------------------------------------------------
+        st.sidebar.markdown("---")
+        st.sidebar.subheader("⚡ Физические неисправности")
+        cur_fault = st.session_state["fault_mode"]
+        circuit_fault_mode = st.sidebar.selectbox(
+            "Состояние термоэлектрического контура:",
+            options=FAULT_MODE_OPTIONS,
+            index=FAULT_MODE_OPTIONS.index(cur_fault) if cur_fault in FAULT_MODE_OPTIONS else 0,
+        )
+        st.session_state["fault_mode"] = circuit_fault_mode
+        params["circuit_fault_mode"] = circuit_fault_mode
+
+        if circuit_fault_mode == "Обрыв термоэлектрического контура":
+            cur_open_mode = st.session_state["open_meter_mode"]
+            open_mode = st.sidebar.radio(
+                "Режим измерительного прибора при обрыве:",
+                options=OPEN_METER_OPTIONS,
+                index=OPEN_METER_OPTIONS.index(cur_open_mode) if cur_open_mode in OPEN_METER_OPTIONS else 0,
+            )
+            st.session_state["open_meter_mode"] = open_mode
+            params["open_circuit_meter_mode"] = open_mode
+        elif circuit_fault_mode == "Паразитный спай (КЗ)":
+            st.sidebar.markdown("**Сопротивления участков цепи при КЗ:**")
+            r_cold_val = float(st.sidebar.number_input(
+                "Сопротивление холодного участка R_уч1 (до КЗ), Ом:",
+                min_value=0.1,
+                max_value=500.0,
+                value=float(st.session_state["r_cold_branch_ohm"]),
+                step=0.5,
+            ))
+            r_hot_val = float(st.sidebar.number_input(
+                "Сопротивление горячего участка R_уч2 (от КЗ до спая), Ом:",
+                min_value=0.1,
+                max_value=500.0,
+                value=float(st.session_state["r_hot_loop_ohm"]),
+                step=0.5,
+            ))
+            r_bridge_val = float(st.sidebar.number_input(
+                "Переходное сопротивление перемычки R_кз, Ом:",
+                min_value=0.0,
+                max_value=100.0,
+                value=float(st.session_state["r_bridge_ohm"]),
+                step=0.5,
+            ))
+            st.session_state["r_cold_branch_ohm"] = r_cold_val
+            st.session_state["r_hot_loop_ohm"] = r_hot_val
+            st.session_state["r_bridge_ohm"] = r_bridge_val
+            params["r_cold_branch_input"] = r_cold_val
+            params["r_hot_loop_input"] = r_hot_val
+            params["r_bridge_input"] = r_bridge_val
+
+            if lab_mode.startswith("Стенд №1"):
+                st.sidebar.markdown("**Температура и тип контакта КЗ:**")
+                kz_min = int(min(params["t_cold"], params["t_hot"]))
+                kz_max = int(max(params["t_cold"], params["t_hot"]))
+                if kz_min == kz_max:
+                    t_kz_val = kz_min
+                else:
+                    t_kz_init = int(np.clip(int(st.session_state["stand1_t_kz"]), kz_min, kz_max))
+                    t_kz_val = st.sidebar.slider(
+                        "Температура в точке перемычки (T_кз), °C:",
+                        min_value=kz_min,
+                        max_value=kz_max,
+                        value=t_kz_init,
+                        step=10,
+                    )
+                st.session_state["stand1_t_kz"] = t_kz_val
+                params["t_kz_stand1"] = float(t_kz_val)
+
+                cur_contact = st.session_state["stand1_kz_contact_type"]
+                kz_contact_type = st.sidebar.selectbox(
+                    "Характер паразитного контакта:",
+                    options=KZ_CONTACT_OPTIONS,
+                    index=KZ_CONTACT_OPTIONS.index(cur_contact) if cur_contact in KZ_CONTACT_OPTIONS else 0,
+                )
+                st.session_state["stand1_kz_contact_type"] = kz_contact_type
+                params["kz_contact_type"] = kz_contact_type
+            else:
+                kz_min2 = int(min(params["t_cold_s2"], params["t_hot_s2"]))
+                kz_max2 = int(max(params["t_cold_s2"], params["t_hot_s2"]))
+                if kz_min2 == kz_max2:
+                    t_kz_s2_val = kz_min2
+                else:
+                    t_kz_s2_init = int(np.clip(int(st.session_state["stand2_t_kz"]), kz_min2, kz_max2))
+                    t_kz_s2_val = st.sidebar.slider(
+                        "Температура перемычки КЗ (T_кз), °C:",
+                        min_value=kz_min2,
+                        max_value=kz_max2,
+                        value=t_kz_s2_init,
+                        step=10,
+                    )
+                st.session_state["stand2_t_kz"] = t_kz_s2_val
+                params["t_kz_s2"] = float(t_kz_s2_val)
+    else:
+        st.sidebar.markdown("---")
+        st.sidebar.caption(
+            "Параметры экспериментов и неисправностей сохранены в текущей сессии и "
+            "доступны при возврате в раздел «Исследовательские стенды»."
+        )
+
+    # -----------------------------------------------------------------
+    # ГРУППА 4: НАСТРОЙКИ ОТОБРАЖЕНИЯ (общие настройки приложения)
+    # -----------------------------------------------------------------
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🎛️ Настройки отображения")
+    cur_chart_mode = st.session_state["chart_display_mode"]
+    chart_mode = st.sidebar.selectbox(
+        "Режим отображения графиков:",
+        options=CHART_DISPLAY_OPTIONS,
+        index=CHART_DISPLAY_OPTIONS.index(cur_chart_mode) if cur_chart_mode in CHART_DISPLAY_OPTIONS else 0,
+    )
+    st.session_state["chart_display_mode"] = chart_mode
+    params["chart_display_mode"] = chart_mode
+
+    return params
 
 
+def render_top_navigation_bar() -> None:
+    """
+    Компактная верхняя панель навигации по четырём основным разделам.
+    Обеспечивает удобные переходы на компьютере и смартфоне, показывает текущий раздел
+    и позволяет вернуться в предыдущий раздел одним нажатием.
+    """
+    active_section = st.session_state["active_section"]
+    history = st.session_state.get("nav_history", [])
+
+    # Индикатор текущего раздела и кнопка возврата
+    status_suffix = ""
+    if active_section == "Исследовательские стенды":
+        active_stand_short = LAB_STAND_SHORT_LABELS.get(
+            st.session_state["active_lab_stand"],
+            st.session_state["active_lab_stand"]
+        )
+        status_suffix = f" &nbsp;→&nbsp; <strong>{active_stand_short}</strong>"
+
+    if history:
+        prev_section = history[-1]
+        bar_left, bar_right = st.columns([3, 1])
+        with bar_left:
+            st.markdown(
+                f'<div class="kip-nav-status">Открытый раздел: <strong>{active_section}</strong>{status_suffix}</div>',
+                unsafe_allow_html=True,
+            )
+        with bar_right:
+            if st.button(
+                f"⬅️ Вернуться: {MAIN_SECTION_LABELS[prev_section]}",
+                key="top_nav_back_btn",
+                use_container_width=True,
+            ):
+                navigate_back()
+                st.rerun()
+    else:
+        st.markdown(
+            f'<div class="kip-nav-status">Открытый раздел: <strong>{active_section}</strong>{status_suffix}</div>',
+            unsafe_allow_html=True,
+        )
+
+    # Меню переключения четырёх основных направлений
+    nav_cols = st.columns(4)
+    for idx, section_name in enumerate(MAIN_SECTIONS):
+        is_current = (section_name == active_section)
+        with nav_cols[idx]:
+            if st.button(
+                MAIN_SECTION_LABELS[section_name],
+                key=f"top_nav_btn_{idx}",
+                type="primary" if is_current else "secondary",
+                use_container_width=True,
+            ):
+                if not is_current:
+                    navigate_to_section(section_name)
+                    st.rerun()
+
+    # Быстрый переключатель стендов внутри раздела «Исследовательские стенды» (удобно на смартфоне)
+    if active_section == "Исследовательские стенды":
+        stand_cols = st.columns(2)
+        for s_idx, stand_full in enumerate(LAB_STAND_OPTIONS):
+            is_stand_active = (st.session_state["active_lab_stand"] == stand_full)
+            with stand_cols[s_idx]:
+                if st.button(
+                    LAB_STAND_SHORT_LABELS[stand_full],
+                    key=f"top_stand_btn_{s_idx}",
+                    type="primary" if is_stand_active else "secondary",
+                    use_container_width=True,
+                ):
+                    if not is_stand_active:
+                        st.session_state["active_lab_stand"] = stand_full
+                        st.rerun()
+
+    st.markdown("---")
 # =====================================================================
 # 6. СТЕНД №1: ВИЗУАЛИЗАЦИЯ ГРАДИЕНТА ТЕМПЕРАТУР И ГЕНЕРАЦИЯ ТЕРМО-ЭДС
 # =====================================================================
-if lab_mode.startswith("Стенд №1"):
+def render_stand_1_section(params: dict) -> None:
+    """Отрисовывает Стенд №1 (выполняется только когда активен раздел стендов и выбран Стенд №1)."""
     st.title("Стенд №1: Визуализация градиента температур и генерация Термо-ЭДС")
 
-    sensor_name = st.sidebar.selectbox(
-        "Выберите термопару из расчётной базы симулятора:",
-        options=list(THERMOCOUPLES_DB.keys())
-    )
+    sensor_name = params["sensor_name"]
     spec = THERMOCOUPLES_DB[sensor_name]
-
-    t_hot = float(st.sidebar.slider(
-        "Температура горячего спая (T_hot), °C:",
-        min_value=int(spec["min_t"]),
-        max_value=int(spec["max_t"]),
-        value=int(spec["default_hot"]),
-        step=10
-    ))
-
-    t_cold = float(st.sidebar.slider(
-        "Температура холодного спая (T_cold), °C:",
-        min_value=-50,
-        max_value=100,
-        value=20,
-        step=10
-    ))
-
-    t_kz_stand1 = None
-    e_kz_stand1 = None
-    kz_contact_type = "Непосредственное соприкосновение электродов A и B"
-    if circuit_fault_mode == "Паразитный спай (КЗ)":
-        st.sidebar.markdown("**Температура и тип контакта КЗ:**")
-        kz_min = int(min(t_cold, t_hot))
-        kz_max = int(max(t_cold, t_hot))
-        kz_default = int(round((t_cold + t_hot) / 2.0, -1))
-        if kz_min == kz_max:
-            t_kz_stand1 = float(kz_min)
-        else:
-            t_kz_stand1 = float(st.sidebar.slider(
-                "Температура в точке перемычки (T_кз), °C:",
-                min_value=kz_min,
-                max_value=kz_max,
-                value=int(np.clip(kz_default, kz_min, kz_max)),
-                step=10
-            ))
-        kz_contact_type = st.sidebar.selectbox(
-            "Характер паразитного контакта:",
-            options=[
-                "Непосредственное соприкосновение электродов A и B",
-                "Перемычка из третьего металла C (изотермическая при T_кз)"
-            ]
-        )
-        e_kz_stand1 = calculate_nominal_emf(sensor_name, t_kz_stand1)
+    t_hot = float(params["t_hot"])
+    t_cold = float(params["t_cold"])
+    chart_display_mode = params["chart_display_mode"]
+    circuit_fault_mode = params["circuit_fault_mode"]
+    open_circuit_meter_mode = params["open_circuit_meter_mode"]
+    r_cold_branch_input = float(params["r_cold_branch_input"])
+    r_hot_loop_input = float(params["r_hot_loop_input"])
+    r_bridge_input = float(params["r_bridge_input"])
+    t_kz_stand1 = params["t_kz_stand1"]
+    kz_contact_type = params["kz_contact_type"]
+    e_kz_stand1 = calculate_nominal_emf(sensor_name, t_kz_stand1) if t_kz_stand1 is not None else None
 
     e_hot = calculate_nominal_emf(sensor_name, t_hot)
     e_cold = calculate_nominal_emf(sensor_name, t_cold)
@@ -1924,7 +2283,8 @@ if lab_mode.startswith("Стенд №1"):
 # =====================================================================
 # 7. СТЕНД №2: ИССЛЕДОВАНИЕ ЭФФЕКТА ЗЕЕБЕКА В РАЗНОРОДНЫХ МЕТАЛЛАХ
 # =====================================================================
-else:
+def render_stand_2_section(params: dict) -> None:
+    """Отрисовывает Стенд №2 (выполняется только когда активен раздел стендов и выбран Стенд №2)."""
     st.title("Стенд №2: Исследование эффекта Зеебека в разнородных металлах (Термоэлектрические пары)")
 
     st.info(
@@ -1936,32 +2296,16 @@ else:
         "$E = \\int_{T_{\\text{cold}}}^{T_{\\text{hot}}} [S_A(T) - S_B(T)]\\,dT$."
     )
 
-    metal_names = list(METALS_DB.keys())
-    metal_1 = st.sidebar.selectbox(
-        "Металл / сплав ветви А (Термоэлектрод 1):",
-        options=metal_names,
-        index=0  # Хромель
-    )
-    metal_2 = st.sidebar.selectbox(
-        "Металл / сплав ветви B (Термоэлектрод 2):",
-        options=metal_names,
-        index=6  # Копель
-    )
-
-    t_hot_s2 = float(st.sidebar.slider(
-        "Температура горячего спая (T_hot), °C:",
-        min_value=-100,
-        max_value=800,
-        value=520,
-        step=10
-    ))
-    t_cold_s2 = float(st.sidebar.slider(
-        "Температура холодного спая (T_cold), °C:",
-        min_value=-100,
-        max_value=200,
-        value=20,
-        step=10
-    ))
+    metal_1 = params["metal_1"]
+    metal_2 = params["metal_2"]
+    t_hot_s2 = float(params["t_hot_s2"])
+    t_cold_s2 = float(params["t_cold_s2"])
+    chart_display_mode = params["chart_display_mode"]
+    circuit_fault_mode = params["circuit_fault_mode"]
+    open_circuit_meter_mode = params["open_circuit_meter_mode"]
+    r_cold_branch_input = float(params["r_cold_branch_input"])
+    r_hot_loop_input = float(params["r_hot_loop_input"])
+    r_bridge_input = float(params["r_bridge_input"])
 
     delta_t_val = t_hot_s2 - t_cold_s2
     s_metal1 = METALS_DB[metal_1]["seebeck"]
@@ -1971,23 +2315,8 @@ else:
     e_hot_lin = (s_pair * t_hot_s2) / 1000.0
     e_cold_lin = (s_pair * t_cold_s2) / 1000.0
 
-    t_kz_s2 = None
-    e_kz_lin = None
-    if circuit_fault_mode == "Паразитный спай (КЗ)":
-        kz_min2 = int(min(t_cold_s2, t_hot_s2))
-        kz_max2 = int(max(t_cold_s2, t_hot_s2))
-        kz_def2 = int(round((t_cold_s2 + t_hot_s2) / 2.0, -1))
-        if kz_min2 == kz_max2:
-            t_kz_s2 = float(kz_min2)
-        else:
-            t_kz_s2 = float(st.sidebar.slider(
-                "Температура перемычки КЗ (T_кз), °C:",
-                min_value=kz_min2,
-                max_value=kz_max2,
-                value=int(np.clip(kz_def2, kz_min2, kz_max2)),
-                step=10
-            ))
-        e_kz_lin = (s_pair * t_kz_s2) / 1000.0
+    t_kz_s2 = params["t_kz_s2"]
+    e_kz_lin = (s_pair * t_kz_s2) / 1000.0 if t_kz_s2 is not None else None
 
     phys_s2 = evaluate_circuit_physics(
         e_hot=e_hot_lin,
@@ -2181,19 +2510,11 @@ else:
             height=430
         )
 
-st.markdown("---")
 
 
 # =====================================================================
 # 8. СПРАВОЧНЫЙ ПОМОЩНИК И ГЕНЕРАТОР УСЛОВНОЙ НСХ
 # =====================================================================
-st.subheader("📘 Справочный помощник по термоэлектрическим явлениям и Генератор условной НСХ")
-st.caption(
-    "Раздел работает на основе локальной базы проверенных физических разборов и расчётных формул "
-    "(внешняя генеративная языковая модель не используется)."
-)
-
-
 def build_hypothetical_thermoelectric(target_s_uv: float) -> dict:
     """
     Генератор условной НСХ: формирует учебную полиномиальную модель E(T) = a1*T + a2*T^2 + a3*T^3
@@ -2214,132 +2535,165 @@ def build_hypothetical_thermoelectric(target_s_uv: float) -> dict:
     }
 
 
-with st.expander("📐 Генератор условной НСХ (расчёт учебной полиномиальной модели)", expanded=False):
-    st.warning(
-        "⚠️ **Предупреждение:** Полученная характеристика является математической моделью "
-        "и не подтверждает существование реального термоэлектрического материала с такими свойствами."
+def render_reference_assistant_section() -> None:
+    """Отрисовывает раздел «Справочный помощник» (чат, практикум и генератор условной НСХ)."""
+    st.header("📘 Справочный помощник по термоэлектрическим явлениям и Генератор условной НСХ")
+    st.caption(
+        "Раздел работает на основе локальной базы проверенных физических разборов и расчётных формул "
+        "(внешняя генеративная языковая модель не используется)."
     )
-    col_gen1, col_gen2 = st.columns([2, 1])
-    with col_gen1:
-        desired_s = st.number_input(
-            "Задайте начальный коэффициент Зеебека S₀ при 0 °C (мкВ/°C):",
-            min_value=-250.0,
-            max_value=250.0,
-            value=75.0,
-            step=5.0
-        )
-    with col_gen2:
-        st.write("")
-        st.write("")
-        if st.button("Построить условную НСХ"):
-            st.session_state["ai_alloy"] = build_hypothetical_thermoelectric(desired_s)
-            st.rerun()
 
-    if "ai_alloy" in st.session_state:
-        ai_cur = st.session_state["ai_alloy"]
-        c_a1 = ai_cur["coeffs"]["a1"]
-        c_a2 = ai_cur["coeffs"]["a2"]
-        c_a3 = ai_cur["coeffs"]["a3"]
-        st.info(
-            f"Построена условная математическая модель **{ai_cur['name']}** ($S_0 = {ai_cur['s_target']}$ мкВ/°C, "
-            f"где $a_1 = S_0 / 1000$, а коэффициенты $a_2, a_3$ заданы как учебные константы нелинейности)."
-        )
-        st.latex(
-            rf"E(T) = a_1 T + a_2 T^2 + a_3 T^3 = "
-            rf"{c_a1:.5f}\,T + ({c_a2:.2e})\,T^2 + ({c_a3:.2e})\,T^3 \text{{ [мВ]}}"
-        )
+    with st.expander("🎓 Справочный практикум: случайный качественный вопрос", expanded=False):
+        if st.button("🧠 Случайный качественный вопрос", key="assistant_random_q_btn"):
+            physics_questions = [
+                {
+                    "title": "Равенство температур спаев",
+                    "question": "Почему при равенстве температур горячего и холодного спаев (T_hot = T_cold) результирующая Термо-ЭДС равна нулю?",
+                    "hint": "Рассмотрите интеграл по замкнутому контуру и Второе начало термодинамики: возможен ли вечный двигатель второго рода?"
+                },
+                {
+                    "title": "Влияние длины проводников",
+                    "question": "Как изменится Термо-ЭДС термопары, если удлинить её провода в 3 раза при неизменных T_hot и T_cold?",
+                    "hint": "Зависит ли интеграл E = ∫ S(T) dT от геометрической длины пути, или меняется только внутреннее омическое сопротивление контура?"
+                },
+                {
+                    "title": "Закон Вольта (третьего металла)",
+                    "question": "Что такое закон Вольта для последовательной цепи металлов и почему медные щупы вольтметра не искажают измеряемую Термо-ЭДС?",
+                    "hint": "Запишите алгебраическую сумму потенциалов при условии, что оба контакта с третьим металлом имеют одинаковую температуру T_cold."
+                }
+            ]
+            st.session_state["prof_question"] = np.random.choice(physics_questions)
+        if "prof_question" in st.session_state:
+            pq = st.session_state["prof_question"]
+            st.info(f"**Тема: {pq['title']}**\n\n{pq['question']}")
+            st.caption(f"💡 *Подсказка:* {pq['hint']}")
 
-if "messages" not in st.session_state:
-    st.session_state["messages"] = [
-        {
-            "role": "assistant",
-            "content": (
-                "Добро пожаловать в **Справочный помощник по термоэлектрическим явлениям**!\n\n"
-                "Выберите или введите интересующий вопрос по физике эффекта Зеебека (ответы формируются по базе знаний практикума):\n"
-                "- *«Почему при равенстве температур спаев Термо-ЭДС равна нулю?»*\n"
-                "- *«Как изменится ЭДС, если удлинить провода?»*\n"
-                "- *«Что такое закон Вольта для последовательной цепи металлов?»*\n"
-                "- *«Построй условную НСХ для 85 мкВ/°C»*"
+    with st.expander("📐 Генератор условной НСХ (расчёт учебной полиномиальной модели)", expanded=False):
+        st.warning(
+            "⚠️ **Предупреждение:** Полученная характеристика является математической моделью "
+            "и не подтверждает существование реального термоэлектрического материала с такими свойствами."
+        )
+        col_gen1, col_gen2 = st.columns([2, 1])
+        with col_gen1:
+            desired_s = st.number_input(
+                "Задайте начальный коэффициент Зеебека S₀ при 0 °C (мкВ/°C):",
+                min_value=-250.0,
+                max_value=250.0,
+            value=float(st.session_state.get("gen_desired_s", 75.0)),
+                step=5.0
             )
-        }
-    ]
+        with col_gen2:
+            st.write("")
+            st.write("")
+            st.session_state["gen_desired_s"] = desired_s
+            if st.button("Построить условную НСХ"):
+                st.session_state["ai_alloy"] = build_hypothetical_thermoelectric(desired_s)
+                st.rerun()
 
-for msg in st.session_state["messages"]:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+        if "ai_alloy" in st.session_state:
+            ai_cur = st.session_state["ai_alloy"]
+            c_a1 = ai_cur["coeffs"]["a1"]
+            c_a2 = ai_cur["coeffs"]["a2"]
+            c_a3 = ai_cur["coeffs"]["a3"]
+            st.info(
+                f"Построена условная математическая модель **{ai_cur['name']}** ($S_0 = {ai_cur['s_target']}$ мкВ/°C, "
+                f"где $a_1 = S_0 / 1000$, а коэффициенты $a_2, a_3$ заданы как учебные константы нелинейности)."
+            )
+            st.latex(
+                rf"E(T) = a_1 T + a_2 T^2 + a_3 T^3 = "
+                rf"{c_a1:.5f}\,T + ({c_a2:.2e})\,T^2 + ({c_a3:.2e})\,T^3 \text{{ [мВ]}}"
+            )
 
-user_query = st.chat_input(
-    "Введите вопрос по теме (например: 'Что такое закон Вольта?' или 'Модель НСХ 90 мкВ/°C')..."
-)
+    if "messages" not in st.session_state:
+        st.session_state["messages"] = [
+            {
+                "role": "assistant",
+                "content": (
+                    "Добро пожаловать в **Справочный помощник по термоэлектрическим явлениям**!\n\n"
+                    "Выберите или введите интересующий вопрос по физике эффекта Зеебека (ответы формируются по базе знаний практикума):\n"
+                    "- *«Почему при равенстве температур спаев Термо-ЭДС равна нулю?»*\n"
+                    "- *«Как изменится ЭДС, если удлинить провода?»*\n"
+                    "- *«Что такое закон Вольта для последовательной цепи металлов?»*\n"
+                    "- *«Построй условную НСХ для 85 мкВ/°C»*"
+                )
+            }
+        ]
 
-if user_query:
-    st.session_state["messages"].append({"role": "user", "content": user_query})
-    with st.chat_message("user"):
-        st.markdown(user_query)
+    for msg in st.session_state["messages"]:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
 
-    q_low = user_query.lower()
-    num_match = re.search(r"([-+]?\d+(?:[.,]\d+)?)", q_low)
+    user_query = st.chat_input(
+        "Введите вопрос по теме (например: 'Что такое закон Вольта?' или 'Модель НСХ 90 мкВ/°C')..."
+    )
 
-    if any(k in q_low for k in ["равенств", "нулю", "ноль", "одинаков"]):
-        reply = (
-            "**Физическое объяснение (Равенство температур спаев $T_{\\text{hot}} = T_{\\text{cold}}$):**\n\n"
-            "В замкнутом контуре из двух металлов $A$ и $B$ результирующая Термо-ЭДС определяется интегралом:\n"
-            "$$E = \\int_{T_{\\text{cold}}}^{T_{\\text{hot}}} \\left(S_A(T) - S_B(T)\\right) dT$$\n"
-            "При $T_{\\text{hot}} = T_{\\text{cold}}$ верхний и нижний пределы интегрирования совпадают, поэтому интеграл "
-            "тождественно равен нулю ($E = 0$). Термодинамически это прямое следствие **Второго начала термодинамики**: "
-            "в изотермическом контуре невозможно непрерывное преобразование теплоты в электрическую работу без перепада температур."
-        )
-    elif any(k in q_low for k in ["удлин", "длин", "провод", "сечен"]):
-        reply = (
-            "**Физическое объяснение (Влияние длины и сечения проводников):**\n\n"
-            "Если проводники термопары однородны по химическому составу, то **генерируемая Термо-ЭДС не изменится** при удлинении проводов. "
-            "Причина в том, что $E = \\int_{T_{\\text{cold}}}^{T_{\\text{hot}}} S_{AB}(T)\\,dT$ является функцией только граничных температур "
-            "концов $T_{\\text{hot}}$ и $T_{\\text{cold}}$, а не градиента $\\nabla T$ по отдельности. Однако при увеличении длины $l$ возрастает "
-            "внутреннее омическое сопротивление контура $R_{\\text{тп}} = \\rho \\frac{l}{S_{\\text{сеч}}}$, что увеличивает падение напряжения "
-            "при протекании тока через низкоомный прибор."
-        )
-    elif any(k in q_low for k in ["вольт", "третьего", "третий", "последоват"]):
-        reply = (
-            "**Физическое объяснение (Закон Вольта / Закон промежуточных металлов):**\n\n"
-            "Согласно закону промежуточных металлов, включение в термоэлектрический контур любого третьего проводника $C$ (например, медных выводов "
-            "и входной цепи вольтметра) **не изменяет результирующую Термо-ЭДС**, если оба конца этого третьего проводника находятся "
-            "при одинаковой температуре $T_{\\text{cold}}$:\n"
-            "$$\\int_{T_{\\text{cold}}}^{T_{\\text{cold}}} S_C(T)\\,dT = 0$$\n"
-            "Дополнительные термо-ЭДС на контактах «Металл А — Медь» и «Медь — Металл B» взаимно компенсируют друг друга."
-        )
-    elif num_match and any(k in q_low for k in ["модел", "нсх", "сплав", "зеебек", "мкв", "коэфф", "постро"]):
-        s_val = float(num_match.group(1).replace(",", "."))
-        s_val = float(np.clip(s_val, -300.0, 300.0))
-        alloy_data = build_hypothetical_thermoelectric(s_val)
-        st.session_state["ai_alloy"] = alloy_data
-        c1, c2, c3 = alloy_data["coeffs"]["a1"], alloy_data["coeffs"]["a2"], alloy_data["coeffs"]["a3"]
+    if user_query:
+        st.session_state["messages"].append({"role": "user", "content": user_query})
+        with st.chat_message("user"):
+            st.markdown(user_query)
 
-        reply = (
-            f"Построена условная математическая характеристика **`{alloy_data['name']}`** для $S_0 = {alloy_data['s_target']}$ мкВ/°C "
-            f"(кривая добавлена на графики Стенда №1 и Стенда №2):\n\n"
-            f"- **Линейный коэффициент $a_1 = S_0 / 1000$:** `{c1:.5f}` мВ/°C\n"
-            f"- **Заданный модельный коэффициент $a_2$:** `{c2:.2e}` мВ/°C²\n"
-            f"- **Заданный модельный коэффициент $a_3$:** `{c3:.2e}` мВ/°C³\n\n"
-            f"$$E(T) = {c1:.5f}\\,T + ({c2:.2e})\\,T^2 + ({c3:.2e})\\,T^3\\text{{ [мВ]}}$$\n\n"
-            f"> *Предупреждение: полученная характеристика является математической моделью и не подтверждает "
-            f"существование реального термоэлектрического материала с такими свойствами.*"
-        )
-    else:
-        reply = (
-            "В справочной базе помощника доступны разборы тем: **равенство температур спаев**, **влияние длины проводников**, "
-            "**закон промежуточных металлов (Вольта)**, а также расчёт **условной полиномиальной модели НСХ** по заданному "
-            "коэффициенту Зеебека (например: *«Модель НСХ 65 мкВ/°C»*)."
-        )
+        q_low = user_query.lower()
+        num_match = re.search(r"([-+]?\d+(?:[.,]\d+)?)", q_low)
 
-    st.session_state["messages"].append({"role": "assistant", "content": reply})
-    with st.chat_message("assistant"):
-        st.markdown(reply)
+        if any(k in q_low for k in ["равенств", "нулю", "ноль", "одинаков"]):
+            reply = (
+                "**Физическое объяснение (Равенство температур спаев $T_{\\text{hot}} = T_{\\text{cold}}$):**\n\n"
+                "В замкнутом контуре из двух металлов $A$ и $B$ результирующая Термо-ЭДС определяется интегралом:\n"
+                "$$E = \\int_{T_{\\text{cold}}}^{T_{\\text{hot}}} \\left(S_A(T) - S_B(T)\\right) dT$$\n"
+                "При $T_{\\text{hot}} = T_{\\text{cold}}$ верхний и нижний пределы интегрирования совпадают, поэтому интеграл "
+                "тождественно равен нулю ($E = 0$). Термодинамически это прямое следствие **Второго начала термодинамики**: "
+                "в изотермическом контуре невозможно непрерывное преобразование теплоты в электрическую работу без перепада температур."
+            )
+        elif any(k in q_low for k in ["удлин", "длин", "провод", "сечен"]):
+            reply = (
+                "**Физическое объяснение (Влияние длины и сечения проводников):**\n\n"
+                "Если проводники термопары однородны по химическому составу, то **генерируемая Термо-ЭДС не изменится** при удлинении проводов. "
+                "Причина в том, что $E = \\int_{T_{\\text{cold}}}^{T_{\\text{hot}}} S_{AB}(T)\\,dT$ является функцией только граничных температур "
+                "концов $T_{\\text{hot}}$ и $T_{\\text{cold}}$, а не градиента $\\nabla T$ по отдельности. Однако при увеличении длины $l$ возрастает "
+                "внутреннее омическое сопротивление контура $R_{\\text{тп}} = \\rho \\frac{l}{S_{\\text{сеч}}}$, что увеличивает падение напряжения "
+                "при протекании тока через низкоомный прибор."
+            )
+        elif any(k in q_low for k in ["вольт", "третьего", "третий", "последоват"]):
+            reply = (
+                "**Физическое объяснение (Закон Вольта / Закон промежуточных металлов):**\n\n"
+                "Согласно закону промежуточных металлов, включение в термоэлектрический контур любого третьего проводника $C$ (например, медных выводов "
+                "и входной цепи вольтметра) **не изменяет результирующую Термо-ЭДС**, если оба конца этого третьего проводника находятся "
+                "при одинаковой температуре $T_{\\text{cold}}$:\n"
+                "$$\\int_{T_{\\text{cold}}}^{T_{\\text{cold}}} S_C(T)\\,dT = 0$$\n"
+                "Дополнительные термо-ЭДС на контактах «Металл А — Медь» и «Медь — Металл B» взаимно компенсируют друг друга."
+            )
+        elif num_match and any(k in q_low for k in ["модел", "нсх", "сплав", "зеебек", "мкв", "коэфф", "постро"]):
+            s_val = float(num_match.group(1).replace(",", "."))
+            s_val = float(np.clip(s_val, -300.0, 300.0))
+            alloy_data = build_hypothetical_thermoelectric(s_val)
+            st.session_state["ai_alloy"] = alloy_data
+            c1, c2, c3 = alloy_data["coeffs"]["a1"], alloy_data["coeffs"]["a2"], alloy_data["coeffs"]["a3"]
+
+            reply = (
+                f"Построена условная математическая характеристика **`{alloy_data['name']}`** для $S_0 = {alloy_data['s_target']}$ мкВ/°C "
+                f"(кривая добавлена на графики Стенда №1 и Стенда №2):\n\n"
+                f"- **Линейный коэффициент $a_1 = S_0 / 1000$:** `{c1:.5f}` мВ/°C\n"
+                f"- **Заданный модельный коэффициент $a_2$:** `{c2:.2e}` мВ/°C²\n"
+                f"- **Заданный модельный коэффициент $a_3$:** `{c3:.2e}` мВ/°C³\n\n"
+                f"$$E(T) = {c1:.5f}\\,T + ({c2:.2e})\\,T^2 + ({c3:.2e})\\,T^3\\text{{ [мВ]}}$$\n\n"
+                f"> *Предупреждение: полученная характеристика является математической моделью и не подтверждает "
+                f"существование реального термоэлектрического материала с такими свойствами.*"
+            )
+        else:
+            reply = (
+                "В справочной базе помощника доступны разборы тем: **равенство температур спаев**, **влияние длины проводников**, "
+                "**закон промежуточных металлов (Вольта)**, а также расчёт **условной полиномиальной модели НСХ** по заданному "
+                "коэффициенту Зеебека (например: *«Модель НСХ 65 мкВ/°C»*)."
+            )
+
+        st.session_state["messages"].append({"role": "assistant", "content": reply})
+        with st.chat_message("assistant"):
+            st.markdown(reply)
 
 
 # =====================================================================
 # 9. ТЕОРЕТИЧЕСКИЙ РАЗДЕЛ: «ТЕРМО-ЭДС. ЭФФЕКТ ЗЕЕБЕКА»
 # =====================================================================
-st.markdown("---")
 
 
 def render_theory_image(rel_path: str, caption: str) -> None:
@@ -2822,14 +3176,18 @@ def render_theory_section() -> None:
     if "theory_stage_idx" not in st.session_state:
         st.session_state["theory_stage_idx"] = 0
 
+    theory_view_options = [
+        "Пошаговое изучение (с навигацией между этапами)",
+        "Все этапы списком (раскрывающиеся карточки)"
+    ]
+    cur_theory_view = st.session_state.get("theory_view_mode", theory_view_options[0])
     view_mode = st.radio(
         "Режим отображения этапов теории:",
-        options=[
-            "Пошаговое изучение (с навигацией между этапами)",
-            "Все этапы списком (раскрывающиеся карточки)"
-        ],
+        options=theory_view_options,
+        index=theory_view_options.index(cur_theory_view) if cur_theory_view in theory_view_options else 0,
         horizontal=True
     )
+    st.session_state["theory_view_mode"] = view_mode
 
     if view_mode.startswith("Пошаговое"):
         stage_titles = [s[0] for s in stages_list]
@@ -2969,7 +3327,8 @@ def render_theory_section() -> None:
         }
     ]
 
-    search_term = st.text_input("🔍 Поиск по словарю терминов:", "")
+    search_term = st.text_input("🔍 Поиск по словарю терминов:", value=st.session_state.get("glossary_search", ""))
+    st.session_state["glossary_search"] = search_term
     filtered_glossary = [
         row for row in glossary_data
         if search_term.lower() in row["Термин"].lower()
@@ -2990,12 +3349,10 @@ def render_theory_section() -> None:
         )
 
 
-render_theory_section()
 
 # =====================================================================
 # 10. МОДУЛЬ ПОДБОРА ТЕРМОПАРЫ ПО УСЛОВИЯМ ЭКСПЛУАТАЦИИ
 # =====================================================================
-st.markdown("---")
 
 SELECTOR_TC_SPECS = {
     "K": {
@@ -4525,4 +4882,28 @@ def render_thermocouple_selector() -> None:
     )
 
 
-render_thermocouple_selector()
+
+# =====================================================================
+# 11. ГЛАВНЫЙ УСЛОВНЫЙ МАРШРУТИЗАТОР ПРИЛОЖЕНИЯ
+# =====================================================================
+def run_kip_simulator() -> None:
+    """Условный маршрутизатор: выполняет и отображает исключительно активный раздел приложения."""
+    init_app_session_state()
+    stand_params = render_sidebar_navigation_and_controls()
+    render_top_navigation_bar()
+
+    active_section = st.session_state["active_section"]
+    if active_section == "Исследовательские стенды":
+        if st.session_state["active_lab_stand"].startswith("Стенд №1"):
+            render_stand_1_section(stand_params)
+        else:
+            render_stand_2_section(stand_params)
+    elif active_section == "Теоретическая часть":
+        render_theory_section()
+    elif active_section == "Подбор термопары":
+        render_thermocouple_selector()
+    elif active_section == "Справочный помощник":
+        render_reference_assistant_section()
+
+
+run_kip_simulator()
