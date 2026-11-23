@@ -6524,8 +6524,92 @@ def render_thermocouple_selector() -> None:
 
 
 # =====================================================================
-# 11. ГЛАВНЫЙ УСЛОВНЫЙ МАРШРУТИЗАТОР ПРИЛОЖЕНИЯ
+# 11. НИЖНЯЯ НАВИГАЦИЯ МЕЖДУ РЕЖИМАМИ И ГЛАВНЫЙ МАРШРУТИЗАТОР ПРИЛОЖЕНИЯ
 # =====================================================================
+def _bottom_nav_to_section(target_section: str) -> None:
+    """Переходит в указанный основной раздел из нижней панели навигации."""
+    navigate_to_section(target_section)
+
+
+def _bottom_nav_to_stand(target_stand: str) -> None:
+    """Переключает активный исследовательский стенд из нижней панели навигации."""
+    if target_stand in LAB_STAND_OPTIONS:
+        st.session_state["active_lab_stand"] = target_stand
+    navigate_to_section("Исследовательские стенды")
+
+
+def render_bottom_section_navigation() -> None:
+    """
+    Отрисовывает в самом низу каждой секции понятный блок перехода к следующему режиму
+    (без необходимости прокручивать страницу обратно вверх).
+    """
+    active_section = st.session_state["active_section"]
+    active_stand = st.session_state["active_lab_stand"]
+    is_mobile_view = (st.session_state.get("chart_display_mode") == "Смартфон (320–430 px)")
+
+    if active_section == "Исследовательские стенды":
+        if active_stand.startswith("Стенд №1"):
+            actions = [
+                ("🔬 Далее: Стенд №2 (Пары металлов) ➡️", "stand", LAB_STAND_OPTIONS[1], "primary"),
+                ("📚 Перейти к теории", "section", "Теоретическая часть", "secondary"),
+                ("🧭 Перейти к практике: подбор термопары", "section", "Подбор термопары", "secondary"),
+            ]
+        else:
+            actions = [
+                ("📚 Далее: Теоретическая часть ➡️", "section", "Теоретическая часть", "primary"),
+                ("🧭 Перейти к практике: подбор термопары", "section", "Подбор термопары", "secondary"),
+                ("🔬 Вернуться к Стенду №1 (Градиент и НСХ)", "stand", LAB_STAND_OPTIONS[0], "secondary"),
+            ]
+    elif active_section == "Теоретическая часть":
+        actions = [
+            ("🧭 Далее: Практика — подбор термопары ➡️", "section", "Подбор термопары", "primary"),
+            ("🔬 Перейти к исследовательским стендам", "section", "Исследовательские стенды", "secondary"),
+            ("📘 Перейти к справочному помощнику", "section", "Справочный помощник", "secondary"),
+        ]
+    elif active_section == "Подбор термопары":
+        actions = [
+            ("📘 Далее: Справочный помощник и генератор НСХ ➡️", "section", "Справочный помощник", "primary"),
+            ("🔬 Перейти к исследовательским стендам", "section", "Исследовательские стенды", "secondary"),
+            ("📚 Перейти к теории", "section", "Теоретическая часть", "secondary"),
+        ]
+    else:
+        actions = [
+            ("🔬 Далее: Исследовательские стенды ➡️", "section", "Исследовательские стенды", "primary"),
+            ("🧭 Перейти к практике: подбор термопары", "section", "Подбор термопары", "secondary"),
+            ("📚 Перейти к теории", "section", "Теоретическая часть", "secondary"),
+        ]
+
+    st.markdown("---")
+    with st.container(border=True):
+        st.markdown('<div class="kip-param-group-title">➡️ Переход к следующему режиму</div>', unsafe_allow_html=True)
+        st.caption("Выберите следующий раздел для продолжения работы с KIP Simulator:")
+
+        if is_mobile_view:
+            for idx, (label, kind, target, btn_type) in enumerate(actions):
+                cb = _bottom_nav_to_stand if kind == "stand" else _bottom_nav_to_section
+                st.button(
+                    label,
+                    key=f"bottom_nav_btn_{active_section}_{idx}",
+                    type=btn_type,
+                    use_container_width=True,
+                    on_click=cb,
+                    args=(target,),
+                )
+        else:
+            nav_cols = st.columns(len(actions))
+            for idx, (label, kind, target, btn_type) in enumerate(actions):
+                cb = _bottom_nav_to_stand if kind == "stand" else _bottom_nav_to_section
+                with nav_cols[idx]:
+                    st.button(
+                        label,
+                        key=f"bottom_nav_btn_{active_section}_{idx}",
+                        type=btn_type,
+                        use_container_width=True,
+                        on_click=cb,
+                        args=(target,),
+                    )
+
+
 def run_kip_simulator() -> None:
     """Условный маршрутизатор: применяет режим доступности и отображает только активный раздел."""
     init_app_session_state()
@@ -6545,6 +6629,8 @@ def run_kip_simulator() -> None:
         render_thermocouple_selector()
     elif active_section == "Справочный помощник":
         render_reference_assistant_section()
+
+    render_bottom_section_navigation()
 
 
 run_kip_simulator()
