@@ -17,14 +17,488 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Адаптивные стили для исключения горизонтального переполнения графиков на смартфонах (320–430 px)
+# Единая визуальная система KIP Simulator (Этап 1: типографика, палитра, карточки, элементы управления)
 st.markdown(
     """
     <style>
-        .stPlotlyChart, .js-plotly-plot, .plot-container {
-            max-width: 100% !important;
-            overflow-x: hidden !important;
+        /* =====================================================================
+           ЕДИНАЯ ВИЗУАЛЬНАЯ СИСТЕМА KIP SIMULATOR (ЭТАП 1)
+           Визуальная и эргономическая доработка с расчётной проверкой отдельных
+           критериев доступности (контрастность палитры, видимый фокус,
+           повышенный ориентир интерактивных областей 44x44 CSS px).
+           ===================================================================== */
+        :root {
+            /* Цветовая система (тёмная инженерная палитра) */
+            --kip-bg-main: #0E1117;
+            --kip-bg-card: #161B24;
+            --kip-bg-nested: #1F2633;
+            --kip-bg-hover: #293345;
+            --kip-bg-active: #192231;
+            --kip-text-primary: #EEF2F6;
+            --kip-text-secondary: #B8C4D4;
+            --kip-border: #70829A;
+            --kip-border-strong: #8294AD;
+            --kip-accent: #38BDF8;
+            --kip-accent-hover: #7DD3FC;
+            --kip-accent-active: #0EA5E9;
+            --kip-accent-fg: #0B111A;
+            --kip-focus: #FACC15;
+            --kip-success: #4ADE80;
+            --kip-success-bg: #12261E;
+            --kip-warning: #FBBF24;
+            --kip-warning-bg: #292011;
+            --kip-error: #F87171;
+            --kip-error-bg: #2B1418;
+            --kip-disabled-bg: #1B202B;
+            --kip-disabled-text: #8592A6;
+            --kip-disabled-border: #5B6B82;
+
+            /* Типографика */
+            --kip-font-base: 17px;
+            --kip-font-caption: 15px;
+            --kip-font-h1: 29px;
+            --kip-font-h2: 26px;
+            --kip-font-h3: 21px;
+            --kip-font-h4: 19px;
+            --kip-line-height: 1.55;
+
+            /* Отступы и размеры интерактивных областей */
+            --kip-radius: 10px;
+            --kip-radius-sm: 8px;
+            --kip-touch-target: 44px;
+            --kip-slider-thumb: 24px;
+            --kip-card-pad: 1rem;
         }
+
+        /* 1. Базовый фон, типографика и иерархия заголовков */
+        html, body, .stApp {
+            background-color: var(--kip-bg-main);
+            color: var(--kip-text-primary);
+            font-size: var(--kip-font-base);
+            line-height: var(--kip-line-height);
+        }
+
+        [data-testid="stSidebar"] {
+            background-color: var(--kip-bg-card);
+            border-right: 1px solid var(--kip-border);
+        }
+
+        .stApp h1 {
+            font-size: var(--kip-font-h1);
+            line-height: 1.25;
+            color: var(--kip-text-primary);
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        .stApp h2 {
+            font-size: var(--kip-font-h2);
+            line-height: 1.3;
+            color: var(--kip-text-primary);
+            font-weight: 700;
+            margin-top: 1.1rem;
+            margin-bottom: 0.65rem;
+        }
+
+        .stApp h3 {
+            font-size: var(--kip-font-h3);
+            line-height: 1.35;
+            color: var(--kip-text-primary);
+            font-weight: 600;
+            margin-top: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stApp h4 {
+            font-size: var(--kip-font-h4);
+            line-height: 1.35;
+            color: var(--kip-text-primary);
+            font-weight: 600;
+            margin-bottom: 0.45rem;
+        }
+
+        .stMarkdown p,
+        .stMarkdown li,
+        .stMarkdown blockquote {
+            font-size: var(--kip-font-base);
+            line-height: var(--kip-line-height);
+            color: var(--kip-text-primary);
+        }
+
+        .stMarkdown blockquote {
+            background-color: var(--kip-bg-nested);
+            border-left: 4px solid var(--kip-accent);
+            padding: 0.75rem 1rem;
+            border-radius: 0 var(--kip-radius-sm) var(--kip-radius-sm) 0;
+            margin: 0.75rem 0;
+        }
+
+        /* Читаемые подписи вместо мелкого серого текста (15 px, без снижения прозрачности) */
+        [data-testid="stCaptionContainer"],
+        [data-testid="stCaptionContainer"] p,
+        .stCaption,
+        .stApp small {
+            font-size: var(--kip-font-caption);
+            line-height: 1.5;
+            color: var(--kip-text-secondary);
+            opacity: 1;
+        }
+
+        .stApp a {
+            color: var(--kip-accent);
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .stApp a:hover {
+            color: var(--kip-accent-hover);
+        }
+
+        .stApp hr {
+            border-color: var(--kip-border);
+            opacity: 1;
+            margin: 1.25rem 0;
+        }
+
+        /* Формулы LaTeX */
+        .katex-display {
+            background-color: var(--kip-bg-nested);
+            border: 1px solid var(--kip-border);
+            border-radius: var(--kip-radius-sm);
+            padding: 0.75rem 1rem;
+            margin: 0.75rem 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        /* 2. Единая система карточек и контейнеров */
+        [data-testid="stVerticalBlockBorderWrapper"] {
+            background-color: var(--kip-bg-card);
+            border: 1px solid var(--kip-border);
+            border-radius: var(--kip-radius);
+            padding: var(--kip-card-pad);
+            margin-bottom: 0.9rem;
+        }
+
+        [data-testid="stForm"] {
+            background-color: var(--kip-bg-card);
+            border: 1px solid var(--kip-border);
+            border-radius: var(--kip-radius);
+            padding: var(--kip-card-pad);
+            margin-bottom: 1rem;
+        }
+
+        /* Карточки показателей (st.metric) */
+        [data-testid="stMetric"] {
+            background-color: var(--kip-bg-nested);
+            border: 1px solid var(--kip-border);
+            border-radius: var(--kip-radius);
+            padding: 0.9rem 1rem;
+            height: 100%;
+        }
+
+        [data-testid="stMetricLabel"],
+        [data-testid="stMetricLabel"] p {
+            font-size: var(--kip-font-caption);
+            line-height: 1.4;
+            color: var(--kip-text-secondary);
+            font-weight: 600;
+            white-space: normal;
+        }
+
+        [data-testid="stMetricValue"] {
+            font-size: 22px;
+            line-height: 1.3;
+            color: var(--kip-text-primary);
+            font-weight: 700;
+            white-space: normal;
+        }
+
+        [data-testid="stMetricDelta"] {
+            font-size: var(--kip-font-caption);
+            line-height: 1.4;
+            white-space: normal;
+        }
+
+        /* Раскрывающиеся блоки (теория, самопроверка, генератор НСХ, паспорта) */
+        [data-testid="stExpander"] {
+            background-color: var(--kip-bg-card);
+            border: 1px solid var(--kip-border);
+            border-radius: var(--kip-radius);
+            margin-bottom: 0.75rem;
+        }
+
+        [data-testid="stExpander"] summary {
+            min-height: var(--kip-touch-target);
+            padding: 0.55rem 0.9rem;
+            font-size: var(--kip-font-base);
+            font-weight: 600;
+            color: var(--kip-text-primary);
+            border-radius: var(--kip-radius);
+        }
+
+        [data-testid="stExpander"] summary:hover {
+            background-color: var(--kip-bg-nested);
+        }
+
+        /* Блоки справочного помощника (чат) */
+        [data-testid="stChatMessage"] {
+            background-color: var(--kip-bg-card);
+            border: 1px solid var(--kip-border);
+            border-radius: var(--kip-radius);
+            padding: 0.95rem 1.1rem;
+            margin-bottom: 0.8rem;
+        }
+
+        /* Статусные уведомления (инфо / успех / предупреждение / ошибка) */
+        [data-testid="stAlert"] {
+            border-radius: var(--kip-radius);
+            border-width: 1px;
+            border-style: solid;
+            font-size: var(--kip-font-base);
+            line-height: var(--kip-line-height);
+        }
+
+        [data-testid="stAlert"] p,
+        [data-testid="stAlert"] li {
+            color: var(--kip-text-primary);
+            font-size: var(--kip-font-base);
+        }
+
+        [data-testid="stAlert"]:has([data-testid="stNotificationContentInfo"]) {
+            background-color: var(--kip-bg-nested);
+            border-color: var(--kip-accent);
+        }
+
+        [data-testid="stAlert"]:has([data-testid="stNotificationContentSuccess"]) {
+            background-color: var(--kip-success-bg);
+            border-color: var(--kip-success);
+        }
+
+        [data-testid="stAlert"]:has([data-testid="stNotificationContentWarning"]) {
+            background-color: var(--kip-warning-bg);
+            border-color: var(--kip-warning);
+        }
+
+        [data-testid="stAlert"]:has([data-testid="stNotificationContentError"]) {
+            background-color: var(--kip-error-bg);
+            border-color: var(--kip-error);
+        }
+
+        /* 3. Кнопки и элементы управления (повышенный ориентир 44x44 CSS px для кнопок и полей) */
+        .stButton > button,
+        .stFormSubmitButton > button,
+        [data-testid="stChatInputSubmitButton"] {
+            min-height: var(--kip-touch-target);
+            min-width: var(--kip-touch-target);
+            padding: 0.6rem 1.1rem;
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 1.35;
+            border-radius: var(--kip-radius-sm);
+            border: 1px solid var(--kip-border-strong);
+            background-color: var(--kip-bg-nested);
+            color: var(--kip-text-primary);
+            transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+        }
+
+        [data-testid="stChatInputSubmitButton"] {
+            padding: 0.45rem;
+        }
+
+        .stButton > button:hover:not(:disabled),
+        .stFormSubmitButton > button:hover:not(:disabled),
+        [data-testid="stChatInputSubmitButton"]:hover:not(:disabled) {
+            background-color: var(--kip-bg-hover);
+            border-color: var(--kip-accent);
+            color: var(--kip-text-primary);
+        }
+
+        .stButton > button:active:not(:disabled),
+        .stFormSubmitButton > button:active:not(:disabled),
+        [data-testid="stChatInputSubmitButton"]:active:not(:disabled) {
+            background-color: var(--kip-bg-active);
+            border-color: var(--kip-accent-active);
+            transform: translateY(1px);
+        }
+
+        .stButton > button[kind="primary"],
+        .stFormSubmitButton > button[kind="primary"],
+        [data-testid="stBaseButton-primary"] {
+            background-color: var(--kip-accent);
+            border-color: var(--kip-accent);
+            color: var(--kip-accent-fg);
+        }
+
+        .stButton > button[kind="primary"]:hover:not(:disabled),
+        .stFormSubmitButton > button[kind="primary"]:hover:not(:disabled),
+        [data-testid="stBaseButton-primary"]:hover:not(:disabled) {
+            background-color: var(--kip-accent-hover);
+            border-color: var(--kip-accent-hover);
+            color: var(--kip-accent-fg);
+        }
+
+        .stButton > button[kind="primary"]:active:not(:disabled),
+        .stFormSubmitButton > button[kind="primary"]:active:not(:disabled),
+        [data-testid="stBaseButton-primary"]:active:not(:disabled) {
+            background-color: var(--kip-accent-active);
+            border-color: var(--kip-accent-active);
+            color: var(--kip-accent-fg);
+        }
+
+        .stButton > button:disabled,
+        .stFormSubmitButton > button:disabled,
+        [data-testid="stChatInputSubmitButton"]:disabled {
+            background-color: var(--kip-disabled-bg);
+            border-color: var(--kip-disabled-border);
+            color: var(--kip-disabled-text);
+            cursor: not-allowed;
+        }
+
+        /* Подписи полей ввода, селекторов, слайдеров и переключателей */
+        .stSelectbox label,
+        .stNumberInput label,
+        .stTextInput label,
+        .stSlider label,
+        .stRadio > label,
+        .stCheckbox label {
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 1.4;
+            color: var(--kip-text-primary);
+            margin-bottom: 0.35rem;
+        }
+
+        /* Поля ввода и выпадающие списки */
+        .stTextInput input,
+        .stNumberInput input,
+        [data-testid="stChatInput"] textarea,
+        [data-baseweb="select"] > div {
+            min-height: var(--kip-touch-target);
+            font-size: var(--kip-font-base);
+            background-color: var(--kip-bg-nested);
+            color: var(--kip-text-primary);
+            border: 1px solid var(--kip-border-strong);
+            border-radius: var(--kip-radius-sm);
+        }
+
+        .stTextInput input:hover:not(:disabled),
+        .stNumberInput input:hover:not(:disabled),
+        [data-baseweb="select"] > div:hover {
+            border-color: var(--kip-accent);
+        }
+
+        .stTextInput input:disabled,
+        .stNumberInput input:disabled {
+            background-color: var(--kip-disabled-bg);
+            color: var(--kip-disabled-text);
+            border-color: var(--kip-disabled-border);
+            cursor: not-allowed;
+        }
+
+        .stNumberInput button {
+            min-height: var(--kip-touch-target);
+            min-width: var(--kip-touch-target);
+            border-color: var(--kip-border-strong);
+            background-color: var(--kip-bg-nested);
+            color: var(--kip-text-primary);
+        }
+
+        .stNumberInput button:hover:not(:disabled) {
+            background-color: var(--kip-bg-hover);
+            border-color: var(--kip-accent);
+        }
+
+        /* Слайдеры: увеличенный бегунок (24x24 px) и достаточная вертикальная зона захвата */
+        [data-testid="stSlider"] [data-baseweb="slider"] {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        [data-testid="stSlider"] [role="slider"] {
+            width: var(--kip-slider-thumb);
+            height: var(--kip-slider-thumb);
+            border: 2px solid var(--kip-text-primary);
+        }
+
+        /* Радиокнопки и чекбоксы: кликабельная область строки >= 44 px по высоте */
+        .stRadio [role="radiogroup"] label,
+        .stCheckbox label {
+            min-height: var(--kip-touch-target);
+            padding: 0.35rem 0.5rem;
+            border-radius: var(--kip-radius-sm);
+            display: flex;
+            align-items: center;
+        }
+
+        .stRadio [role="radiogroup"] label:hover,
+        .stCheckbox label:hover {
+            background-color: var(--kip-bg-nested);
+        }
+
+        [data-baseweb="tab-list"] {
+            gap: 0.45rem;
+            flex-wrap: wrap;
+        }
+
+        [data-baseweb="tab"] {
+            min-height: var(--kip-touch-target);
+            padding: 0.5rem 0.95rem;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--kip-text-secondary);
+            background-color: var(--kip-bg-nested);
+            border: 1px solid var(--kip-border);
+            border-radius: var(--kip-radius-sm) var(--kip-radius-sm) 0 0;
+        }
+
+        [data-baseweb="tab"]:hover {
+            color: var(--kip-text-primary);
+            border-color: var(--kip-accent);
+        }
+
+        [data-baseweb="tab"][aria-selected="true"] {
+            color: var(--kip-accent-fg);
+            background-color: var(--kip-accent);
+            border-color: var(--kip-accent);
+        }
+
+        /* Видимый фокус клавиатуры */
+        button:focus-visible,
+        a:focus-visible,
+        input:focus-visible,
+        textarea:focus-visible,
+        select:focus-visible,
+        summary:focus-visible,
+        [role="tab"]:focus-visible,
+        [role="slider"]:focus-visible,
+        [tabindex]:focus-visible,
+        [data-baseweb="select"] > div:focus-within,
+        [data-testid="stChatInput"]:focus-within {
+            outline: 3px solid var(--kip-focus);
+            outline-offset: 2px;
+        }
+
+        /* 4. Таблицы и безопасная адаптация графиков Plotly без обрезания подписей и легенд */
+        [data-testid="stDataFrame"] {
+            border: 1px solid var(--kip-border);
+            border-radius: var(--kip-radius-sm);
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .stPlotlyChart {
+            max-width: 100%;
+            overflow-x: auto;
+            overflow-y: visible;
+        }
+
+        .stPlotlyChart .js-plotly-plot,
+        .stPlotlyChart .plot-container {
+            max-width: 100%;
+            overflow: visible;
+        }
+
         @media (max-width: 640px) {
             .block-container {
                 padding-left: 0.65rem !important;
@@ -33,6 +507,15 @@ st.markdown(
             .stPlotlyChart {
                 margin-left: 0 !important;
                 margin-right: 0 !important;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .stButton > button,
+            .stFormSubmitButton > button,
+            [data-testid="stChatInputSubmitButton"] {
+                transition: none;
+                transform: none;
             }
         }
     </style>
