@@ -18,171 +18,320 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+THEME_MODE_OPTIONS = [
+    "Светлая (дневная)",
+    "Тёмная (ночная)",
+]
+
 ACCESSIBILITY_MODE_OPTIONS = [
     "Стандартный",
     "Повышенная читаемость",
     "Высокая контрастность",
 ]
 
-ACCESSIBILITY_PALETTES = {
-    "Стандартный": {
-        "bg_main": "#0E1117",
-        "bg_card": "#161B24",
-        "bg_nested": "#1F2633",
-        "bg_hover": "#293345",
-        "bg_active": "#192231",
-        "text_primary": "#EEF2F6",
-        "text_secondary": "#B8C4D4",
-        "border": "#70829A",
-        "border_strong": "#8294AD",
-        "border_width": "1px",
-        "accent": "#38BDF8",
-        "accent_hover": "#7DD3FC",
-        "accent_active": "#0EA5E9",
-        "accent_fg": "#0B111A",
-        "focus": "#FACC15",
-        "success": "#4ADE80",
-        "success_bg": "#12261E",
-        "warning": "#FBBF24",
-        "warning_bg": "#292011",
-        "error": "#F87171",
-        "error_bg": "#2B1418",
-        "disabled_bg": "#1B202B",
-        "disabled_text": "#8592A6",
-        "disabled_border": "#5B6B82",
-        "font_base": "17px",
-        "font_caption": "15px",
-        "font_btn": "16px",
-        "font_h1": "29px",
-        "font_h2": "25px",
-        "font_h3": "21px",
-        "font_h4": "19px",
-        "font_kpi": "21px",
-        "line_height": "1.55",
-        "touch_target": "44px",
-        "slider_thumb": "24px",
-        "card_pad": "1rem",
-        "gap": "0.85rem",
-        "caption_weight": "400",
-        "alert_border_w": "1px",
-        "kpi_1col_bp": "420px",
+THEME_ACCESSIBILITY_PALETTES = {
+    "Светлая (дневная)": {
+        "Стандартный": {
+            "bg_main": "#FFFFFF",
+            "bg_card": "#F8FAFC",
+            "bg_nested": "#F1F5F9",
+            "bg_hover": "#E2E8F0",
+            "bg_active": "#CBD5E1",
+            "text_primary": "#0F172A",
+            "text_secondary": "#334155",
+            "border": "#94A3B8",
+            "border_strong": "#475569",
+            "border_width": "1px",
+            "accent": "#0369A1",
+            "accent_hover": "#075985",
+            "accent_active": "#0C4A6E",
+            "accent_fg": "#FFFFFF",
+            "focus": "#D97706",
+            "success": "#15803D",
+            "success_bg": "#DCFCE7",
+            "warning": "#B45309",
+            "warning_bg": "#FEF3C7",
+            "error": "#B91C1C",
+            "error_bg": "#FEE2E2",
+            "disabled_bg": "#E2E8F0",
+            "disabled_text": "#475569",
+            "disabled_border": "#94A3B8",
+            "font_base": "17px",
+            "font_caption": "15px",
+            "font_btn": "16px",
+            "font_h1": "29px",
+            "font_h2": "25px",
+            "font_h3": "21px",
+            "font_h4": "19px",
+            "font_kpi": "21px",
+            "line_height": "1.55",
+            "touch_target": "44px",
+            "slider_thumb": "24px",
+            "card_pad": "1rem",
+            "gap": "0.85rem",
+            "caption_weight": "500",
+            "alert_border_w": "1px",
+            "kpi_1col_bp": "420px",
+        },
+        "Повышенная читаемость": {
+            "bg_main": "#FFFFFF",
+            "bg_card": "#F8FAFC",
+            "bg_nested": "#EEF2F6",
+            "bg_hover": "#E2E8F0",
+            "bg_active": "#CBD5E1",
+            "text_primary": "#000000",
+            "text_secondary": "#1E293B",
+            "border": "#64748B",
+            "border_strong": "#334155",
+            "border_width": "2px",
+            "accent": "#0369A1",
+            "accent_hover": "#075985",
+            "accent_active": "#0C4A6E",
+            "accent_fg": "#FFFFFF",
+            "focus": "#D97706",
+            "success": "#15803D",
+            "success_bg": "#DCFCE7",
+            "warning": "#92400E",
+            "warning_bg": "#FEF3C7",
+            "error": "#991B1B",
+            "error_bg": "#FEE2E2",
+            "disabled_bg": "#E2E8F0",
+            "disabled_text": "#334155",
+            "disabled_border": "#64748B",
+            "font_base": "20px",
+            "font_caption": "17px",
+            "font_btn": "18px",
+            "font_h1": "34px",
+            "font_h2": "29px",
+            "font_h3": "24px",
+            "font_h4": "22px",
+            "font_kpi": "24px",
+            "line_height": "1.65",
+            "touch_target": "52px",
+            "slider_thumb": "28px",
+            "card_pad": "1.25rem",
+            "gap": "1.15rem",
+            "caption_weight": "600",
+            "alert_border_w": "2px",
+            "kpi_1col_bp": "540px",
+        },
+        "Высокая контрастность": {
+            "bg_main": "#FFFFFF",
+            "bg_card": "#FFFFFF",
+            "bg_nested": "#F8FAFC",
+            "bg_hover": "#E2E8F0",
+            "bg_active": "#CBD5E1",
+            "text_primary": "#000000",
+            "text_secondary": "#000000",
+            "border": "#000000",
+            "border_strong": "#000000",
+            "border_width": "2px",
+            "accent": "#000000",
+            "accent_hover": "#1E293B",
+            "accent_active": "#334155",
+            "accent_fg": "#FFFFFF",
+            "focus": "#D97706",
+            "success": "#14532D",
+            "success_bg": "#DCFCE7",
+            "warning": "#78350F",
+            "warning_bg": "#FEF08A",
+            "error": "#7F1D1D",
+            "error_bg": "#FECACA",
+            "disabled_bg": "#F1F5F9",
+            "disabled_text": "#334155",
+            "disabled_border": "#475569",
+            "font_base": "18px",
+            "font_caption": "16px",
+            "font_btn": "17px",
+            "font_h1": "31px",
+            "font_h2": "27px",
+            "font_h3": "22px",
+            "font_h4": "20px",
+            "font_kpi": "22px",
+            "line_height": "1.60",
+            "touch_target": "48px",
+            "slider_thumb": "26px",
+            "card_pad": "1.1rem",
+            "gap": "0.95rem",
+            "caption_weight": "700",
+            "alert_border_w": "2px",
+            "kpi_1col_bp": "460px",
+        },
     },
-    "Повышенная читаемость": {
-        "bg_main": "#0E1117",
-        "bg_card": "#161C26",
-        "bg_nested": "#202837",
-        "bg_hover": "#2C374C",
-        "bg_active": "#1A2436",
-        "text_primary": "#F5F8FC",
-        "text_secondary": "#CBD6E4",
-        "border": "#8DA2BD",
-        "border_strong": "#A6BCD6",
-        "border_width": "2px",
-        "accent": "#38BDF8",
-        "accent_hover": "#7DD3FC",
-        "accent_active": "#0EA5E9",
-        "accent_fg": "#0B111A",
-        "focus": "#FACC15",
-        "success": "#4ADE80",
-        "success_bg": "#12281F",
-        "warning": "#FBBF24",
-        "warning_bg": "#2D2312",
-        "error": "#F87171",
-        "error_bg": "#30151A",
-        "disabled_bg": "#1C222E",
-        "disabled_text": "#9BA8BC",
-        "disabled_border": "#6F829C",
-        "font_base": "20px",
-        "font_caption": "17px",
-        "font_btn": "18px",
-        "font_h1": "34px",
-        "font_h2": "29px",
-        "font_h3": "24px",
-        "font_h4": "22px",
-        "font_kpi": "24px",
-        "line_height": "1.65",
-        "touch_target": "52px",
-        "slider_thumb": "28px",
-        "card_pad": "1.25rem",
-        "gap": "1.15rem",
-        "caption_weight": "500",
-        "alert_border_w": "2px",
-        "kpi_1col_bp": "540px",
-    },
-    "Высокая контрастность": {
-        "bg_main": "#000000",
-        "bg_card": "#06080D",
-        "bg_nested": "#0E131E",
-        "bg_hover": "#1C2538",
-        "bg_active": "#27334D",
-        "text_primary": "#FFFFFF",
-        "text_secondary": "#F8FAFC",
-        "border": "#E2E8F0",
-        "border_strong": "#FFFFFF",
-        "border_width": "2px",
-        "accent": "#FFE600",
-        "accent_hover": "#FFF266",
-        "accent_active": "#FFD000",
-        "accent_fg": "#000000",
-        "focus": "#00FFFF",
-        "success": "#00FF85",
-        "success_bg": "#002914",
-        "warning": "#FFE600",
-        "warning_bg": "#332900",
-        "error": "#FF5C5C",
-        "error_bg": "#380008",
-        "disabled_bg": "#121722",
-        "disabled_text": "#D1D9E6",
-        "disabled_border": "#94A3B8",
-        "font_base": "18px",
-        "font_caption": "16px",
-        "font_btn": "17px",
-        "font_h1": "31px",
-        "font_h2": "27px",
-        "font_h3": "22px",
-        "font_h4": "20px",
-        "font_kpi": "22px",
-        "line_height": "1.60",
-        "touch_target": "48px",
-        "slider_thumb": "26px",
-        "card_pad": "1.1rem",
-        "gap": "0.95rem",
-        "caption_weight": "600",
-        "alert_border_w": "2px",
-        "kpi_1col_bp": "460px",
+    "Тёмная (ночная)": {
+        "Стандартный": {
+            "bg_main": "#0E1117",
+            "bg_card": "#161B24",
+            "bg_nested": "#1F2633",
+            "bg_hover": "#293345",
+            "bg_active": "#192231",
+            "text_primary": "#EEF2F6",
+            "text_secondary": "#CBD5E1",
+            "border": "#70829A",
+            "border_strong": "#8294AD",
+            "border_width": "1px",
+            "accent": "#38BDF8",
+            "accent_hover": "#7DD3FC",
+            "accent_active": "#0EA5E9",
+            "accent_fg": "#0B111A",
+            "focus": "#FACC15",
+            "success": "#4ADE80",
+            "success_bg": "#12261E",
+            "warning": "#FBBF24",
+            "warning_bg": "#292011",
+            "error": "#F87171",
+            "error_bg": "#2B1418",
+            "disabled_bg": "#1B202B",
+            "disabled_text": "#94A3B8",
+            "disabled_border": "#5B6B82",
+            "font_base": "17px",
+            "font_caption": "15px",
+            "font_btn": "16px",
+            "font_h1": "29px",
+            "font_h2": "25px",
+            "font_h3": "21px",
+            "font_h4": "19px",
+            "font_kpi": "21px",
+            "line_height": "1.55",
+            "touch_target": "44px",
+            "slider_thumb": "24px",
+            "card_pad": "1rem",
+            "gap": "0.85rem",
+            "caption_weight": "400",
+            "alert_border_w": "1px",
+            "kpi_1col_bp": "420px",
+        },
+        "Повышенная читаемость": {
+            "bg_main": "#0E1117",
+            "bg_card": "#161C26",
+            "bg_nested": "#202837",
+            "bg_hover": "#2C374C",
+            "bg_active": "#1A2436",
+            "text_primary": "#F5F8FC",
+            "text_secondary": "#CBD6E4",
+            "border": "#8DA2BD",
+            "border_strong": "#A6BCD6",
+            "border_width": "2px",
+            "accent": "#38BDF8",
+            "accent_hover": "#7DD3FC",
+            "accent_active": "#0EA5E9",
+            "accent_fg": "#0B111A",
+            "focus": "#FACC15",
+            "success": "#4ADE80",
+            "success_bg": "#12281F",
+            "warning": "#FBBF24",
+            "warning_bg": "#2D2312",
+            "error": "#F87171",
+            "error_bg": "#30151A",
+            "disabled_bg": "#1C222E",
+            "disabled_text": "#9BA8BC",
+            "disabled_border": "#6F829C",
+            "font_base": "20px",
+            "font_caption": "17px",
+            "font_btn": "18px",
+            "font_h1": "34px",
+            "font_h2": "29px",
+            "font_h3": "24px",
+            "font_h4": "22px",
+            "font_kpi": "24px",
+            "line_height": "1.65",
+            "touch_target": "52px",
+            "slider_thumb": "28px",
+            "card_pad": "1.25rem",
+            "gap": "1.15rem",
+            "caption_weight": "500",
+            "alert_border_w": "2px",
+            "kpi_1col_bp": "540px",
+        },
+        "Высокая контрастность": {
+            "bg_main": "#000000",
+            "bg_card": "#06080D",
+            "bg_nested": "#0E131E",
+            "bg_hover": "#1C2538",
+            "bg_active": "#27334D",
+            "text_primary": "#FFFFFF",
+            "text_secondary": "#F8FAFC",
+            "border": "#E2E8F0",
+            "border_strong": "#FFFFFF",
+            "border_width": "2px",
+            "accent": "#FFE600",
+            "accent_hover": "#FFF266",
+            "accent_active": "#FFD000",
+            "accent_fg": "#000000",
+            "focus": "#00FFFF",
+            "success": "#00FF85",
+            "success_bg": "#002914",
+            "warning": "#FFE600",
+            "warning_bg": "#332900",
+            "error": "#FF5C5C",
+            "error_bg": "#380008",
+            "disabled_bg": "#121722",
+            "disabled_text": "#D1D9E6",
+            "disabled_border": "#94A3B8",
+            "font_base": "18px",
+            "font_caption": "16px",
+            "font_btn": "17px",
+            "font_h1": "31px",
+            "font_h2": "27px",
+            "font_h3": "22px",
+            "font_h4": "20px",
+            "font_kpi": "22px",
+            "line_height": "1.60",
+            "touch_target": "48px",
+            "slider_thumb": "26px",
+            "card_pad": "1.1rem",
+            "gap": "0.95rem",
+            "caption_weight": "600",
+            "alert_border_w": "2px",
+            "kpi_1col_bp": "460px",
+        },
     },
 }
 
+# Палитра по умолчанию (дневная светлая тема) для обратной совместимости
+ACCESSIBILITY_PALETTES = THEME_ACCESSIBILITY_PALETTES[THEME_MODE_OPTIONS[0]]
 
-def get_visual_system_css(accessibility_mode: str = "Стандартный") -> str:
+
+def get_visual_system_css(
+    accessibility_mode: str = "Стандартный",
+    theme_mode: str = "Светлая (дневная)",
+) -> str:
     """
-    Формирует единую таблицу стилей KIP Simulator для выбранного режима доступности
-    («Стандартный», «Повышенная читаемость», «Высокая контрастность») с адаптацией
-    под ширины 320 / 360 / 390 / 430 px, планшет, ПК и масштабирование браузера до 200%.
+    Формирует единую таблицу стилей KIP Simulator для выбранной цветовой темы
+    («Светлая (дневная)» по умолчанию или «Тёмная (ночная)») и режима доступности
+    («Стандартный», «Повышенная читаемость», «Высокая контрастность»).
+    Гарантирует высокий контраст текста во всех виджетах Streamlit (включая radio, selectbox,
+    slider, expander и боковую панель) без чёрного текста на тёмном фоне.
     """
-    p = ACCESSIBILITY_PALETTES.get(accessibility_mode, ACCESSIBILITY_PALETTES["Стандартный"])
+    theme_key = theme_mode if theme_mode in THEME_ACCESSIBILITY_PALETTES else THEME_MODE_OPTIONS[0]
+    theme_palettes = THEME_ACCESSIBILITY_PALETTES[theme_key]
+    p = theme_palettes.get(accessibility_mode, theme_palettes["Стандартный"])
+    is_light = (theme_key == "Светлая (дневная)")
+    color_scheme = "light" if is_light else "dark"
+    hc_ring = "#000000" if is_light else "#FFFFFF"
+
     extra_hc_rules = ""
     if accessibility_mode == "Высокая контрастность":
-        extra_hc_rules = """
+        extra_hc_rules = f"""
         /* Усиленное выделение активных состояний, предупреждений и подписей (Высокая контрастность) */
         .stButton > button[kind="primary"],
         .stFormSubmitButton > button[kind="primary"],
         [data-testid="stBaseButton-primary"],
-        [data-baseweb="tab"][aria-selected="true"] {
-            box-shadow: 0 0 0 2px #FFFFFF;
+        [data-baseweb="tab"][aria-selected="true"] {{
+            box-shadow: 0 0 0 2px {hc_ring};
             font-weight: 800;
-        }
-        [data-testid="stAlert"] {
+        }}
+        [data-testid="stAlert"] {{
             border-left-width: 6px !important;
-        }
+        }}
         .kip-nav-status,
         .kip-stand-purpose,
-        .kip-section-intro {
+        .kip-section-intro {{
             border-left-width: 6px;
-        }
-        .kip-stage-step--active {
-            box-shadow: 0 0 0 2px #FFFFFF;
-        }
+        }}
+        .kip-stage-step--active {{
+            box-shadow: 0 0 0 2px {hc_ring};
+        }}
         """
     elif accessibility_mode == "Повышенная читаемость":
         extra_hc_rules = """
@@ -201,10 +350,11 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
     return f"""
     <style>
         /* =====================================================================
-           ЕДИНАЯ ВИЗУАЛЬНАЯ СИСТЕМА KIP SIMULATOR (ЭТАПЫ 1–5)
-           Активный режим доступности: {accessibility_mode}
+           ЕДИНАЯ ВИЗУАЛЬНАЯ СИСТЕМА KIP SIMULATOR (Светлая / Тёмная + Доступность)
+           Активная тема: {theme_key} | Режим доступности: {accessibility_mode}
            ===================================================================== */
         :root {{
+            color-scheme: {color_scheme};
             --kip-bg-main: {p["bg_main"]};
             --kip-bg-card: {p["bg_card"]};
             --kip-bg-nested: {p["bg_nested"]};
@@ -250,21 +400,55 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
             --kip-gap: {p["gap"]};
         }}
 
-        /* 1. Базовый фон, типографика и иерархия заголовков */
+        /* 1. Базовый фон, верхняя панель Streamlit, сайдбар и типографика */
         *, *::before, *::after {{
             box-sizing: border-box;
         }}
 
-        html, body, .stApp {{
-            background-color: var(--kip-bg-main);
-            color: var(--kip-text-primary);
+        html, body, .stApp,
+        [data-testid="stAppViewContainer"],
+        [data-testid="stMain"] {{
+            background-color: var(--kip-bg-main) !important;
+            color: var(--kip-text-primary) !important;
             font-size: var(--kip-font-base);
             line-height: var(--kip-line-height);
         }}
 
+        [data-testid="stHeader"] {{
+            background-color: var(--kip-bg-main) !important;
+            color: var(--kip-text-primary) !important;
+            border-bottom: 1px solid var(--kip-border);
+        }}
+
+        [data-testid="stHeader"] button,
+        [data-testid="stHeader"] svg {{
+            color: var(--kip-text-primary) !important;
+            fill: currentColor;
+        }}
+
+        [data-testid="stSidebar"],
+        [data-testid="stSidebarContent"] {{
+            background-color: var(--kip-bg-card) !important;
+            color: var(--kip-text-primary) !important;
+        }}
+
         [data-testid="stSidebar"] {{
-            background-color: var(--kip-bg-card);
             border-right: var(--kip-border-width) solid var(--kip-border);
+        }}
+
+        [data-testid="stSidebar"] h1,
+        [data-testid="stSidebar"] h2,
+        [data-testid="stSidebar"] h3,
+        [data-testid="stSidebar"] p,
+        [data-testid="stSidebar"] span,
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] li {{
+            color: var(--kip-text-primary);
+        }}
+
+        [data-testid="stBottom"],
+        [data-testid="stBottomBlockContainer"] {{
+            background-color: var(--kip-bg-main) !important;
         }}
 
         .stApp h1 {{
@@ -307,7 +491,9 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
 
         .stMarkdown p,
         .stMarkdown li,
-        .stMarkdown blockquote {{
+        .stMarkdown blockquote,
+        [data-testid="stMarkdownContainer"] p,
+        [data-testid="stMarkdownContainer"] li {{
             font-size: var(--kip-font-base);
             line-height: var(--kip-line-height);
             color: var(--kip-text-primary);
@@ -323,16 +509,27 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
             margin: 0.75rem 0;
         }}
 
+        .stMarkdown code,
+        .stApp code {{
+            background-color: var(--kip-bg-nested);
+            color: var(--kip-text-primary);
+            border: 1px solid var(--kip-border);
+            padding: 0.1rem 0.35rem;
+            border-radius: 4px;
+        }}
+
         /* Читаемые подписи без снижения прозрачности */
         [data-testid="stCaptionContainer"],
         [data-testid="stCaptionContainer"] p,
+        [data-testid="stSidebar"] [data-testid="stCaptionContainer"],
+        [data-testid="stSidebar"] [data-testid="stCaptionContainer"] p,
         .stCaption,
         .stApp small {{
             font-size: var(--kip-font-caption);
             font-weight: var(--kip-caption-weight);
             line-height: 1.5;
-            color: var(--kip-text-secondary);
-            opacity: 1;
+            color: var(--kip-text-secondary) !important;
+            opacity: 1 !important;
             overflow-wrap: break-word;
         }}
 
@@ -356,6 +553,7 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
         /* Формулы LaTeX: горизонтальная прокрутка внутри контейнера формулы без растягивания страницы */
         .katex-display {{
             background-color: var(--kip-bg-nested);
+            color: var(--kip-text-primary);
             border: var(--kip-border-width) solid var(--kip-border);
             border-radius: var(--kip-radius-sm);
             padding: 0.75rem 1rem;
@@ -366,6 +564,7 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
         }}
 
         .katex {{
+            color: var(--kip-text-primary);
             max-width: 100%;
         }}
 
@@ -427,12 +626,17 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
             max-width: 100%;
         }}
 
+        [data-testid="stExpander"] summary,
+        [data-testid="stExpander"] summary p,
+        [data-testid="stExpander"] summary svg {{
+            color: var(--kip-text-primary) !important;
+        }}
+
         [data-testid="stExpander"] summary {{
             min-height: var(--kip-touch-target);
             padding: 0.55rem 0.9rem;
             font-size: var(--kip-font-base);
             font-weight: 600;
-            color: var(--kip-text-primary);
             border-radius: var(--kip-radius);
         }}
 
@@ -449,6 +653,10 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
             max-width: 100%;
         }}
 
+        [data-testid="stProgress"] p {{
+            color: var(--kip-text-primary) !important;
+        }}
+
         /* Статусные уведомления (инфо / успех / предупреждение / ошибка) */
         [data-testid="stAlert"] {{
             border-radius: var(--kip-radius);
@@ -461,7 +669,7 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
 
         [data-testid="stAlert"] p,
         [data-testid="stAlert"] li {{
-            color: var(--kip-text-primary);
+            color: var(--kip-text-primary) !important;
             font-size: var(--kip-font-base);
             max-width: 100%;
         }}
@@ -502,8 +710,15 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
             border-radius: var(--kip-radius-sm);
             border: var(--kip-border-width) solid var(--kip-border-strong);
             background-color: var(--kip-bg-nested);
-            color: var(--kip-text-primary);
+            color: var(--kip-text-primary) !important;
             transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+        }}
+
+        .stButton > button p,
+        .stFormSubmitButton > button p {{
+            color: inherit !important;
+            font-size: inherit;
+            margin: 0;
         }}
 
         [data-testid="stChatInputSubmitButton"] {{
@@ -515,7 +730,7 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
         [data-testid="stChatInputSubmitButton"]:hover:not(:disabled) {{
             background-color: var(--kip-bg-hover);
             border-color: var(--kip-accent);
-            color: var(--kip-text-primary);
+            color: var(--kip-text-primary) !important;
         }}
 
         .stButton > button:active:not(:disabled),
@@ -530,7 +745,7 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
         [data-testid="stBaseButton-primary"] {{
             background-color: var(--kip-accent);
             border-color: var(--kip-accent);
-            color: var(--kip-accent-fg);
+            color: var(--kip-accent-fg) !important;
         }}
 
         .stButton > button[kind="primary"]:hover:not(:disabled),
@@ -538,7 +753,7 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
         [data-testid="stBaseButton-primary"]:hover:not(:disabled) {{
             background-color: var(--kip-accent-hover);
             border-color: var(--kip-accent-hover);
-            color: var(--kip-accent-fg);
+            color: var(--kip-accent-fg) !important;
         }}
 
         .stButton > button[kind="primary"]:active:not(:disabled),
@@ -546,7 +761,7 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
         [data-testid="stBaseButton-primary"]:active:not(:disabled) {{
             background-color: var(--kip-accent-active);
             border-color: var(--kip-accent-active);
-            color: var(--kip-accent-fg);
+            color: var(--kip-accent-fg) !important;
         }}
 
         .stButton > button:disabled,
@@ -554,7 +769,7 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
         [data-testid="stChatInputSubmitButton"]:disabled {{
             background-color: var(--kip-disabled-bg);
             border-color: var(--kip-disabled-border);
-            color: var(--kip-disabled-text);
+            color: var(--kip-disabled-text) !important;
             cursor: not-allowed;
         }}
 
@@ -563,11 +778,13 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
         .stTextInput label,
         .stSlider label,
         .stRadio > label,
-        .stCheckbox label {{
+        .stCheckbox label,
+        [data-testid="stWidgetLabel"],
+        [data-testid="stWidgetLabel"] p {{
             font-size: var(--kip-font-btn);
             font-weight: 600;
             line-height: 1.4;
-            color: var(--kip-text-primary);
+            color: var(--kip-text-primary) !important;
             margin-bottom: 0.35rem;
         }}
 
@@ -577,10 +794,36 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
         [data-baseweb="select"] > div {{
             min-height: var(--kip-touch-target);
             font-size: var(--kip-font-base);
-            background-color: var(--kip-bg-nested);
-            color: var(--kip-text-primary);
+            background-color: var(--kip-bg-nested) !important;
+            color: var(--kip-text-primary) !important;
             border: var(--kip-border-width) solid var(--kip-border-strong);
             border-radius: var(--kip-radius-sm);
+        }}
+
+        [data-baseweb="select"] span,
+        [data-baseweb="select"] input,
+        [data-baseweb="select"] svg {{
+            color: var(--kip-text-primary) !important;
+        }}
+
+        [data-baseweb="popover"],
+        [data-baseweb="popover"] ul,
+        [role="listbox"],
+        [role="option"] {{
+            background-color: var(--kip-bg-card) !important;
+            color: var(--kip-text-primary) !important;
+        }}
+
+        [role="option"]:hover,
+        [role="option"][aria-selected="true"] {{
+            background-color: var(--kip-bg-hover) !important;
+            color: var(--kip-text-primary) !important;
+        }}
+
+        [data-testid="stChatInput"] textarea::placeholder,
+        .stTextInput input::placeholder {{
+            color: var(--kip-text-secondary) !important;
+            opacity: 0.85;
         }}
 
         .stTextInput input:hover:not(:disabled),
@@ -591,8 +834,8 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
 
         .stTextInput input:disabled,
         .stNumberInput input:disabled {{
-            background-color: var(--kip-disabled-bg);
-            color: var(--kip-disabled-text);
+            background-color: var(--kip-disabled-bg) !important;
+            color: var(--kip-disabled-text) !important;
             border-color: var(--kip-disabled-border);
             cursor: not-allowed;
         }}
@@ -621,6 +864,24 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
             border: 2px solid var(--kip-text-primary);
         }}
 
+        [data-testid="stSlider"] [data-testid="stTickBarMin"],
+        [data-testid="stSlider"] [data-testid="stTickBarMax"],
+        [data-testid="stSlider"] [data-testid="stThumbValue"] {{
+            color: var(--kip-text-primary) !important;
+        }}
+
+        /* Явный контрастный цвет подписей радиокнопок и чекбоксов в обеих темах */
+        .stRadio [role="radiogroup"] label,
+        .stRadio [role="radiogroup"] label p,
+        .stRadio [role="radiogroup"] label div,
+        .stRadio [role="radiogroup"] label span,
+        .stCheckbox label,
+        .stCheckbox label p,
+        .stCheckbox label span {{
+            color: var(--kip-text-primary) !important;
+            opacity: 1 !important;
+        }}
+
         .stRadio [role="radiogroup"] label,
         .stCheckbox label {{
             min-height: var(--kip-touch-target);
@@ -645,20 +906,25 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
             padding: 0.5rem 0.95rem;
             font-size: var(--kip-font-btn);
             font-weight: 600;
-            color: var(--kip-text-secondary);
+            color: var(--kip-text-secondary) !important;
             background-color: var(--kip-bg-nested);
             border: var(--kip-border-width) solid var(--kip-border);
             border-radius: var(--kip-radius-sm) var(--kip-radius-sm) 0 0;
             white-space: normal;
         }}
 
+        [data-baseweb="tab"] p {{
+            color: inherit !important;
+            margin: 0;
+        }}
+
         [data-baseweb="tab"]:hover {{
-            color: var(--kip-text-primary);
+            color: var(--kip-text-primary) !important;
             border-color: var(--kip-accent);
         }}
 
         [data-baseweb="tab"][aria-selected="true"] {{
-            color: var(--kip-accent-fg);
+            color: var(--kip-accent-fg) !important;
             background-color: var(--kip-accent);
             border-color: var(--kip-accent);
         }}
@@ -937,7 +1203,6 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
             overflow-wrap: break-word;
         }}
 
-
         .kip-stage-step--active {{
             background-color: var(--kip-accent);
             border-color: var(--kip-accent);
@@ -1173,9 +1438,12 @@ def get_visual_system_css(accessibility_mode: str = "Стандартный") ->
     """
 
 
-def apply_visual_system_css(accessibility_mode: str = "Стандартный") -> None:
-    """Применяет CSS активного режима доступности без перезапуска приложения."""
-    st.markdown(get_visual_system_css(accessibility_mode), unsafe_allow_html=True)
+def apply_visual_system_css(
+    accessibility_mode: str = "Стандартный",
+    theme_mode: str = "Светлая (дневная)",
+) -> None:
+    """Применяет CSS активной цветовой темы и режима доступности без перезапуска приложения."""
+    st.markdown(get_visual_system_css(accessibility_mode, theme_mode), unsafe_allow_html=True)
 
 
 # =====================================================================
@@ -1579,7 +1847,8 @@ def configure_adaptive_plotly_layout(
     all_y_arrays: list[np.ndarray],
     x_title: str,
     y_title: str,
-    display_mode: str = "Адаптивный (ПК + смартфон)"
+    display_mode: str = "Адаптивный (ПК + смартфон)",
+    theme_mode: str = "Светлая (дневная)"
 ) -> tuple[dict, str]:
     """
     Настраивает адаптивное отображение графика Plotly под мобильные (320–430 px) и настольные экраны.
@@ -1648,9 +1917,19 @@ def configure_adaptive_plotly_layout(
             "modeBarButtonsToRemove": ["lasso2d", "select2d"]
         }
 
+    is_light_theme = (theme_mode == "Светлая (дневная)")
+    plotly_template = "plotly_white" if is_light_theme else "plotly_dark"
+    chart_bg = "#FFFFFF" if is_light_theme else "#0E1117"
+    chart_font_col = "#0F172A" if is_light_theme else "#EEF2F6"
+    x_grid_col = "rgba(15, 23, 42, 0.16)" if is_light_theme else "rgba(255,255,255,0.14)"
+    x_zero_col = "rgba(15, 23, 42, 0.40)" if is_light_theme else "rgba(255,255,255,0.32)"
+    y_grid_col = "rgba(15, 23, 42, 0.12)" if is_light_theme else "rgba(255,255,255,0.10)"
+    y_zero_col = "rgba(15, 23, 42, 0.35)" if is_light_theme else "rgba(255,255,255,0.28)"
+    minor_grid_col = "rgba(15, 23, 42, 0.06)" if is_light_theme else "rgba(255,255,255,0.04)"
+
     # 3. Градуировка горизонтальной оси температуры с равномерным шагом 250 °C (от 0 в обе стороны)
     xaxis_cfg = dict(
-        title=dict(text=x_title, font=dict(size=title_size)),
+        title=dict(text=x_title, font=dict(size=title_size, color=chart_font_col)),
         range=x_range,
         tickmode="linear",
         tick0=0,
@@ -1658,21 +1937,21 @@ def configure_adaptive_plotly_layout(
         tickangle=0,
         ticks="outside",
         ticklen=5,
-        tickfont=dict(size=x_tick_size),
+        tickfont=dict(size=x_tick_size, color=chart_font_col),
         automargin=True,
         showgrid=True,
-        gridcolor="rgba(255,255,255,0.14)",
-        zerolinecolor="rgba(255,255,255,0.32)"
+        gridcolor=x_grid_col,
+        zerolinecolor=x_zero_col
     )
     yaxis_cfg = dict(
-        title=dict(text=y_title, font=dict(size=title_size)),
+        title=dict(text=y_title, font=dict(size=title_size, color=chart_font_col)),
         range=y_range,
         nticks=y_nticks,
-        tickfont=dict(size=y_tick_size),
+        tickfont=dict(size=y_tick_size, color=chart_font_col),
         automargin=True,
         showgrid=True,
-        gridcolor="rgba(255,255,255,0.10)",
-        zerolinecolor="rgba(255,255,255,0.28)"
+        gridcolor=y_grid_col,
+        zerolinecolor=y_zero_col
     )
 
     if dy_main < 1e-6 or dx_main < 1e-6:
@@ -1708,7 +1987,10 @@ def configure_adaptive_plotly_layout(
         autosize=True,
         height=fig_height,
         margin=margins,
-        template="plotly_dark",
+        template=plotly_template,
+        paper_bgcolor=chart_bg,
+        plot_bgcolor=chart_bg,
+        font=dict(color=chart_font_col),
         hovermode=hover_mode,
         xaxis=xaxis_cfg,
         yaxis=yaxis_cfg,
@@ -1718,8 +2000,8 @@ def configure_adaptive_plotly_layout(
             y=legend_y,
             xanchor="center",
             x=0.5,
-            font=dict(size=legend_size),
-            bgcolor="rgba(14, 17, 23, 0.0)",
+            font=dict(size=legend_size, color=chart_font_col),
+            bgcolor="rgba(0, 0, 0, 0.0)",
             itemwidth=30
         )
     )
@@ -1734,7 +2016,7 @@ def configure_adaptive_plotly_layout(
                 ticks="outside",
                 ticklen=3,
                 showgrid=True,
-                gridcolor="rgba(255,255,255,0.04)"
+                gridcolor=minor_grid_col
             )
         )
     except Exception:
@@ -1755,7 +2037,8 @@ def render_3d_stand1_gradient(
     u_meter_str: str,
     seebeck_str: str,
     fault_state: str,
-    t_kz_val: float | None = None
+    t_kz_val: float | None = None,
+    theme_mode: str = "Светлая (дневная)"
 ) -> str:
     """
     3D-модель термопары для Стенда №1.
@@ -1766,7 +2049,21 @@ def render_3d_stand1_gradient(
     cold_hex, cold_emissive, cold_int = cold_junction_rgb(t_cold)
     hot_css = "#" + hot_hex[2:]
     cold_css = "#" + cold_hex[2:]
-    border_col = "#ff2a2a" if fault_state != "Норма" else "#00b4d8"
+    is_light = (theme_mode == "Светлая (дневная)")
+    border_col = ("#b91c1c" if is_light else "#ff2a2a") if fault_state != "Норма" else ("#0369a1" if is_light else "#00b4d8")
+    scene_bg_css = "#f1f5f9" if is_light else "#0e1117"
+    scene_bg_three = "0xf1f5f9" if is_light else "0x0e1117"
+    hud_bg_css = "rgba(255, 255, 255, 0.94)" if is_light else "rgba(20, 24, 33, 0.92)"
+    hud_fg_css = "#0f172a" if is_light else "#eef2f6"
+    hud_bold_css = "#b45309" if is_light else "#ff9f1c"
+    hot_badge_css = "#c2410c" if is_light else "#ff6b35"
+    cold_badge_css = "#0369a1" if is_light else "#4cc9f0"
+    leg_bg_css = "rgba(255, 255, 255, 0.90)" if is_light else "rgba(20, 24, 33, 0.85)"
+    hint_bg_css = "rgba(255, 255, 255, 0.90)" if is_light else "rgba(14, 17, 23, 0.82)"
+    hint_fg_css = "#334155" if is_light else "#cbd5e1"
+    hud_border_css = "1px solid #cbd5e1" if is_light else "none"
+    svg_stroke_css = "#0f172a" if is_light else "#ffffff"
+    svg_mask_bg = "#f1f5f9" if is_light else "#0e1117"
     is_open = "Обрыв" in fault_state
     is_short = "Паразитный" in fault_state
     kz_label = f"{t_kz_val:.0f} °C" if t_kz_val is not None else ""
@@ -1779,11 +2076,12 @@ def render_3d_stand1_gradient(
         <meta charset="utf-8">
         <style>
             * {{ box-sizing: border-box; }}
-            body {{ margin: 0; overflow: hidden; background-color: #0e1117; font-family: sans-serif; }}
+            body {{ margin: 0; overflow: hidden; background-color: {scene_bg_css}; font-family: sans-serif; }}
             #hud {{
-                position: absolute; top: 10px; left: 10px; color: #e0e6ed;
+                position: absolute; top: 10px; left: 10px; color: {hud_fg_css};
                 max-width: calc(100vw - 20px);
-                background: rgba(20, 24, 33, 0.92); padding: 9px 12px;
+                background: {hud_bg_css}; padding: 9px 12px;
+                border: {hud_border_css};
                 border-radius: 8px; border-left: 4px solid {border_col}; font-size: 12px;
                 pointer-events: none; z-index: 10; line-height: 1.42;
                 overflow-wrap: break-word; word-break: break-word;
@@ -1794,26 +2092,26 @@ def render_3d_stand1_gradient(
                 pointer-events: none; z-index: 10;
             }}
             #legend {{
-                max-width: 100%; color: #e0e6ed;
-                background: rgba(20, 24, 33, 0.85); padding: 5px 9px;
+                max-width: 100%; color: {hud_fg_css};
+                background: {leg_bg_css}; padding: 5px 9px; border: {hud_border_css};
                 border-radius: 6px; font-size: 11px; line-height: 1.35;
                 overflow-wrap: break-word; word-break: break-word;
             }}
             #hint {{
-                max-width: 100%; color: #b8c4d4;
-                background: rgba(14, 17, 23, 0.82); padding: 5px 9px;
+                max-width: 100%; color: {hint_fg_css};
+                background: {hint_bg_css}; padding: 5px 9px; border: {hud_border_css};
                 border-radius: 6px; font-size: 11px; line-height: 1.35;
                 overflow-wrap: break-word; word-break: break-word;
             }}
             #fallback2d {{
                 display: none; width: 100vw; height: 100vh; padding: 10px;
                 align-items: center; justify-content: center; flex-direction: column;
-                background-color: #0e1117; color: #e0e6ed;
+                background-color: {scene_bg_css}; color: {hud_fg_css};
             }}
             #fallback2d svg {{ max-width: 100%; height: auto; }}
-            .hot-badge {{ color: #ff6b35; font-weight: bold; }}
-            .cold-badge {{ color: #4cc9f0; font-weight: bold; }}
-            #hud b {{ color: #ff9f1c; }}
+            .hot-badge {{ color: {hot_badge_css}; font-weight: bold; }}
+            .cold-badge {{ color: {cold_badge_css}; font-weight: bold; }}
+            #hud b {{ color: {hud_bold_css}; }}
             @media (max-width: 480px) {{
                 #hud {{ top: 8px; left: 8px; max-width: calc(100vw - 16px); padding: 7px 9px; font-size: 11px; line-height: 1.35; }}
                 #bottom-overlay {{ bottom: 6px; left: 8px; right: 8px; gap: 4px; }}
@@ -1846,14 +2144,14 @@ def render_3d_stand1_gradient(
                         <stop offset="100%" style="stop-color:{hot_css};stop-opacity:1" />
                     </linearGradient>
                 </defs>
-                <rect x="85" y="45" width="150" height="36" rx="6" fill="{cold_css}" stroke="#ffffff" stroke-width="1.5"/>
-                <text x="160" y="68" fill="#0e1117" font-size="12" font-weight="bold" text-anchor="middle">Холодный спай ({t_cold:.0f} °C)</text>
+                <rect x="85" y="45" width="150" height="36" rx="6" fill="{cold_css}" stroke="{svg_stroke_css}" stroke-width="1.5"/>
+                <text x="160" y="68" fill="#0f172a" font-size="12" font-weight="bold" text-anchor="middle">Холодный спай ({t_cold:.0f} °C)</text>
                 <line x1="115" y1="81" x2="155" y2="290" stroke="url(#gradWire)" stroke-width="8" stroke-linecap="round"/>
                 <line x1="205" y1="81" x2="165" y2="290" stroke="url(#gradWire)" stroke-width="8" stroke-linecap="round"/>
-                {"<rect x='115' y='165' width='35' height='22' fill='#0e1117'/><circle cx='132' cy='176' r='10' fill='none' stroke='#ff2a2a' stroke-width='2' stroke-dasharray='3,3'/><text x='70' y='180' fill='#ff4d4d' font-size='11'>Обрыв I=0</text>" if is_open else ""}
-                {"<line x1='128' y1='185' x2='192' y2='185' stroke='#ff2a2a' stroke-width='6'/><text x='235' y='189' fill='#ff4d4d' font-size='11'>КЗ (" + kz_label + ")</text>" if is_short else ""}
-                <circle cx="160" cy="295" r="20" fill="{hot_css}" stroke="#ffffff" stroke-width="1.5"/>
-                <text x="160" y="335" fill="{hot_css}" font-size="12" font-weight="bold" text-anchor="middle">Горячий спай ({t_hot:.0f} °C)</text>
+                {"<rect x='115' y='165' width='35' height='22' fill='" + svg_mask_bg + "'/><circle cx='132' cy='176' r='10' fill='none' stroke='#dc2626' stroke-width='2' stroke-dasharray='3,3'/><text x='70' y='180' fill='#dc2626' font-size='11' font-weight='bold'>Обрыв I=0</text>" if is_open else ""}
+                {"<line x1='128' y1='185' x2='192' y2='185' stroke='#dc2626' stroke-width='6'/><text x='235' y='189' fill='#dc2626' font-size='11' font-weight='bold'>КЗ (" + kz_label + ")</text>" if is_short else ""}
+                <circle cx="160" cy="295" r="20" fill="{hot_css}" stroke="{svg_stroke_css}" stroke-width="1.5"/>
+                <text x="160" y="335" fill="{hot_badge_css}" font-size="12" font-weight="bold" text-anchor="middle">Горячий спай ({t_hot:.0f} °C)</text>
             </svg>
         </div>
 
@@ -1872,7 +2170,7 @@ def render_3d_stand1_gradient(
             }} else {{
                 try {{
                     const scene = new THREE.Scene();
-                    scene.background = new THREE.Color(0x0e1117);
+                    scene.background = new THREE.Color({scene_bg_three});
 
                     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
                     camera.position.set(0.0, 0.3, 6.8);
@@ -2129,13 +2427,25 @@ def render_3d_stand2_pair(
     e_gen_mv: float,
     u_meter_mv: float | None,
     u_meter_str: str,
-    fault_state: str
+    fault_state: str,
+    theme_mode: str = "Светлая (дневная)"
 ) -> str:
     """
     3D-модель для Стенда №2 с раздельной проверкой THREE / THREE.OrbitControls
     и перехватом ошибок WebGLRenderer (автоматический переход на 2D SVG).
     """
-    border_col = "#ff2a2a" if fault_state != "Норма" else "#80ed99"
+    is_light = (theme_mode == "Светлая (дневная)")
+    border_col = ("#b91c1c" if is_light else "#ff2a2a") if fault_state != "Норма" else ("#15803d" if is_light else "#80ed99")
+    scene_bg_css = "#f1f5f9" if is_light else "#0e1117"
+    scene_bg_three = "0xf1f5f9" if is_light else "0x0e1117"
+    hud_bg_css = "rgba(255, 255, 255, 0.94)" if is_light else "rgba(20, 24, 33, 0.92)"
+    hud_fg_css = "#0f172a" if is_light else "#eef2f6"
+    hud_bold_css = "#15803d" if is_light else "#80ed99"
+    hint_bg_css = "rgba(255, 255, 255, 0.90)" if is_light else "rgba(14, 17, 23, 0.82)"
+    hint_fg_css = "#334155" if is_light else "#cbd5e1"
+    hud_border_css = "1px solid #cbd5e1" if is_light else "none"
+    svg_mask_bg = "#f1f5f9" if is_light else "#0e1117"
+    svg_stroke_css = "#0f172a" if is_light else "#ffffff"
     is_open = "Обрыв" in fault_state
     is_short = "Паразитный" in fault_state
     col1_css = "#" + col1_hex[2:]
@@ -2151,11 +2461,12 @@ def render_3d_stand2_pair(
         <meta charset="utf-8">
         <style>
             * {{ box-sizing: border-box; }}
-            body {{ margin: 0; overflow: hidden; background-color: #0e1117; font-family: sans-serif; }}
+            body {{ margin: 0; overflow: hidden; background-color: {scene_bg_css}; font-family: sans-serif; }}
             #hud {{
-                position: absolute; top: 10px; left: 10px; color: #e0e6ed;
+                position: absolute; top: 10px; left: 10px; color: {hud_fg_css};
                 max-width: calc(100vw - 20px);
-                background: rgba(20, 24, 33, 0.92); padding: 9px 12px;
+                background: {hud_bg_css}; padding: 9px 12px;
+                border: {hud_border_css};
                 border-radius: 8px; border-left: 4px solid {border_col}; font-size: 12px;
                 pointer-events: none; z-index: 10; line-height: 1.42;
                 overflow-wrap: break-word; word-break: break-word;
@@ -2166,18 +2477,18 @@ def render_3d_stand2_pair(
                 pointer-events: none; z-index: 10;
             }}
             #hint {{
-                max-width: 100%; color: #b8c4d4;
-                background: rgba(14, 17, 23, 0.82); padding: 5px 9px;
+                max-width: 100%; color: {hint_fg_css};
+                background: {hint_bg_css}; padding: 5px 9px; border: {hud_border_css};
                 border-radius: 6px; font-size: 11px; line-height: 1.35;
                 overflow-wrap: break-word; word-break: break-word;
             }}
             #fallback2d {{
                 display: none; width: 100vw; height: 100vh; padding: 10px;
                 align-items: center; justify-content: center; flex-direction: column;
-                background-color: #0e1117; color: #e0e6ed;
+                background-color: {scene_bg_css}; color: {hud_fg_css};
             }}
             #fallback2d svg {{ max-width: 100%; height: auto; }}
-            #hud b {{ color: #80ed99; }}
+            #hud b {{ color: {hud_bold_css}; }}
             @media (max-width: 480px) {{
                 #hud {{ top: 8px; left: 8px; max-width: calc(100vw - 16px); padding: 7px 9px; font-size: 11px; line-height: 1.35; }}
                 #bottom-overlay {{ bottom: 6px; left: 8px; right: 8px; }}
@@ -2205,9 +2516,9 @@ def render_3d_stand2_pair(
                 <text x="160" y="98" fill="#80ed99" font-size="11" text-anchor="middle">{u_meter_str}</text>
                 <line x1="115" y1="115" x2="155" y2="290" stroke="{col1_css}" stroke-width="7" stroke-linecap="round"/>
                 <line x1="205" y1="115" x2="165" y2="290" stroke="{col2_css}" stroke-width="7" stroke-linecap="round"/>
-                {"<rect x='115' y='180' width='35' height='22' fill='#0e1117'/><text x='65' y='195' fill='#ff4d4d' font-size='11'>Обрыв I=0</text>" if is_open else ""}
-                {"<line x1='130' y1='200' x2='190' y2='200' stroke='#ff2a2a' stroke-width='6'/><text x='225' y='204' fill='#ff4d4d' font-size='11'>Перемычка КЗ</text>" if is_short else ""}
-                <circle cx="160" cy="295" r="18" fill="#ff5400" stroke="#ffffff" stroke-width="1.5"/>
+                {"<rect x='115' y='180' width='35' height='22' fill='" + svg_mask_bg + "'/><text x='65' y='195' fill='#dc2626' font-size='11' font-weight='bold'>Обрыв I=0</text>" if is_open else ""}
+                {"<line x1='130' y1='200' x2='190' y2='200' stroke='#dc2626' stroke-width='6'/><text x='225' y='204' fill='#dc2626' font-size='11' font-weight='bold'>Перемычка КЗ</text>" if is_short else ""}
+                <circle cx="160" cy="295" r="18" fill="#ff5400" stroke="{svg_stroke_css}" stroke-width="1.5"/>
             </svg>
         </div>
 
@@ -2226,7 +2537,7 @@ def render_3d_stand2_pair(
             }} else {{
                 try {{
                     const scene = new THREE.Scene();
-                    scene.background = new THREE.Color(0x0e1117);
+                    scene.background = new THREE.Color({scene_bg_three});
 
                     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
                     camera.position.set(0.0, 0.5, 7.2);
@@ -2520,7 +2831,8 @@ def init_app_session_state() -> None:
         "active_section": MAIN_SECTIONS[0],
         "nav_history": [],
         "active_lab_stand": LAB_STAND_OPTIONS[0],
-        # Настройки отображения и доступности
+        # Настройки отображения, темы и доступности (по умолчанию дневная светлая тема)
+        "theme_mode": THEME_MODE_OPTIONS[0],
         "chart_display_mode": CHART_DISPLAY_OPTIONS[0],
         "accessibility_mode": ACCESSIBILITY_MODE_OPTIONS[0],
         # Общие параметры физических неисправностей
@@ -2615,6 +2927,28 @@ def _on_top_a11y_change() -> None:
         st.session_state["accessibility_mode"] = chosen_mode
 
 
+def _on_sidebar_theme_change() -> None:
+    """Синхронизирует цветовую тему (Светлая / Тёмная) при переключении из боковой панели."""
+    chosen_theme = st.session_state.get("_sidebar_theme_radio")
+    if chosen_theme in THEME_MODE_OPTIONS:
+        st.session_state["theme_mode"] = chosen_theme
+
+
+def _on_top_theme_change() -> None:
+    """Синхронизирует цветовую тему (Светлая / Тёмная) при переключении из верхней панели."""
+    chosen_theme = st.session_state.get("_top_theme_radio")
+    if chosen_theme in THEME_MODE_OPTIONS:
+        st.session_state["theme_mode"] = chosen_theme
+
+
+def _toggle_theme_mode() -> None:
+    """Быстро переключает цветовую тему между светлой (дневной) и тёмной (ночной)."""
+    cur_theme = st.session_state.get("theme_mode", THEME_MODE_OPTIONS[0])
+    st.session_state["theme_mode"] = (
+        THEME_MODE_OPTIONS[1] if cur_theme == THEME_MODE_OPTIONS[0] else THEME_MODE_OPTIONS[0]
+    )
+
+
 def render_sidebar_navigation_and_controls() -> dict:
     """
     Отрисовывает компактную боковую панель, разделённую на четыре логические группы:
@@ -2707,10 +3041,19 @@ def render_sidebar_navigation_and_controls() -> dict:
         )
 
     # -----------------------------------------------------------------
-    # ГРУППА 4: НАСТРОЙКИ ОТОБРАЖЕНИЯ И ДОСТУПНОСТИ (общие настройки приложения)
+    # ГРУППА 4: НАСТРОЙКИ ОТОБРАЖЕНИЯ, ТЕМЫ И ДОСТУПНОСТИ (общие настройки)
     # -----------------------------------------------------------------
     st.sidebar.markdown("---")
     st.sidebar.subheader("🎛️ Настройки отображения")
+
+    st.session_state["_sidebar_theme_radio"] = st.session_state["theme_mode"]
+    st.sidebar.radio(
+        "☀️ / 🌙 Тема оформления:",
+        options=THEME_MODE_OPTIONS,
+        key="_sidebar_theme_radio",
+        on_change=_on_sidebar_theme_change,
+        help="Светлая (дневная) тема по умолчанию: чёрный текст на белом фоне. Тёмная (ночная): светлый текст на тёмном фоне.",
+    )
 
     st.session_state["_sidebar_a11y_radio"] = st.session_state["accessibility_mode"]
     st.sidebar.radio(
@@ -2718,7 +3061,7 @@ def render_sidebar_navigation_and_controls() -> dict:
         options=ACCESSIBILITY_MODE_OPTIONS,
         key="_sidebar_a11y_radio",
         on_change=_on_sidebar_a11y_change,
-        help="Переключает размер шрифта, толщину границ и контрастность темы без перезапуска приложения.",
+        help="Переключает размер шрифта, толщину границ и контрастность выбранной темы без перезапуска приложения.",
     )
 
     cur_chart_mode = st.session_state["chart_display_mode"]
@@ -2734,6 +3077,7 @@ def render_sidebar_navigation_and_controls() -> dict:
         "chart_display_mode": chart_mode,
         "circuit_fault_mode": st.session_state["fault_mode"],
         "accessibility_mode": st.session_state["accessibility_mode"],
+        "theme_mode": st.session_state["theme_mode"],
     }
 
 
@@ -2744,6 +3088,9 @@ def render_top_navigation_bar() -> None:
     """
     active_section = st.session_state["active_section"]
     a11y_mode = st.session_state["accessibility_mode"]
+    theme_mode = st.session_state["theme_mode"]
+    is_light_now = (theme_mode == THEME_MODE_OPTIONS[0])
+    theme_btn_label = "🌙 Тёмная тема" if is_light_now else "☀️ Светлая тема"
     history = st.session_state.get("nav_history", [])
 
     status_suffix = ""
@@ -2754,17 +3101,20 @@ def render_top_navigation_bar() -> None:
         )
         status_suffix = f" &nbsp;→&nbsp; <strong>{active_stand_short}</strong>"
 
-    a11y_badge = f" &nbsp;|&nbsp; Режим: <strong>{html.escape(a11y_mode)}</strong>"
+    a11y_badge = (
+        f" &nbsp;|&nbsp; Тема: <strong>{html.escape(theme_mode)}</strong>"
+        f" &nbsp;|&nbsp; Режим: <strong>{html.escape(a11y_mode)}</strong>"
+    )
 
     if history:
         prev_section = history[-1]
-        bar_left, bar_right = st.columns([3, 1])
+        bar_left, bar_mid, bar_right = st.columns([2.6, 1.2, 1.2])
         with bar_left:
             st.markdown(
                 f'<div class="kip-nav-status">Открытый раздел: <strong>{active_section}</strong>{status_suffix}{a11y_badge}</div>',
                 unsafe_allow_html=True,
             )
-        with bar_right:
+        with bar_mid:
             if st.button(
                 f"⬅️ Вернуться: {MAIN_SECTION_LABELS[prev_section]}",
                 key="top_nav_back_btn",
@@ -2772,11 +3122,27 @@ def render_top_navigation_bar() -> None:
             ):
                 navigate_back()
                 st.rerun()
+        with bar_right:
+            st.button(
+                theme_btn_label,
+                key="top_quick_theme_btn",
+                use_container_width=True,
+                on_click=_toggle_theme_mode,
+            )
     else:
-        st.markdown(
-            f'<div class="kip-nav-status">Открытый раздел: <strong>{active_section}</strong>{status_suffix}{a11y_badge}</div>',
-            unsafe_allow_html=True,
-        )
+        bar_left, bar_right = st.columns([3.4, 1.1])
+        with bar_left:
+            st.markdown(
+                f'<div class="kip-nav-status">Открытый раздел: <strong>{active_section}</strong>{status_suffix}{a11y_badge}</div>',
+                unsafe_allow_html=True,
+            )
+        with bar_right:
+            st.button(
+                theme_btn_label,
+                key="top_quick_theme_btn",
+                use_container_width=True,
+                on_click=_toggle_theme_mode,
+            )
 
     is_mobile_nav = (st.session_state.get("chart_display_mode") == "Смартфон (320–430 px)")
     if is_mobile_nav:
@@ -2830,10 +3196,18 @@ def render_top_navigation_bar() -> None:
                         st.session_state["active_lab_stand"] = stand_full
                         st.rerun()
 
-    with st.expander(f"👁️ Режим доступности: {a11y_mode}", expanded=False):
+    with st.expander(f"🎨 Тема: {theme_mode} • Доступность: {a11y_mode}", expanded=False):
+        st.session_state["_top_theme_radio"] = st.session_state["theme_mode"]
+        st.radio(
+            "Цветовая тема оформления:",
+            options=THEME_MODE_OPTIONS,
+            key="_top_theme_radio",
+            on_change=_on_top_theme_change,
+            horizontal=True,
+        )
         st.session_state["_top_a11y_radio"] = st.session_state["accessibility_mode"]
         st.radio(
-            "Выберите режим отображения интерфейса:",
+            "Режим доступности интерфейса:",
             options=ACCESSIBILITY_MODE_OPTIONS,
             key="_top_a11y_radio",
             on_change=_on_top_a11y_change,
@@ -3270,6 +3644,9 @@ def render_stand_1_section(params: dict) -> None:
         },
     ])
 
+    theme_mode_cur = params.get("theme_mode", THEME_MODE_OPTIONS[0])
+    is_light_ui = (theme_mode_cur == "Светлая (дневная)")
+
     # 6. ГРАФИК И 7. 3D-ВИЗУАЛИЗАЦИЯ (рядом на ПК, вертикально на телефоне)
     def _draw_stand1_plot() -> None:
         st.subheader("График: формирование Термо-ЭДС на характеристике НСХ")
@@ -3277,21 +3654,30 @@ def render_stand_1_section(params: dict) -> None:
         e_curve_abs = spec["values"]
         e_curve_rel = e_curve_abs - e_cold
 
+        light_curve_map = {"#80ed99": "#15803d", "#00b4d8": "#0369a1", "#f77f00": "#c2410c"}
+        main_curve_col = light_curve_map.get(spec["color"], spec["color"]) if is_light_ui else spec["color"]
+        ref_line_col = "#475569" if is_light_ui else "#adb5bd"
+        ref_marker_col = "#0f172a" if is_light_ui else "#ffffff"
+        marker_ring_col = "#0f172a" if is_light_ui else "white"
+        cold_txt_col = "#0369a1" if is_light_ui else "#4cc9f0"
+        hot_txt_col = "#b91c1c" if is_light_ui else "#ff6b6b"
+        kz_col = "#b45309" if is_light_ui else "#ff9f1c"
+
         fig_stand1 = go.Figure()
         all_y_stand1 = [e_curve_rel, e_curve_abs, np.array([0.0, phys["e_gen_mv"]])]
 
         fig_stand1.add_trace(go.Scatter(
             x=t_curve, y=e_curve_rel, mode="lines",
             name=f"E(T) − E({t_cold:.0f} °C)",
-            line=dict(color=spec["color"], width=3),
+            line=dict(color=main_curve_col, width=3),
             hovertemplate="T = %{x:.0f} °C<br>E_ген = %{y:+.3f} мВ<extra>Основная НСХ</extra>"
         ))
 
         fig_stand1.add_trace(go.Scatter(
             x=t_curve, y=e_curve_abs, mode="lines+markers",
             name="Таблица E(T) при T₀ = 0 °C",
-            line=dict(color="#adb5bd", width=1.5, dash="dash"),
-            marker=dict(size=3.5 if is_mobile_view else 4, color="#ffffff"),
+            line=dict(color=ref_line_col, width=1.5, dash="dash"),
+            marker=dict(size=3.5 if is_mobile_view else 4, color=ref_marker_col),
             hovertemplate="T = %{x:.0f} °C<br>E_табл = %{y:+.3f} мВ<extra>При T₀ = 0 °C</extra>"
         ))
 
@@ -3300,8 +3686,8 @@ def render_stand_1_section(params: dict) -> None:
             mode="markers+text", name="Холодный спай (T_cold)",
             text=["T_cold"] if is_mobile_view else [f"  T_cold = {t_cold:.0f} °C"],
             textposition="bottom right",
-            textfont=dict(size=12 if is_mobile_view else 11, color="#4cc9f0"),
-            marker=dict(size=10, color="#00b4d8", symbol="circle", line=dict(width=1.5, color="white")),
+            textfont=dict(size=12 if is_mobile_view else 11, color=cold_txt_col),
+            marker=dict(size=10, color="#0284c7" if is_light_ui else "#00b4d8", symbol="circle", line=dict(width=1.5, color=marker_ring_col)),
             hovertemplate=(
                 f"Холодный спай T_cold = {t_cold:.0f} °C<br>"
                 f"E_табл(T_cold) = {e_cold:.3f} мВ<br>E_отн = 0.000 мВ<extra></extra>"
@@ -3313,8 +3699,8 @@ def render_stand_1_section(params: dict) -> None:
             mode="markers+text", name="Рабочий спай (E_ген)",
             text=[f"T_hot ({phys['e_gen_mv']:+.1f})"] if is_mobile_view else [f"  T_hot = {t_hot:.0f} °C ({phys['e_gen_mv']:+.2f} мВ)"],
             textposition="top left",
-            textfont=dict(size=12 if is_mobile_view else 11, color="#ff6b6b"),
-            marker=dict(size=12, color="#ff4d4d", symbol="diamond", line=dict(width=1.5, color="white")),
+            textfont=dict(size=12 if is_mobile_view else 11, color=hot_txt_col),
+            marker=dict(size=12, color="#dc2626" if is_light_ui else "#ff4d4d", symbol="diamond", line=dict(width=1.5, color=marker_ring_col)),
             hovertemplate=(
                 f"Горячий спай T_hot = {t_hot:.0f} °C<br>"
                 f"E_ген = {phys['e_gen_mv']:+.3f} мВ<br>"
@@ -3329,8 +3715,8 @@ def render_stand_1_section(params: dict) -> None:
                 mode="markers+text", name="Точка КЗ (U_приб)",
                 text=[f"T_кз ({phys['u_meter_mv']:+.1f})"] if is_mobile_view else [f"T_кз ({phys['u_meter_mv']:+.1f} мВ)"],
                 textposition="bottom right",
-                textfont=dict(size=12 if is_mobile_view else 11, color="#ff9f1c"),
-                marker=dict(size=12, color="#ff9f1c", symbol="x", line=dict(width=2, color="white")),
+                textfont=dict(size=12 if is_mobile_view else 11, color=kz_col),
+                marker=dict(size=12, color=kz_col, symbol="x", line=dict(width=2, color=marker_ring_col)),
                 hovertemplate=(
                     f"Паразитный спай T_кз = {t_kz_stand1:.0f} °C<br>"
                     f"U_приб = {phys['u_meter_mv']:+.3f} мВ<extra></extra>"
@@ -3346,7 +3732,7 @@ def render_stand_1_section(params: dict) -> None:
             fig_stand1.add_trace(go.Scatter(
                 x=t_curve, y=e_ai_curve, mode="lines",
                 name=f"Условная НСХ ({ai['s_target']} мкВ/°C)",
-                line=dict(color="#ff9f1c", width=2.5, dash="dot"),
+                line=dict(color=kz_col, width=2.5, dash="dot"),
                 hovertemplate="T = %{x:.0f} °C<br>E_мод = %{y:+.3f} мВ<extra>Условная НСХ</extra>"
             ))
 
@@ -3358,6 +3744,7 @@ def render_stand_1_section(params: dict) -> None:
             x_title="Температура T, °C",
             y_title="Термо-ЭДС E, мВ",
             display_mode=chart_display_mode,
+            theme_mode=theme_mode_cur,
         )
         st.plotly_chart(fig_stand1, use_container_width=True, config=plotly_cfg1)
         st.caption(f"📐 {angle_note1}")
@@ -3375,6 +3762,7 @@ def render_stand_1_section(params: dict) -> None:
                 seebeck_str=f"{seebeck_hot:.2f} мкВ/°C",
                 fault_state=circuit_fault_mode,
                 t_kz_val=t_kz_stand1,
+                theme_mode=theme_mode_cur,
             ),
             height=410 if is_mobile_view else 460,
         )
@@ -3657,16 +4045,26 @@ def render_stand_2_section(params: dict) -> None:
             f"(расхождение из-за зависимости $S(T)$ составляет ${abs(phys_s2['e_gen_mv'] - e_gost_hot):.3f}\\text{{ мВ}}$)."
         )
 
+    theme_mode_cur = params.get("theme_mode", THEME_MODE_OPTIONS[0])
+    is_light_ui = (theme_mode_cur == "Светлая (дневная)")
+
     # 6. ГРАФИК И 7. 3D-ВИЗУАЛИЗАЦИЯ (рядом на ПК, вертикально на телефоне)
     def _draw_stand2_plot() -> None:
         st.subheader("График: сравнение линейного приближения и табличной НСХ")
+        lin_col = "#15803d" if is_light_ui else "#80ed99"
+        gost_col = "#0369a1" if is_light_ui else "#00b4d8"
+        marker_ring_col = "#0f172a" if is_light_ui else "white"
+        cold_txt_col = "#0369a1" if is_light_ui else "#4cc9f0"
+        hot_txt_col = "#b91c1c" if is_light_ui else "#ff6b6b"
+        kz_col = "#b45309" if is_light_ui else "#ff9f1c"
+
         fig_stand2 = go.Figure()
         all_y_stand2 = [e_lin_arr, np.array([0.0, phys_s2["e_gen_mv"]])]
 
         fig_stand2.add_trace(go.Scatter(
             x=t_grid_s2, y=e_lin_arr, mode="lines",
             name=f"Линейная (S = {s_pair:+.1f} мкВ/°C)",
-            line=dict(color="#80ed99", width=3.2),
+            line=dict(color=lin_col, width=3.2),
             hovertemplate="T_hot = %{x:.0f} °C<br>E_лин = %{y:+.3f} мВ<extra>Линейное приближение</extra>"
         ))
 
@@ -3675,7 +4073,7 @@ def render_stand_2_section(params: dict) -> None:
             fig_stand2.add_trace(go.Scatter(
                 x=t_grid_s2, y=e_gost_arr, mode="lines",
                 name=f"Табличная НСХ ({THERMOCOUPLES_DB[gost_match_key]['short_code']})",
-                line=dict(color="#00b4d8", width=2.5, dash="dash"),
+                line=dict(color=gost_col, width=2.5, dash="dash"),
                 hovertemplate="T_hot = %{x:.0f} °C<br>E_табл = %{y:+.3f} мВ<extra>Табличная НСХ</extra>"
             ))
 
@@ -3684,8 +4082,8 @@ def render_stand_2_section(params: dict) -> None:
             mode="markers+text", name="Холодный спай (T_cold)",
             text=["T_cold"] if is_mobile_view else [f"T_cold ({t_cold_s2:.0f}°C)"],
             textposition="bottom right",
-            textfont=dict(size=12 if is_mobile_view else 11, color="#4cc9f0"),
-            marker=dict(size=10, color="#00b4d8", symbol="circle", line=dict(width=1.5, color="white")),
+            textfont=dict(size=12 if is_mobile_view else 11, color=cold_txt_col),
+            marker=dict(size=10, color="#0284c7" if is_light_ui else "#00b4d8", symbol="circle", line=dict(width=1.5, color=marker_ring_col)),
             hovertemplate=f"Холодный спай T_cold = {t_cold_s2:.0f} °C<br>E = 0.000 мВ<extra></extra>"
         ))
 
@@ -3694,8 +4092,8 @@ def render_stand_2_section(params: dict) -> None:
             mode="markers+text", name="Рабочая точка (E_ген)",
             text=[f"T_hot ({phys_s2['e_gen_mv']:+.1f})"] if is_mobile_view else [f"  T_hot = {t_hot_s2:.0f} °C ({phys_s2['e_gen_mv']:+.2f} мВ)"],
             textposition="top left",
-            textfont=dict(size=12 if is_mobile_view else 11, color="#ff6b6b"),
-            marker=dict(size=12, color="#ff4d4d", symbol="diamond", line=dict(width=1.5, color="white")),
+            textfont=dict(size=12 if is_mobile_view else 11, color=hot_txt_col),
+            marker=dict(size=12, color="#dc2626" if is_light_ui else "#ff4d4d", symbol="diamond", line=dict(width=1.5, color=marker_ring_col)),
             hovertemplate=(
                 f"Горячий спай T_hot = {t_hot_s2:.0f} °C<br>"
                 f"ΔT = {delta_t_val:+.0f} °C<br>"
@@ -3710,8 +4108,8 @@ def render_stand_2_section(params: dict) -> None:
                 mode="markers+text", name="Точка КЗ (U_приб)",
                 text=[f"T_кз ({phys_s2['u_meter_mv']:+.1f})"] if is_mobile_view else [f"T_кз ({phys_s2['u_meter_mv']:+.1f} мВ)"],
                 textposition="bottom right",
-                textfont=dict(size=12 if is_mobile_view else 11, color="#ff9f1c"),
-                marker=dict(size=12, color="#ff9f1c", symbol="x", line=dict(width=2, color="white")),
+                textfont=dict(size=12 if is_mobile_view else 11, color=kz_col),
+                marker=dict(size=12, color=kz_col, symbol="x", line=dict(width=2, color=marker_ring_col)),
                 hovertemplate=(
                     f"Паразитный спай T_кз = {t_kz_s2:.0f} °C<br>"
                     f"U_приб = {phys_s2['u_meter_mv']:+.3f} мВ<extra></extra>"
@@ -3727,7 +4125,7 @@ def render_stand_2_section(params: dict) -> None:
             fig_stand2.add_trace(go.Scatter(
                 x=t_grid_s2, y=e_ai_arr, mode="lines",
                 name=f"Условная НСХ ({ai['s_target']} мкВ/°C)",
-                line=dict(color="#ff9f1c", width=2.5, dash="dot"),
+                line=dict(color=kz_col, width=2.5, dash="dot"),
                 hovertemplate="T_hot = %{x:.0f} °C<br>E_мод = %{y:+.3f} мВ<extra>Условная НСХ</extra>"
             ))
 
@@ -3739,6 +4137,7 @@ def render_stand_2_section(params: dict) -> None:
             x_title="Температура T_hot, °C",
             y_title=f"Термо-ЭДС (отн. {t_cold_s2:.0f} °C), мВ",
             display_mode=chart_display_mode,
+            theme_mode=theme_mode_cur,
         )
         st.plotly_chart(fig_stand2, use_container_width=True, config=plotly_cfg2)
         st.caption(f"📐 {angle_note2}")
@@ -3757,6 +4156,7 @@ def render_stand_2_section(params: dict) -> None:
                 u_meter_mv=phys_s2["u_meter_mv"],
                 u_meter_str=phys_s2["u_meter_str"],
                 fault_state=circuit_fault_mode,
+                theme_mode=theme_mode_cur,
             ),
             height=410 if is_mobile_view else 460,
         )
@@ -6614,7 +7014,7 @@ def run_kip_simulator() -> None:
     """Условный маршрутизатор: применяет режим доступности и отображает только активный раздел."""
     init_app_session_state()
     stand_params = render_sidebar_navigation_and_controls()
-    apply_visual_system_css(st.session_state["accessibility_mode"])
+    apply_visual_system_css(st.session_state["accessibility_mode"], st.session_state["theme_mode"])
     render_top_navigation_bar()
 
     active_section = st.session_state["active_section"]
