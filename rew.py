@@ -1338,9 +1338,28 @@ def get_visual_system_css(
             }}
         }}
 
-        /* Служебные маркеры контейнеров верхней навигации не занимают высоту */
+        /* Служебные маркеры и якоря автопрокрутки не занимают видимую высоту */
+        .kip-scroll-anchor {{
+            display: block;
+            height: 0;
+            margin: 0;
+            padding: 0;
+            scroll-margin-top: 72px;
+        }}
+
+        iframe[height="0"] {{
+            height: 0 !important;
+            min-height: 0 !important;
+            border: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            display: block;
+        }}
+
         [data-testid="stVerticalBlock"] > div:has(.kip-mobile-nav-2x2-marker),
-        [data-testid="stVerticalBlock"] > div:has(.kip-top-nav-wrap-marker) {{
+        [data-testid="stVerticalBlock"] > div:has(.kip-top-nav-wrap-marker),
+        [data-testid="stVerticalBlock"] > div:has(.kip-scroll-anchor),
+        [data-testid="stVerticalBlock"] > div:has(iframe[height="0"]) {{
             margin: 0 !important;
             padding: 0 !important;
             height: 0 !important;
@@ -2837,10 +2856,12 @@ def init_app_session_state() -> None:
     metal_names = list(METALS_DB.keys())
 
     defaults = {
-        # Навигация и история переходов
+        # Навигация, история переходов и автопрокрутка
         "active_section": MAIN_SECTIONS[0],
         "nav_history": [],
         "active_lab_stand": LAB_STAND_OPTIONS[0],
+        "_pending_scroll_target": None,
+        "_scroll_nonce": 0,
         # Настройки отображения, темы и доступности (по умолчанию дневная светлая тема)
         "theme_mode": THEME_MODE_OPTIONS[0],
         "chart_display_mode": CHART_DISPLAY_OPTIONS[0],
@@ -2874,6 +2895,165 @@ def init_app_session_state() -> None:
             st.session_state[key] = val
 
 
+def request_page_scroll(anchor_id: str) -> None:
+    """Планирует однократную автопрокрутку к указанному якорю после обновления страницы."""
+    st.session_state["_pending_scroll_target"] = anchor_id
+    st.session_state["_scroll_nonce"] = int(st.session_state.get("_scroll_nonce", 0)) + 1
+
+
+def build_autoscroll_html(anchor_id: str, nonce: int) -> str:
+    """
+    Формирует компактный JS-скрипт для мгновенной прокрутки родительского окна Streamlit
+    к целевому якорю (или в самый верх страницы) после смены этапа теории или раздела.
+    """
+    safe_anchor = re.sub(r"[^a-zA-Z0-9_-]", "", str(anchor_id))
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="margin:0;padding:0;overflow:hidden;">
+    <script>
+        (function() {{
+            const targetId = "{safe_anchor}";
+            const nonce = {int(nonce)};
+            let cancelledByUser = false;
+            const timers = [];
+
+            function getParentContext() {{
+                try {{
+                    const pWin = window.parent;
+                    const pDoc = pWin && pWin.document;
+                    if (pWin && pDoc) {{
+                        return {{ win: pWin, doc: pDoc }};
+                    }}
+                }} catch (e) {{
+                    return null;
+                }}
+                return null;
+            }}
+
+            function getScrollContainers(doc) {{
+                const list = [
+                    doc.querySelector('section[data-testid="stMain"]'),
+                    doc.querySelector('[data-testid="stMain"]'),
+                    doc.querySelector('[data-testid="stAppViewContainer"]'),
+                    doc.querySelector('section.main'),
+                    doc.scrollingElement,
+                    doc.documentElement,
+                    doc.body
+                ];
+                const unique = [];
+                for (const node of list) {{
+                    if (node && unique.indexOf(node) === -1) {{
+                        unique.push(node);
+                    }}
+                }}
+                return unique;
+            }}
+
+            function findScrollableAncestor(el, win, doc) {{
+                let node = el ? el.parentElement : null;
+                while (node && node !== doc.body && node !== doc.documentElement) {{
+                    const st = win.getComputedStyle(node);
+                    const oy = st ? st.overflowY : "";
+                    if ((oy === "auto" || oy === "scroll" || oy === "overlay") && node.scrollHeight > node.clientHeight + 2) {{
+                        return node;
+                    }}
+                    node = node.parentElement;
+                }}
+                return null;
+            }}
+
+            function performScroll() {{
+                if (cancelledByUser) return;
+                const ctx = getParentContext();
+                if (!ctx) return;
+                const {{ win, doc }} = ctx;
+
+                if (targetId === "kip-page-top-anchor") {{
+                    for (const sc of getScrollContainers(doc)) {{
+                        try {{
+                            sc.scrollTop = 0;
+                        }} catch (e) {{}}
+                    }}
+                    try {{ win.scrollTo(0, 0); }} catch (e) {{}}
+                    return;
+                }}
+
+                const anchorEl = doc.getElementById(targetId);
+                if (!anchorEl) return;
+
+                const headerEl = doc.querySelector('[data-testid="stHeader"]');
+                const headerOffset = headerEl ? Math.ceil(headerEl.getBoundingClientRect().height) + 12 : 68;
+                const scrollParent = findScrollableAncestor(anchorEl, win, doc);
+
+                if (scrollParent) {{
+                    const elRect = anchorEl.getBoundingClientRect();
+                    const contRect = scrollParent.getBoundingClientRect();
+                    const desiredTop = Math.max(0, scrollParent.scrollTop + (elRect.top - contRect.top) - headerOffset);
+                    try {{
+                        scrollParent.scrollTo({{ top: desiredTop, behavior: "auto" }});
+                    }} catch (e) {{
+                        scrollParent.scrollTop = desiredTop;
+                    }}
+                }} else {{
+                    const elRect = anchorEl.getBoundingClientRect();
+                    const currentY = win.scrollY || doc.documentElement.scrollTop || doc.body.scrollTop || 0;
+                    const desiredTop = Math.max(0, currentY + elRect.top - headerOffset);
+                    try {{
+                        win.scrollTo({{ top: desiredTop, behavior: "auto" }});
+                    }} catch (e) {{
+                        anchorEl.scrollIntoView({{ behavior: "auto", block: "start" }});
+                    }}
+                }}
+            }}
+
+            const ctxInit = getParentContext();
+            if (!ctxInit) return;
+            const cancelEvents = ["wheel", "touchstart", "pointerdown", "keydown"];
+            const onUserInput = function() {{
+                cancelledByUser = true;
+                while (timers.length) {{
+                    clearTimeout(timers.pop());
+                }}
+                for (const ev of cancelEvents) {{
+                    ctxInit.win.removeEventListener(ev, onUserInput, true);
+                }}
+            }};
+            for (const ev of cancelEvents) {{
+                ctxInit.win.addEventListener(ev, onUserInput, {{ capture: true, passive: true }});
+            }}
+
+            performScroll();
+            if (typeof ctxInit.win.requestAnimationFrame === "function") {{
+                ctxInit.win.requestAnimationFrame(performScroll);
+            }}
+            timers.push(setTimeout(performScroll, 60));
+            timers.push(setTimeout(performScroll, 180));
+            timers.push(setTimeout(function() {{
+                performScroll();
+                for (const ev of cancelEvents) {{
+                    ctxInit.win.removeEventListener(ev, onUserInput, true);
+                }}
+            }}, 340));
+            void nonce;
+        }})();
+    </script>
+    </body>
+    </html>
+    """
+
+
+def render_pending_page_scroll() -> None:
+    """Выполняет запланированную автопрокрутку один раз и сбрасывает флаг."""
+    target_anchor = st.session_state.get("_pending_scroll_target")
+    if not target_anchor:
+        return
+    st.session_state["_pending_scroll_target"] = None
+    nonce = int(st.session_state.get("_scroll_nonce", 0))
+    components.html(build_autoscroll_html(str(target_anchor), nonce), height=0)
+
+
 def navigate_to_section(target_section: str) -> None:
     """Выполняет переход в выбранный основной раздел с сохранением предыдущего раздела в истории."""
     if target_section not in MAIN_SECTIONS:
@@ -2884,6 +3064,7 @@ def navigate_to_section(target_section: str) -> None:
         history.append(current)
         st.session_state["nav_history"] = history[-20:]
         st.session_state["active_section"] = target_section
+        request_page_scroll("kip-page-top-anchor")
 
 
 def navigate_back() -> None:
@@ -2893,6 +3074,7 @@ def navigate_back() -> None:
         prev_section = history.pop()
         st.session_state["nav_history"] = history
         st.session_state["active_section"] = prev_section
+        request_page_scroll("kip-page-top-anchor")
 
 
 def _on_sidebar_nav_change() -> None:
@@ -2907,6 +3089,7 @@ def _on_sidebar_stand_change() -> None:
     chosen_stand = st.session_state.get("_sidebar_stand_radio")
     if chosen_stand in LAB_STAND_OPTIONS:
         st.session_state["active_lab_stand"] = chosen_stand
+        request_page_scroll("kip-page-top-anchor")
 
 
 def _on_sidebar_fault_change() -> None:
@@ -4957,18 +5140,20 @@ def render_stage_6() -> None:
 
 
 def _on_theory_stage_select_change(stage_titles: list[str]) -> None:
-    """Синхронизирует theory_stage_idx при выборе этапа через выпадающий список."""
+    """Синхронизирует theory_stage_idx при выборе этапа и прокручивает экран к началу текста этапа."""
     chosen_title = st.session_state.get("theory_stage_selectbox")
     if chosen_title in stage_titles:
         st.session_state["theory_stage_idx"] = stage_titles.index(chosen_title)
+        request_page_scroll("kip-theory-stage-anchor")
 
 
 def _step_theory_stage(delta: int, stage_titles: list[str]) -> None:
-    """Обновляет оба ключа (theory_stage_idx и theory_stage_selectbox) до повторной отрисовки виджета."""
+    """Обновляет оба ключа этапа и планирует автопрокрутку к началу текста выбранного этапа."""
     curr = int(st.session_state.get("theory_stage_idx", 0))
     new_idx = int(np.clip(curr + delta, 0, len(stage_titles) - 1))
     st.session_state["theory_stage_idx"] = new_idx
     st.session_state["theory_stage_selectbox"] = stage_titles[new_idx]
+    request_page_scroll("kip-theory-stage-anchor")
 
 
 def render_theory_section() -> None:
@@ -5016,6 +5201,7 @@ def render_theory_section() -> None:
         cur_subtab = valid_keys[0]
         st.session_state["theory_subtab"] = cur_subtab
 
+    st.markdown('<div id="kip-theory-content-anchor" class="kip-scroll-anchor" aria-hidden="true"></div>', unsafe_allow_html=True)
     sub_cols = st.columns(3)
     for s_idx, (sub_key, sub_label) in enumerate(theory_subtabs):
         is_sub_active = (cur_subtab == sub_key)
@@ -5051,6 +5237,7 @@ def render_theory_section() -> None:
             args=(stage_titles,),
         )
 
+        st.markdown('<div id="kip-theory-stage-anchor" class="kip-scroll-anchor" aria-hidden="true"></div>', unsafe_allow_html=True)
         st.markdown(
             f'<div class="kip-stage-header-card">'
             f'<span class="kip-stage-badge">Текущий этап: {curr_idx + 1} из {len(stages_list)}</span>'
@@ -5099,6 +5286,7 @@ def render_theory_section() -> None:
         with nav_col2:
             if st.button("✅ Перейти к самопроверке", key="theory_goto_qa_btn", use_container_width=True):
                 st.session_state["theory_subtab"] = "Самопроверка"
+                request_page_scroll("kip-theory-content-anchor")
                 st.rerun()
         with nav_col3:
             st.button(
@@ -5177,10 +5365,12 @@ def render_theory_section() -> None:
         with qa_nav1:
             if st.button("⬅️ Вернуться к этапам теории", key="qa_back_stages_btn", use_container_width=True):
                 st.session_state["theory_subtab"] = "Изучение по этапам (1–6)"
+                request_page_scroll("kip-theory-content-anchor")
                 st.rerun()
         with qa_nav2:
             if st.button("Открыть словарь терминов ➡️", key="qa_goto_glossary_btn", use_container_width=True):
                 st.session_state["theory_subtab"] = "Словарь терминов"
+                request_page_scroll("kip-theory-content-anchor")
                 st.rerun()
 
     # -----------------------------------------------------------------
@@ -5265,6 +5455,7 @@ def render_theory_section() -> None:
 
         if st.button("⬅️ Вернуться к этапам теории", key="glossary_back_stages_btn"):
             st.session_state["theory_subtab"] = "Изучение по этапам (1–6)"
+            request_page_scroll("kip-theory-content-anchor")
             st.rerun()
 
     # -----------------------------------------------------------------
@@ -7534,10 +7725,11 @@ def _bottom_nav_to_section(target_section: str) -> None:
 
 
 def _bottom_nav_to_stand(target_stand: str) -> None:
-    """Переключает активный исследовательский стенд из нижней панели навигации."""
+    """Переключает активный исследовательский стенд из нижней панели навигации и прокручивает вверх."""
     if target_stand in LAB_STAND_OPTIONS:
         st.session_state["active_lab_stand"] = target_stand
     navigate_to_section("Исследовательские стенды")
+    request_page_scroll("kip-page-top-anchor")
 
 
 def render_bottom_section_navigation() -> None:
@@ -7617,6 +7809,7 @@ def run_kip_simulator() -> None:
     init_app_session_state()
     stand_params = render_sidebar_navigation_and_controls()
     apply_visual_system_css(st.session_state["accessibility_mode"], st.session_state["theme_mode"])
+    st.markdown('<div id="kip-page-top-anchor" class="kip-scroll-anchor" aria-hidden="true"></div>', unsafe_allow_html=True)
     render_top_navigation_bar()
 
     active_section = st.session_state["active_section"]
@@ -7633,6 +7826,7 @@ def run_kip_simulator() -> None:
         render_reference_assistant_section()
 
     render_bottom_section_navigation()
+    render_pending_page_scroll()
 
 
 run_kip_simulator()
