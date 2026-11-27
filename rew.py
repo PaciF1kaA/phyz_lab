@@ -660,23 +660,26 @@ def get_visual_system_css(
         }}
 
         /* Статусные уведомления (инфо / успех / предупреждение / ошибка) */
-        [data-testid="stAlert"] {{
+        [data-testid="stAlert"],
+        [data-testid="stAlert"] > div {{
+            background-color: #FFFFFF !important;
+            color: #000000 !important;
             border-radius: var(--kip-radius);
             border-width: var(--kip-alert-border-w);
             border-style: solid;
+            border-color: var(--kip-border-strong) !important;
             font-size: var(--kip-font-base);
             line-height: var(--kip-line-height);
             max-width: 100%;
         }}
 
-        [data-testid="stAlert"],
         [data-testid="stAlert"] p,
         [data-testid="stAlert"] li,
         [data-testid="stAlert"] span,
         [data-testid="stAlert"] div,
         [data-testid="stAlert"] strong,
         [data-testid="stAlert"] a {{
-            color: var(--kip-text-primary) !important;
+            color: #000000 !important;
             max-width: 100%;
         }}
 
@@ -685,24 +688,11 @@ def get_visual_system_css(
             font-size: var(--kip-font-base);
         }}
 
-        [data-testid="stAlert"]:has([data-testid="stNotificationContentInfo"]) {{
-            background-color: var(--kip-bg-nested);
-            border-color: var(--kip-accent);
-        }}
-
-        [data-testid="stAlert"]:has([data-testid="stNotificationContentSuccess"]) {{
-            background-color: var(--kip-success-bg);
-            border-color: var(--kip-success);
-        }}
-
-        [data-testid="stAlert"]:has([data-testid="stNotificationContentWarning"]) {{
-            background-color: var(--kip-warning-bg);
-            border-color: var(--kip-warning);
-        }}
-
+        [data-testid="stAlert"]:has([data-testid="stNotificationContentInfo"]),
+        [data-testid="stAlert"]:has([data-testid="stNotificationContentSuccess"]),
+        [data-testid="stAlert"]:has([data-testid="stNotificationContentWarning"]),
         [data-testid="stAlert"]:has([data-testid="stNotificationContentError"]) {{
-            background-color: var(--kip-error-bg);
-            border-color: var(--kip-error);
+            background-color: #FFFFFF !important;
         }}
 
         /* 3. Кнопки и элементы управления (с безопасным переносом текста при 320 px и зуме 200%) */
