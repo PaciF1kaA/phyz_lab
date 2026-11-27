@@ -6209,16 +6209,25 @@ def render_theory_section() -> None:
             unsafe_allow_html=True,
         )
 
-        step_cells = []
+        def _select_theory_stage(target_idx: int) -> None:
+            clamped_idx = int(np.clip(target_idx, 0, len(stages_list) - 1))
+            st.session_state["theory_stage_idx"] = clamped_idx
+            st.session_state["theory_stage_selectbox"] = stage_titles[clamped_idx]
+            request_page_scroll("kip-theory-stage-anchor")
+
+        step_cols = st.columns(len(stages_list))
         for idx_s in range(len(stages_list)):
-            if idx_s == curr_idx:
-                s_cls = "kip-stage-step kip-stage-step--active"
-                s_prefix = "● "
-            else:
-                s_cls = "kip-stage-step"
-                s_prefix = ""
-            step_cells.append(f'<div class="{s_cls}">{s_prefix}Этап {idx_s + 1}</div>')
-        st.markdown(f'<div class="kip-stage-steps">{"".join(step_cells)}</div>', unsafe_allow_html=True)
+            is_cur_step = (idx_s == curr_idx)
+            btn_label = f"● Этап {idx_s + 1}" if is_cur_step else f"Этап {idx_s + 1}"
+            with step_cols[idx_s]:
+                st.button(
+                    btn_label,
+                    key=f"theory_step_pill_btn_{idx_s}",
+                    type="primary" if is_cur_step else "secondary",
+                    use_container_width=True,
+                    on_click=_select_theory_stage,
+                    args=(idx_s,),
+                )
         st.progress(
             (curr_idx + 1) / len(stages_list),
             text=f"Текущий этап: {curr_idx + 1} из {len(stages_list)}"
