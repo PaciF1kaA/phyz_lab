@@ -5755,24 +5755,26 @@ def render_myth_detector_game(stage_titles: list[str]) -> None:
         with st.container():
             st.markdown('<div class="kip-inline-pair-marker" aria-hidden="true"></div>', unsafe_allow_html=True)
             v_col1, v_col2 = st.columns(2)
-            with v_col1:
-                st.button(
-                    "✅ ПРАВДА",
-                    key=f"myth_btn_true_{case_id}",
-                    type="primary",
-                    use_container_width=True,
-                    on_click=_submit_myth_verdict,
-                    args=(case_id, True),
-                )
-            with v_col2:
-                st.button(
-                    "❌ МИФ",
-                    key=f"myth_btn_false_{case_id}",
-                    type="secondary",
-                    use_container_width=True,
-                    on_click=_submit_myth_verdict,
-                    args=(case_id, False),
-                )
+        st.caption("Шаг 1 из 2: нажмите кнопку ниже — это научный факт из реферата или миф?")
+        v_col1, v_col2 = st.columns(2)
+        with v_col1:
+            if st.button(
+                "✅ ПРАВДА",
+                key=f"myth_btn_true_{case_id}",
+                type="primary",
+                use_container_width=True,
+            ):
+                _submit_myth_verdict(case_id, True)
+                st.rerun()
+        with v_col2:
+            if st.button(
+                "❌ МИФ",
+                key=f"myth_btn_false_{case_id}",
+                type="secondary",
+                use_container_width=True,
+            ):
+                _submit_myth_verdict(case_id, False)
+                st.rerun()
     else:
         truth_word = "ПРАВДА" if case["is_truth"] else "МИФ"
         if ans["verdict_ok"]:
