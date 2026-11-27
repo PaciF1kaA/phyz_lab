@@ -669,11 +669,20 @@ def get_visual_system_css(
             max-width: 100%;
         }}
 
+        [data-testid="stAlert"],
+        [data-testid="stAlert"] p,
+        [data-testid="stAlert"] li,
+        [data-testid="stAlert"] span,
+        [data-testid="stAlert"] div,
+        [data-testid="stAlert"] strong,
+        [data-testid="stAlert"] a {{
+            color: var(--kip-text-primary) !important;
+            max-width: 100%;
+        }}
+
         [data-testid="stAlert"] p,
         [data-testid="stAlert"] li {{
-            color: var(--kip-text-primary) !important;
             font-size: var(--kip-font-base);
-            max-width: 100%;
         }}
 
         [data-testid="stAlert"]:has([data-testid="stNotificationContentInfo"]) {{
