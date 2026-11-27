@@ -6093,36 +6093,13 @@ def render_knowledge_check_hub(stage_titles: list[str]) -> None:
         },
     ])
 
-    cur_game = st.session_state["check_game_mode"]
-    with st.container():
-        st.markdown('<div class="kip-inline-pair-marker" aria-hidden="true"></div>', unsafe_allow_html=True)
-        g_col1, g_col2 = st.columns(2)
-        with g_col1:
-            if st.button(
-                "🕵️ Детектор мифов (10 дел)",
-                key="check_mode_myth_btn",
-                type="primary" if cur_game == "myth" else "secondary",
-                use_container_width=True,
-            ):
-                if cur_game != "myth":
-                    st.session_state["check_game_mode"] = "myth"
-                    st.rerun()
-        with g_col2:
-            if st.button(
-                "⏳ Хронология открытий (1800–1956)",
-                key="check_mode_chrono_btn",
-                type="primary" if cur_game == "chrono" else "secondary",
-                use_container_width=True,
-            ):
-                if cur_game != "chrono":
-                    st.session_state["check_game_mode"] = "chrono"
-                    st.rerun()
+    st.markdown("---")
+    st.markdown("### 🕵️ Блок 1. Детектор мифов (10 дел)")
+    render_myth_detector_game(stage_titles)
 
     st.markdown("---")
-    if st.session_state["check_game_mode"] == "myth":
-        render_myth_detector_game(stage_titles)
-    else:
-        render_chronology_game()
+    st.markdown("### ⏳ Блок 2. Хронология открытий (1800–1956)")
+    render_chronology_game()
 
 
 def _on_theory_stage_select_change(stage_titles: list[str]) -> None:
