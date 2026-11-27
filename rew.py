@@ -1,4 +1,5 @@
 import re
+import random
 import sys
 import base64
 import html
@@ -1323,6 +1324,131 @@ def get_visual_system_css(
             background-color: var(--kip-warning-bg);
         }}
 
+        /* 7.1. Интерактивная проверка знаний: Детектор мифов и Хронология открытий */
+        .kip-myth-card {{
+            background-color: var(--kip-bg-card);
+            border: var(--kip-border-width) solid var(--kip-border-strong);
+            border-left: 5px solid var(--kip-accent);
+            border-radius: var(--kip-radius);
+            padding: var(--kip-card-pad);
+            margin-bottom: 0.9rem;
+        }}
+
+        .kip-myth-meta {{
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            margin-bottom: 0.65rem;
+        }}
+
+        .kip-myth-badge {{
+            display: inline-block;
+            background-color: var(--kip-bg-nested);
+            color: var(--kip-text-primary);
+            border: var(--kip-border-width) solid var(--kip-border);
+            border-radius: var(--kip-radius-sm);
+            padding: 0.2rem 0.65rem;
+            font-size: var(--kip-font-caption);
+            font-weight: 700;
+        }}
+
+        .kip-myth-statement {{
+            font-size: var(--kip-font-h4);
+            font-weight: 700;
+            line-height: 1.45;
+            color: var(--kip-text-primary);
+            background-color: var(--kip-bg-nested);
+            border: var(--kip-border-width) solid var(--kip-border);
+            border-radius: var(--kip-radius-sm);
+            padding: 0.9rem 1.05rem;
+            margin: 0.35rem 0 0.5rem 0;
+            overflow-wrap: break-word;
+        }}
+
+        .kip-chrono-card {{
+            background-color: var(--kip-bg-card);
+            border: var(--kip-border-width) solid var(--kip-border);
+            border-left: 5px solid var(--kip-accent);
+            border-radius: var(--kip-radius);
+            padding: 0.75rem 0.95rem;
+            margin-bottom: 0.45rem;
+            color: var(--kip-text-primary);
+        }}
+
+        .kip-chrono-card--ok {{
+            background-color: var(--kip-success-bg);
+            border-color: var(--kip-success);
+            border-left-color: var(--kip-success);
+        }}
+
+        .kip-chrono-card--wrong {{
+            background-color: var(--kip-warning-bg);
+            border-color: var(--kip-warning);
+            border-left-color: var(--kip-warning);
+        }}
+
+        .kip-chrono-head {{
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.3rem;
+        }}
+
+        .kip-chrono-pos {{
+            display: inline-block;
+            background-color: var(--kip-accent);
+            color: var(--kip-accent-fg);
+            border-radius: var(--kip-radius-sm);
+            padding: 0.15rem 0.55rem;
+            font-size: var(--kip-font-caption);
+            font-weight: 800;
+        }}
+
+        .kip-chrono-year {{
+            display: inline-block;
+            background-color: var(--kip-bg-nested);
+            color: var(--kip-text-primary);
+            border: var(--kip-border-width) solid var(--kip-border-strong);
+            border-radius: var(--kip-radius-sm);
+            padding: 0.15rem 0.55rem;
+            font-size: var(--kip-font-caption);
+            font-weight: 700;
+        }}
+
+        .kip-chrono-title {{
+            font-size: var(--kip-font-base);
+            font-weight: 700;
+            color: var(--kip-text-primary);
+        }}
+
+        .kip-chrono-desc {{
+            font-size: var(--kip-font-caption);
+            line-height: 1.45;
+            color: var(--kip-text-secondary);
+            margin-top: 0.2rem;
+        }}
+
+        .kip-chrono-hint {{
+            font-size: var(--kip-font-caption);
+            font-weight: 700;
+            color: var(--kip-text-primary);
+            margin-top: 0.35rem;
+        }}
+
+        .kip-timeline-item {{
+            position: relative;
+            padding: 0.65rem 0.9rem 0.65rem 1.1rem;
+            margin-bottom: 0.55rem;
+            background-color: var(--kip-bg-nested);
+            border: var(--kip-border-width) solid var(--kip-border);
+            border-left: 5px solid var(--kip-success);
+            border-radius: var(--kip-radius-sm);
+            color: var(--kip-text-primary);
+        }}
+
         /* 8. Адаптивные брейкпоинты (ПК, планшет, 200% масштаб браузера, 430 / 390 / 360 / 320 px) */
         .main .block-container {{
             max-width: 100%;
@@ -1358,6 +1484,7 @@ def get_visual_system_css(
 
         [data-testid="stVerticalBlock"] > div:has(.kip-mobile-nav-2x2-marker),
         [data-testid="stVerticalBlock"] > div:has(.kip-top-nav-wrap-marker),
+        [data-testid="stVerticalBlock"] > div:has(.kip-inline-pair-marker),
         [data-testid="stVerticalBlock"] > div:has(.kip-scroll-anchor),
         [data-testid="stVerticalBlock"] > div:has(iframe[height="0"]) {{
             margin: 0 !important;
@@ -1378,14 +1505,17 @@ def get_visual_system_css(
                 flex: 1 1 100% !important;
                 min-width: 0 !important;
             }}
-            /* Исключение для отдельного контейнера верхней мобильной навигации 2 × 2 */
-            [data-testid="stVerticalBlock"] > div:has(.kip-mobile-nav-2x2-marker) ~ [data-testid="stHorizontalBlock"] {{
+            /* Исключение для компактных парных кнопок (навигация 2 × 2 и игровые кнопки Правда/Миф, Выше/Ниже) */
+            [data-testid="stVerticalBlock"] > div:has(.kip-mobile-nav-2x2-marker) ~ [data-testid="stHorizontalBlock"],
+            [data-testid="stVerticalBlock"] > div:has(.kip-inline-pair-marker) ~ [data-testid="stHorizontalBlock"] {{
                 flex-direction: row !important;
                 flex-wrap: nowrap !important;
                 gap: 0.45rem !important;
             }}
             [data-testid="stVerticalBlock"] > div:has(.kip-mobile-nav-2x2-marker) ~ [data-testid="stHorizontalBlock"] > [data-testid="column"],
-            [data-testid="stVerticalBlock"] > div:has(.kip-mobile-nav-2x2-marker) ~ [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {{
+            [data-testid="stVerticalBlock"] > div:has(.kip-mobile-nav-2x2-marker) ~ [data-testid="stHorizontalBlock"] > [data-testid="stColumn"],
+            [data-testid="stVerticalBlock"] > div:has(.kip-inline-pair-marker) ~ [data-testid="stHorizontalBlock"] > [data-testid="column"],
+            [data-testid="stVerticalBlock"] > div:has(.kip-inline-pair-marker) ~ [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {{
                 width: calc(50% - 0.25rem) !important;
                 flex: 1 1 calc(50% - 0.25rem) !important;
                 min-width: 0 !important;
@@ -5139,6 +5269,861 @@ def render_stage_6() -> None:
     )
 
 
+
+# =====================================================================
+# 9.1. ИНТЕРАКТИВНАЯ ПРОВЕРКА ЗНАНИЙ: ДЕТЕКТОР МИФОВ И ХРОНОЛОГИЯ ОТКРЫТИЙ
+# =====================================================================
+MYTH_DETECTOR_CASES = [
+    {
+        "id": 0,
+        "category": "История открытия • Этап 1",
+        "stage_idx": 0,
+        "statement": (
+            "В 1821 году Томас Зеебек в опыте с висмутом и медью сразу доказал, "
+            "что магнитную стрелку отклоняет электрический ток, вызванный разностью температур."
+        ),
+        "is_truth": False,
+        "proof_options": [
+            "Сам Зеебек называл явление «термомагнетизмом» и связывал его с земным магнетизмом; верное объяснение через электрический ток дал Х. К. Эрстед в 1823 году.",
+            "Зеебек вообще не использовал магнитную стрелку, а сразу измерял напряжение цифровым вольтметром.",
+            "Опыт с висмутом и медью провёл Алессандро Вольта в 1800 году при создании вольтова столба.",
+        ],
+        "correct_proof_idx": 0,
+        "explanation": (
+            "По реферату (гл. 1.3): Зеебек полагал, что разность температур «намагничивает» металлы, "
+            "и называл явление термомагнитным эффектом. Верное объяснение через термоток и термин "
+            "«термоэлектричество» ввёл Ханс Кристиан Эрстед в 1823 году."
+        ),
+    },
+    {
+        "id": 1,
+        "category": "Физика эффекта • Этап 2",
+        "stage_idx": 1,
+        "statement": (
+            "Удача первого опыта Зеебека во многом объяснялась выбором висмута: у него коэффициент "
+            "Зеебека достигает нескольких десятков мкВ/К по модулю, тогда как у меди — всего около 2 мкВ/К."
+        ),
+        "is_truth": True,
+        "proof_options": [
+            "У висмута термоэлектрический эффект выражен особенно ярко среди металлов, а ЭДС пары зависит от разности коэффициентов Зеебека двух проводников.",
+            "Висмут — полупроводник с коэффициентом Зеебека более 5000 мкВ/К, поэтому стрелка отклонилась даже без нагрева.",
+            "У меди коэффициент Зеебека максимален среди всех металлов, а висмут в опыте служил только магнитным экраном.",
+        ],
+        "correct_proof_idx": 0,
+        "explanation": (
+            "По реферату (гл. 2.1): у меди коэффициент Зеебека составляет около 2 мкВ/К, а у висмута — "
+            "несколько десятков мкВ/К по модулю, благодаря чему пара висмут–медь дала заметное отклонение стрелки."
+        ),
+    },
+    {
+        "id": 2,
+        "category": "Эффект Пельтье и опыт Ленца • Этап 3",
+        "stage_idx": 2,
+        "statement": (
+            "Если пропустить постоянный электрический ток через спай висмута и сурьмы, каплю воды "
+            "на спае можно заморозить, а при изменении направления тока — растопить."
+        ),
+        "is_truth": True,
+        "proof_options": [
+            "Это опыт Э. Х. Ленца (1838 г.), подтвердивший обратимость эффекта Пельтье: тепловая мощность Q̇ = Π·I меняет знак при смене направления тока.",
+            "Это следствие закона Джоуля–Ленца Q̇ = I²R, который вызывает охлаждение контакта при любом направлении тока.",
+            "Вода замерзает исключительно из-за эффекта Томсона в однородном проводнике без контакта разнородных металлов.",
+        ],
+        "correct_proof_idx": 0,
+        "explanation": (
+            "По реферату (гл. 1.4 и 2.2): в 1838 году российский физик Э. Х. Ленц поместил каплю воды на спай "
+            "висмута и сурьмы — при одном направлении тока капля замерзала, при обратном оттаивала."
+        ),
+    },
+    {
+        "id": 3,
+        "category": "Законы термоцепей • Этап 4",
+        "stage_idx": 3,
+        "statement": (
+            "Если сильно нагреть горелкой середину замкнутого кольца из одного однородного медного провода, "
+            "в цепи возникнет устойчивый термоток."
+        ),
+        "is_truth": False,
+        "proof_options": [
+            "По закону однородной цепи (и опытам Г. Магнуса 1851 г.) в цепи из одного однородного проводника нагревом нельзя создать термоток.",
+            "Термоток возникнет, только если предварительно скрутить медный провод в спираль.",
+            "Закон промежуточных температур запрещает нагревать медный провод выше 100 °C.",
+        ],
+        "correct_proof_idx": 0,
+        "explanation": (
+            "По реферату (гл. 3.2): для возникновения эффекта Зеебека необходимы два разнородных проводника "
+            "и разность температур их спаев; в однородном проводнике нагревом создать термоток невозможно."
+        ),
+    },
+    {
+        "id": 4,
+        "category": "Законы термоцепей • Этап 4",
+        "stage_idx": 3,
+        "statement": (
+            "Подключение вольтметра с медными проводами к термопаре всегда искажает её термо-ЭДС, "
+            "даже если обе клеммы подключения имеют одинаковую температуру."
+        ),
+        "is_truth": False,
+        "proof_options": [
+            "По закону промежуточных металлов включение третьего проводника не меняет ЭДС, если оба его конца находятся при одинаковой температуре.",
+            "Медь вообще не даёт контактной разности потенциалов ни с одним сплавом при любых температурах.",
+            "Искажение исчезает только тогда, когда клеммы вольтметра нагреты до температуры горячего спая.",
+        ],
+        "correct_proof_idx": 0,
+        "explanation": (
+            "По реферату (гл. 3.2): закон промежуточных металлов позволяет подключать к термопаре "
+            "измерительный прибор и паять/сваривать спай без искажения ЭДС, если концы третьего металла изотермичны."
+        ),
+    },
+    {
+        "id": 5,
+        "category": "Компенсация холодного спая • Этап 4",
+        "stage_idx": 3,
+        "statement": (
+            "Термопара реагирует на разность температур рабочего и холодного спаев, поэтому без учёта "
+            "температуры свободных концов (компенсации холодного спая) измерение будет неточным."
+        ),
+        "is_truth": True,
+        "proof_options": [
+            "Показания зависят от разности температур спаев: раньше свободные концы держали в тающем льду (0 °C), а современные приборы вводят поправку автоматически.",
+            "Компенсация холодного спая нужна только для охлаждения усилителя внутри вторичного прибора.",
+            "Температура свободных концов влияет на показания лишь при обрыве термопары.",
+        ],
+        "correct_proof_idx": 0,
+        "explanation": (
+            "По реферату (гл. 3.1): термо-ЭДС зависит от разности температур рабочего спая и свободных концов, "
+            "поэтому современные приборы измеряют температуру клемм термистором или термометром сопротивления и вводят поправку."
+        ),
+    },
+    {
+        "id": 6,
+        "category": "Стандартные термопары • Этап 5",
+        "stage_idx": 4,
+        "statement": (
+            "Платинородиевая термопара типа B (ТПР) — самая дорогая и точная, поэтому она лучше всего "
+            "подходит для измерения комнатной температуры от 0 до 40 °C."
+        ),
+        "is_truth": False,
+        "proof_options": [
+            "При температурах ниже +50 °C тип B практически не даёт полезного сигнала (ЭДС при 0 и 42 °C почти одинакова); он предназначен для высоких температур.",
+            "Платина мгновенно разрушается на воздухе при комнатной температуре.",
+            "У типа B слишком высокая чувствительность (более 200 мкВ/°C), из-за чего прибор зашкаливает при 20 °C.",
+        ],
+        "correct_proof_idx": 0,
+        "explanation": (
+            "По реферату (гл. 3.3 и 4.2): тип B работает при очень высоких температурах (до 1700–1800 °C), "
+            "а ниже 50 °C практически не даёт сигнала, поэтому для комнатных температур он не подходит."
+        ),
+    },
+    {
+        "id": 7,
+        "category": "Материалы термопар • Этап 5",
+        "stage_idx": 4,
+        "statement": (
+            "Термопара типа N (нихросил–нисил) создана как улучшенная замена типа K (хромель–алюмель): "
+            "она лучше сопротивляется окислению и меньше дрейфует при высоких температурах."
+        ),
+        "is_truth": True,
+        "proof_options": [
+            "Благодаря добавкам кремния сплавы нихросил и нисил устойчивее к окислению и меньше меняют градуировку, хотя их чувствительность чуть ниже (~39 против ~41 мкВ/°C).",
+            "Тип N изготовлен из вольфрама и платины и работает на открытом воздухе до 2500 °C.",
+            "Тип N обладает самой высокой чувствительностью среди всех стандартных пар — около 68 мкВ/°C.",
+        ],
+        "correct_proof_idx": 0,
+        "explanation": (
+            "По реферату (гл. 4.3): пара нихросил–нисил (тип N) разработана как более стабильная замена типа K "
+            "с лучшей стойкостью к окислению и меньшим дрейфом (наибольшая чувствительность ~68 мкВ/°C у типа E)."
+        ),
+    },
+    {
+        "id": 8,
+        "category": "Высокотемпературные пары • Этап 5",
+        "stage_idx": 4,
+        "statement": (
+            "Вольфрам-рениевые термопары рассчитаны на 2200–2500 °C, поэтому их можно свободно применять "
+            "в обычной открытой воздушной печи."
+        ),
+        "is_truth": False,
+        "proof_options": [
+            "На воздухе вольфрам быстро окисляется, поэтому вольфрам-рениевые термопары допускаются только в вакууме, инертной или восстановительной среде.",
+            "Вольфрам-рениевые пары работают только в криогенной области при температурах жидкого гелия.",
+            "В воздушной печи их нельзя применять только потому, что они перестают давать сигнал выше 800 °C.",
+        ],
+        "correct_proof_idx": 0,
+        "explanation": (
+            "По реферату (гл. 4.5): вольфрам-рениевые термопары измеряют 2200–2500 °C только в вакууме, "
+            "инертной или восстановительной среде, так как на воздухе вольфрам быстро окисляется."
+        ),
+    },
+    {
+        "id": 9,
+        "category": "Полупроводники и добротность ZT • Этапы 5–6",
+        "stage_idx": 4,
+        "statement": (
+            "Для эффективного термоэлектрического генератора или модуля Пельтье нужен материал "
+            "с максимально высокой теплопроводностью, чтобы тепло быстрее проходило через элемент."
+        ),
+        "is_truth": False,
+        "proof_options": [
+            "По формуле добротности ZT = α²σT/κ хороший термоэлектрик должен сочетать высокие α и σ с низкой теплопроводностью κ — поэтому используют полупроводники (Bi₂Te₃ и др.).",
+            "Добротность ZT не зависит от теплопроводности и определяется только температурой плавления металла.",
+            "Лучшим материалом для генераторов является чистая медь с КПД выше 50 %.",
+        ],
+        "correct_proof_idx": 0,
+        "explanation": (
+            "По реферату (гл. 4.6): добротность ZT = α²σT/κ обратно пропорциональна теплопроводности κ. "
+            "Если теплопроводность велика, разность температур быстро выравнивается, поэтому применяют полупроводники."
+        ),
+    },
+]
+
+CHRONOLOGY_EVENTS = [
+    {
+        "id": 0,
+        "year": "1800 г.",
+        "title": "Алессандро Вольта — «вольтов столб»",
+        "desc": "Создан первый источник постоянного тока, открывший эпоху систематических опытов с электричеством.",
+    },
+    {
+        "id": 1,
+        "year": "1820 г.",
+        "title": "Ханс Кристиан Эрстед — магнитное действие тока",
+        "desc": "Обнаружено, что проводник с электрическим током отклоняет магнитную стрелку компаса.",
+    },
+    {
+        "id": 2,
+        "year": "1821 г.",
+        "title": "Томас Иоганн Зеебек — открытие термо-ЭДС",
+        "desc": "В опыте с кольцом из висмута и меди при нагревании одного спая зафиксировано отклонение стрелки.",
+    },
+    {
+        "id": 3,
+        "year": "1834 г.",
+        "title": "Жан Шарль Пельтье — обратный эффект",
+        "desc": "Открыто выделение или поглощение дополнительной теплоты в спае разнородных проводников при пропускании тока.",
+    },
+    {
+        "id": 4,
+        "year": "1838 г.",
+        "title": "Э. Х. Ленц — опыт с замерзающей каплей воды",
+        "desc": "Наглядно доказано тепловое действие эффекта Пельтье: капля воды на спае висмута и сурьмы замерзала и оттаивала.",
+    },
+    {
+        "id": 5,
+        "year": "1851–1857 гг.",
+        "title": "Уильям Томсон (лорд Кельвин) — единая теория",
+        "desc": "Выведены термодинамические соотношения между эффектами Зеебека и Пельтье и предсказан эффект Томсона.",
+    },
+    {
+        "id": 6,
+        "year": "1886 г.",
+        "title": "Анри Луи Ле Шателье — платинородиевая термопара",
+        "desc": "Предложена термопара платина–платинородий, ставшая основой высокотемпературной и эталонной термометрии.",
+    },
+    {
+        "id": 7,
+        "year": "1930-е – 1956 г.",
+        "title": "Школа А. Ф. Иоффе — полупроводники, ТГ-1 и «Морозко»",
+        "desc": "Показана перспективность полупроводников; созданы генератор ТГ-1 («партизанский котелок») и серийный холодильник «Морозко» (1956).",
+    },
+]
+
+
+def _make_shuffled_chrono_order(seed_val: int | None = None) -> list[int]:
+    """Создаёт перемешанный порядок событий хронологии (гарантированно не совпадающий с верным)."""
+    ids = [ev["id"] for ev in CHRONOLOGY_EVENTS]
+    rng = random.Random(seed_val)
+    order = list(ids)
+    for _ in range(15):
+        rng.shuffle(order)
+        exact = sum(1 for pos, eid in enumerate(order) if pos == eid)
+        if exact <= 2 and order != ids:
+            return order
+    return list(reversed(ids))
+
+
+def _make_myth_proof_orders(seed_val: int | None = None) -> dict[int, list[int]]:
+    """Генерирует перемешанный порядок 3 вариантов доказательства для каждого дела Детектора мифов."""
+    rng = random.Random(seed_val)
+    orders: dict[int, list[int]] = {}
+    for case in MYTH_DETECTOR_CASES:
+        perm = [0, 1, 2]
+        rng.shuffle(perm)
+        orders[case["id"]] = perm
+    return orders
+
+
+def _init_knowledge_check_state() -> None:
+    """Инициализирует состояние интерактивных игр «Детектор мифов» и «Хронология открытий»."""
+    if "check_game_mode" not in st.session_state:
+        st.session_state["check_game_mode"] = "myth"
+    if "myth_order" not in st.session_state:
+        st.session_state["myth_order"] = [c["id"] for c in MYTH_DETECTOR_CASES]
+    if "myth_idx" not in st.session_state:
+        st.session_state["myth_idx"] = 0
+    if "myth_answers" not in st.session_state:
+        st.session_state["myth_answers"] = {}
+    if "myth_streak" not in st.session_state:
+        st.session_state["myth_streak"] = 0
+    if "myth_best_streak" not in st.session_state:
+        st.session_state["myth_best_streak"] = 0
+    if "myth_proof_orders" not in st.session_state:
+        st.session_state["myth_proof_orders"] = _make_myth_proof_orders(seed_val=1821)
+
+    if "chrono_order" not in st.session_state:
+        st.session_state["chrono_order"] = _make_shuffled_chrono_order(seed_val=1838)
+    if "chrono_checked" not in st.session_state:
+        st.session_state["chrono_checked"] = False
+    if "chrono_attempts" not in st.session_state:
+        st.session_state["chrono_attempts"] = 0
+    if "chrono_revealed_ids" not in st.session_state:
+        st.session_state["chrono_revealed_ids"] = []
+    if "chrono_solved" not in st.session_state:
+        st.session_state["chrono_solved"] = False
+    if "chrono_best_correct" not in st.session_state:
+        st.session_state["chrono_best_correct"] = 0
+
+
+def _compute_knowledge_rank(myth_points: int, myth_max: int, chrono_points: int, chrono_max: int) -> tuple[str, int, int]:
+    """Вычисляет итоговый балл и инженерный ранг по результатам обеих игр."""
+    total_pts = myth_points + chrono_points
+    max_pts = max(myth_max + chrono_max, 1)
+    pct = (total_pts / max_pts) * 100.0
+    if pct >= 99.9:
+        rank = "Хранитель законов Кельвина"
+    elif pct >= 80.0:
+        rank = "Эксперт термоэлектричества"
+    elif pct >= 55.0:
+        rank = "Инженер-термометрист"
+    elif pct >= 25.0:
+        rank = "Ассистент лаборатории"
+    else:
+        rank = "Наблюдатель опыта 1821 г."
+    return rank, total_pts, max_pts
+
+
+def _submit_myth_verdict(case_id: int, chosen_truth: bool) -> None:
+    """Фиксирует выбор «Правда / Миф» для текущего дела и обновляет серию побед."""
+    answers = dict(st.session_state.get("myth_answers", {}))
+    if case_id in answers:
+        return
+    case = MYTH_DETECTOR_CASES[case_id]
+    is_ok = (chosen_truth == case["is_truth"])
+    answers[case_id] = {
+        "verdict_choice": chosen_truth,
+        "verdict_ok": is_ok,
+        "proof_choice": None,
+        "proof_ok": None,
+    }
+    st.session_state["myth_answers"] = answers
+    if is_ok:
+        new_streak = int(st.session_state.get("myth_streak", 0)) + 1
+        st.session_state["myth_streak"] = new_streak
+        st.session_state["myth_best_streak"] = max(int(st.session_state.get("myth_best_streak", 0)), new_streak)
+    else:
+        st.session_state["myth_streak"] = 0
+
+
+def _submit_myth_proof(case_id: int, radio_key: str, perm: list[int]) -> None:
+    """Фиксирует выбранное физическое или историческое доказательство (+1 бонусный балл)."""
+    answers = dict(st.session_state.get("myth_answers", {}))
+    if case_id not in answers or answers[case_id]["proof_choice"] is not None:
+        return
+    case = MYTH_DETECTOR_CASES[case_id]
+    chosen_text = st.session_state.get(radio_key)
+    displayed_opts = [case["proof_options"][i] for i in perm]
+    if chosen_text not in displayed_opts:
+        return
+    orig_idx = perm[displayed_opts.index(chosen_text)]
+    answers[case_id]["proof_choice"] = orig_idx
+    answers[case_id]["proof_ok"] = (orig_idx == case["correct_proof_idx"])
+    st.session_state["myth_answers"] = answers
+
+
+def _reset_myth_detector(shuffle_cases: bool = False) -> None:
+    """Сбрасывает прогресс Детектора мифов (опционально перемешивая порядок дел)."""
+    order = [c["id"] for c in MYTH_DETECTOR_CASES]
+    if shuffle_cases:
+        random.shuffle(order)
+    st.session_state["myth_order"] = order
+    st.session_state["myth_idx"] = 0
+    st.session_state["myth_answers"] = {}
+    st.session_state["myth_streak"] = 0
+    st.session_state["myth_best_streak"] = 0
+    st.session_state["myth_proof_orders"] = _make_myth_proof_orders()
+    request_page_scroll("kip-theory-content-anchor")
+
+
+def _jump_to_theory_stage(stage_idx: int, stage_titles: list[str]) -> None:
+    """Переносит пользователя из игры сразу на нужный этап теории для повторения."""
+    clamped = int(np.clip(stage_idx, 0, len(stage_titles) - 1))
+    st.session_state["theory_stage_idx"] = clamped
+    st.session_state["theory_stage_selectbox"] = stage_titles[clamped]
+    st.session_state["theory_subtab"] = "Изучение по этапам (1–6)"
+    request_page_scroll("kip-theory-stage-anchor")
+
+
+def _move_chrono_item(pos: int, delta: int) -> None:
+    """Перемещает событие хронологии на одну позицию вверх или вниз."""
+    order = list(st.session_state.get("chrono_order", []))
+    new_pos = pos + delta
+    if 0 <= pos < len(order) and 0 <= new_pos < len(order):
+        order[pos], order[new_pos] = order[new_pos], order[pos]
+        st.session_state["chrono_order"] = order
+        st.session_state["chrono_checked"] = False
+        st.session_state["chrono_solved"] = False
+
+
+def _check_chronology() -> None:
+    """Проверяет текущую последовательность хронологии и обновляет статистику."""
+    order = list(st.session_state.get("chrono_order", []))
+    correct_cnt = sum(1 for pos, eid in enumerate(order) if pos == eid)
+    st.session_state["chrono_checked"] = True
+    st.session_state["chrono_attempts"] = int(st.session_state.get("chrono_attempts", 0)) + 1
+    st.session_state["chrono_best_correct"] = max(
+        int(st.session_state.get("chrono_best_correct", 0)),
+        correct_cnt,
+    )
+    st.session_state["chrono_solved"] = (correct_cnt == len(CHRONOLOGY_EVENTS))
+
+
+def _reveal_one_chrono_hint() -> None:
+    """Открывает год одного ещё не открытого события, стоящего не на своём месте."""
+    order = list(st.session_state.get("chrono_order", []))
+    revealed = list(st.session_state.get("chrono_revealed_ids", []))
+    candidates = [eid for pos, eid in enumerate(order) if pos != eid and eid not in revealed]
+    if not candidates:
+        candidates = [eid for eid in order if eid not in revealed]
+    if candidates:
+        revealed.append(candidates[0])
+        st.session_state["chrono_revealed_ids"] = revealed
+
+
+def _show_solved_chronology() -> None:
+    """Устанавливает правильный порядок всех событий хронологии для разбора."""
+    st.session_state["chrono_order"] = [ev["id"] for ev in CHRONOLOGY_EVENTS]
+    st.session_state["chrono_checked"] = True
+    st.session_state["chrono_revealed_ids"] = [ev["id"] for ev in CHRONOLOGY_EVENTS]
+
+
+def _reset_chronology() -> None:
+    """Перемешивает события хронологии заново для новой попытки."""
+    st.session_state["chrono_order"] = _make_shuffled_chrono_order()
+    st.session_state["chrono_checked"] = False
+    st.session_state["chrono_attempts"] = 0
+    st.session_state["chrono_revealed_ids"] = []
+    st.session_state["chrono_solved"] = False
+    st.session_state["chrono_best_correct"] = 0
+    request_page_scroll("kip-theory-content-anchor")
+
+
+def render_myth_detector_game(stage_titles: list[str]) -> None:
+    """Отрисовывает интерактивную игру «Детектор мифов» (вердикт Правда/Миф + доказательство)."""
+    myth_order = list(st.session_state["myth_order"])
+    total_cases = len(myth_order)
+    curr_pos = int(np.clip(int(st.session_state["myth_idx"]), 0, total_cases - 1))
+    st.session_state["myth_idx"] = curr_pos
+    answers = st.session_state["myth_answers"]
+    answered_cnt = len(answers)
+
+    st.progress(
+        answered_cnt / total_cases,
+        text=f"Разобрано дел: {answered_cnt} из {total_cases} • Текущее дело: №{curr_pos + 1}",
+    )
+
+    case_id = myth_order[curr_pos]
+    case = MYTH_DETECTOR_CASES[case_id]
+    ans = answers.get(case_id)
+
+    verdict_badge = "⏳ Ожидает вердикта"
+    if ans is not None:
+        verdict_badge = "✅ Вердикт верен" if ans["verdict_ok"] else "❌ Ошибка в вердикте"
+
+    st.markdown(
+        f'<div class="kip-myth-card">'
+        f'<div class="kip-myth-meta">'
+        f'<span class="kip-myth-badge">🕵️ Дело №{curr_pos + 1} из {total_cases} • {html.escape(case["category"])}</span>'
+        f'<span class="kip-myth-badge">{html.escape(verdict_badge)}</span>'
+        f'</div>'
+        f'<div class="kip-myth-statement">«{html.escape(case["statement"])}»</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+    if ans is None:
+        st.caption("Шаг 1 из 2: оцените утверждение — это научный факт из реферата или распространённый миф?")
+        with st.container():
+            st.markdown('<div class="kip-inline-pair-marker" aria-hidden="true"></div>', unsafe_allow_html=True)
+            v_col1, v_col2 = st.columns(2)
+            with v_col1:
+                st.button(
+                    "✅ ПРАВДА",
+                    key=f"myth_btn_true_{case_id}",
+                    type="primary",
+                    use_container_width=True,
+                    on_click=_submit_myth_verdict,
+                    args=(case_id, True),
+                )
+            with v_col2:
+                st.button(
+                    "❌ МИФ",
+                    key=f"myth_btn_false_{case_id}",
+                    type="secondary",
+                    use_container_width=True,
+                    on_click=_submit_myth_verdict,
+                    args=(case_id, False),
+                )
+    else:
+        truth_word = "ПРАВДА" if case["is_truth"] else "МИФ"
+        if ans["verdict_ok"]:
+            st.success(f"🎯 Точно! Это действительно **{truth_word}** (+1 балл за вердикт).")
+        else:
+            st.error(f"💥 Промах! На самом деле это **{truth_word}**.")
+
+        perm = st.session_state["myth_proof_orders"].get(case_id, [0, 1, 2])
+        displayed_proofs = [case["proof_options"][i] for i in perm]
+        radio_key = f"myth_proof_radio_{case_id}"
+
+        if ans["proof_choice"] is None:
+            with st.container(border=True):
+                st.markdown("**Шаг 2 из 2 • Бонус-доказательство (+1 балл):** выберите закон или факт из реферата, который это доказывает:")
+                st.radio(
+                    "Аргумент защиты / опровержения:",
+                    options=displayed_proofs,
+                    key=radio_key,
+                )
+                st.button(
+                    "⚖️ Предъявить доказательство",
+                    key=f"myth_proof_submit_{case_id}",
+                    type="primary",
+                    use_container_width=True,
+                    on_click=_submit_myth_proof,
+                    args=(case_id, radio_key, perm),
+                )
+        else:
+            if ans["proof_ok"]:
+                st.success("🏅 Доказательство принято! Вы указали верный физический/исторический аргумент (+1 бонусный балл).")
+            else:
+                st.warning(
+                    f"⚠️ Доказательство неточное. Верный аргумент: **{case['proof_options'][case['correct_proof_idx']]}**"
+                )
+            st.info(f"📖 **Разбор по реферату:** {case['explanation']}")
+            st.button(
+                f"📖 Повторить {stage_titles[case['stage_idx']].split('.')[0]} в теории",
+                key=f"myth_jump_stage_{case_id}",
+                on_click=_jump_to_theory_stage,
+                args=(case["stage_idx"], stage_titles),
+            )
+
+    st.markdown("---")
+    m_nav1, m_nav2, m_nav3 = st.columns([1, 1, 1])
+    with m_nav1:
+        if st.button("⬅️ Предыдущее дело", key="myth_prev_case_btn", disabled=(curr_pos == 0), use_container_width=True):
+            st.session_state["myth_idx"] = curr_pos - 1
+            request_page_scroll("kip-theory-content-anchor")
+            st.rerun()
+    with m_nav2:
+        st.button(
+            "🔀 Начать заново",
+            key="myth_restart_btn",
+            use_container_width=True,
+            on_click=_reset_myth_detector,
+            args=(True,),
+        )
+    with m_nav3:
+        if st.button(
+            "Следующее дело ➡️",
+            key="myth_next_case_btn",
+            disabled=(curr_pos >= total_cases - 1),
+            type="primary" if (ans is not None and curr_pos < total_cases - 1) else "secondary",
+            use_container_width=True,
+        ):
+            st.session_state["myth_idx"] = curr_pos + 1
+            request_page_scroll("kip-theory-content-anchor")
+            st.rerun()
+
+    if answered_cnt == total_cases:
+        v_ok = sum(1 for a in answers.values() if a["verdict_ok"])
+        p_ok = sum(1 for a in answers.values() if a["proof_ok"] is True)
+        st.markdown("---")
+        with st.container(border=True):
+            st.subheader("🏆 Итоговый протокол «Детектора мифов»")
+            st.markdown(
+                f"- **Верных вердиктов («Правда / Миф»):** `{v_ok} / {total_cases}`\n"
+                f"- **Бонусов за точное доказательство:** `{p_ok} / {total_cases}`\n"
+                f"- **Лучшая серия побед подряд:** `{st.session_state['myth_best_streak']}`"
+            )
+            summary_rows = []
+            for idx_r, cid in enumerate(myth_order, start=1):
+                c_item = MYTH_DETECTOR_CASES[cid]
+                a_item = answers[cid]
+                summary_rows.append({
+                    "№": idx_r,
+                    "Тема": c_item["category"],
+                    "Истина": "Правда" if c_item["is_truth"] else "Миф",
+                    "Вердикт": "✅ Верно" if a_item["verdict_ok"] else "❌ Ошибка",
+                    "Доказательство": (
+                        "✅ +1" if a_item["proof_ok"] is True
+                        else ("❌ 0" if a_item["proof_ok"] is False else "— Не выбрано")
+                    ),
+                })
+            st.dataframe(pd.DataFrame(summary_rows), use_container_width=True, hide_index=True)
+
+
+def render_chronology_game() -> None:
+    """Отрисовывает интерактивную игру «Хронология открытий термоэлектричества (1800–1956)»."""
+    order = list(st.session_state["chrono_order"])
+    checked = bool(st.session_state["chrono_checked"])
+    solved = bool(st.session_state["chrono_solved"])
+    revealed_ids = set(st.session_state.get("chrono_revealed_ids", []))
+    is_mobile_view = (st.session_state.get("chart_display_mode") == "Смартфон (320–430 px)")
+    n_events = len(CHRONOLOGY_EVENTS)
+
+    st.markdown(
+        "**Задание:** расставьте 8 ключевых вех развития термоэлектричества из реферата "
+        "в правильном хронологическом порядке — от **самого раннего события (№1)** сверху "
+        "до **самого позднего (№8)** снизу. Переставляйте карточки кнопками **⬆️** и **⬇️**, затем нажмите **«Проверить хронологию»**."
+    )
+
+    if solved:
+        st.success(
+            f"🎉 Безупречно! Вся хронология открытий (1800–1956) собрана верно "
+            f"(попыток проверки: {st.session_state['chrono_attempts']})."
+        )
+        with st.container(border=True):
+            st.subheader("📜 Полная лента времени термоэлектричества (1800–1956)")
+            for ev in CHRONOLOGY_EVENTS:
+                st.markdown(
+                    f'<div class="kip-timeline-item">'
+                    f'<strong>{html.escape(ev["year"])} — {html.escape(ev["title"])}</strong><br/>'
+                    f'<span style="font-size: var(--kip-font-caption); color: var(--kip-text-secondary);">{html.escape(ev["desc"])}</span>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+        st.button(
+            "🔀 Перемешать и собрать заново",
+            key="chrono_solved_reset_btn",
+            type="primary",
+            use_container_width=True,
+            on_click=_reset_chronology,
+        )
+        return
+
+    if checked:
+        exact_now = sum(1 for pos, eid in enumerate(order) if pos == eid)
+        if exact_now == n_events:
+            st.success("🎉 Все 8 событий стоят на своих местах!")
+        else:
+            st.warning(
+                f"🔍 Точно на своём месте сейчас: **{exact_now} из {n_events}**. "
+                f"Обратите внимание на подсказки направления («раньше» / «позже») в жёлтых карточках и переставьте их."
+            )
+
+    for pos, eid in enumerate(order):
+        ev = CHRONOLOGY_EVENTS[eid]
+        is_exact = (pos == eid)
+
+        card_cls = "kip-chrono-card"
+        hint_html = ""
+        year_badge = ""
+
+        if checked and is_exact:
+            card_cls = "kip-chrono-card kip-chrono-card--ok"
+            year_badge = f'<span class="kip-chrono-year">✅ {html.escape(ev["year"])}</span>'
+            hint_html = '<div class="kip-chrono-hint">✅ На своём месте</div>'
+        elif checked and not is_exact:
+            card_cls = "kip-chrono-card kip-chrono-card--wrong"
+            if eid in revealed_ids:
+                year_badge = f'<span class="kip-chrono-year">💡 {html.escape(ev["year"])}</span>'
+            if eid < pos:
+                hint_html = '<div class="kip-chrono-hint">⬆️ Это событие произошло РАНЬШЕ — поднимите карточку выше</div>'
+            else:
+                hint_html = '<div class="kip-chrono-hint">⬇️ Это событие произошло ПОЗЖЕ — опустите карточку ниже</div>'
+        elif eid in revealed_ids:
+            year_badge = f'<span class="kip-chrono-year">💡 {html.escape(ev["year"])}</span>'
+
+        card_html = (
+            f'<div class="{card_cls}">'
+            f'<div class="kip-chrono-head">'
+            f'<span class="kip-chrono-pos">#{pos + 1}</span>'
+            f'{year_badge}'
+            f'<span class="kip-chrono-title">{html.escape(ev["title"])}</span>'
+            f'</div>'
+            f'<div class="kip-chrono-desc">{html.escape(ev["desc"])}</div>'
+            f'{hint_html}'
+            f'</div>'
+        )
+
+        if is_mobile_view:
+            st.markdown(card_html, unsafe_allow_html=True)
+            with st.container():
+                st.markdown('<div class="kip-inline-pair-marker" aria-hidden="true"></div>', unsafe_allow_html=True)
+                mc1, mc2 = st.columns(2)
+                with mc1:
+                    st.button(
+                        "⬆️ Выше",
+                        key=f"chrono_up_{pos}_{eid}",
+                        disabled=(pos == 0),
+                        use_container_width=True,
+                        on_click=_move_chrono_item,
+                        args=(pos, -1),
+                    )
+                with mc2:
+                    st.button(
+                        "⬇️ Ниже",
+                        key=f"chrono_down_{pos}_{eid}",
+                        disabled=(pos == n_events - 1),
+                        use_container_width=True,
+                        on_click=_move_chrono_item,
+                        args=(pos, 1),
+                    )
+        else:
+            c_card, c_up, c_dn = st.columns([5.6, 0.85, 0.85])
+            with c_card:
+                st.markdown(card_html, unsafe_allow_html=True)
+            with c_up:
+                st.button(
+                    "⬆️",
+                    key=f"chrono_up_{pos}_{eid}",
+                    disabled=(pos == 0),
+                    use_container_width=True,
+                    help="Переместить событие выше (раньше по времени)",
+                    on_click=_move_chrono_item,
+                    args=(pos, -1),
+                )
+            with c_dn:
+                st.button(
+                    "⬇️",
+                    key=f"chrono_down_{pos}_{eid}",
+                    disabled=(pos == n_events - 1),
+                    use_container_width=True,
+                    help="Переместить событие ниже (позже по времени)",
+                    on_click=_move_chrono_item,
+                    args=(pos, 1),
+                )
+
+    st.markdown("---")
+    act1, act2, act3, act4 = st.columns(4)
+    with act1:
+        st.button(
+            "🔍 Проверить хронологию",
+            key="chrono_check_btn",
+            type="primary",
+            use_container_width=True,
+            on_click=_check_chronology,
+        )
+    with act2:
+        st.button(
+            "💡 Открыть 1 дату",
+            key="chrono_hint_btn",
+            disabled=(len(revealed_ids) >= n_events),
+            use_container_width=True,
+            on_click=_reveal_one_chrono_hint,
+        )
+    with act3:
+        st.button(
+            "🔀 Перемешать",
+            key="chrono_shuffle_btn",
+            use_container_width=True,
+            on_click=_reset_chronology,
+        )
+    with act4:
+        st.button(
+            "📜 Показать ответ",
+            key="chrono_solve_btn",
+            use_container_width=True,
+            on_click=_show_solved_chronology,
+        )
+
+
+def render_knowledge_check_hub(stage_titles: list[str]) -> None:
+    """
+    Интерактивный центр проверки знаний в разделе «Теория»:
+    объединяет «Детектор мифов» (10 дел) и «Хронологию открытий» (8 вех 1800–1956),
+    ведёт общий рейтинг и сохраняет классический чек-лист из 10 вопросов в свёрнутом блоке.
+    """
+    _init_knowledge_check_state()
+
+    answers = st.session_state["myth_answers"]
+    v_ok = sum(1 for a in answers.values() if a["verdict_ok"])
+    p_ok = sum(1 for a in answers.values() if a["proof_ok"] is True)
+    myth_pts = v_ok + p_ok
+    myth_max = len(MYTH_DETECTOR_CASES) * 2
+
+    chrono_best = int(st.session_state["chrono_best_correct"])
+    chrono_max = len(CHRONOLOGY_EVENTS)
+    chrono_status = (
+        "✅ Собрано (8 / 8)" if st.session_state["chrono_solved"]
+        else f"Лучший: {chrono_best} / {chrono_max}"
+    )
+
+    rank_title, total_pts, max_pts = _compute_knowledge_rank(myth_pts, myth_max, chrono_best, chrono_max)
+
+    st.subheader("🎯 Интерактивная проверка знаний: Детектор мифов и Хронология")
+    st.caption(
+        "Вместо обычного списка вопросов из методички проверьте понимание реферата в двух игровых режимах: "
+        "разоблачайте физические мифы с доказательствами и соберите ленту открытий 1800–1956 годов."
+    )
+
+    render_kpi_cards_grid([
+        {
+            "label": "1. Детектор мифов",
+            "value": f"{v_ok} / {len(MYTH_DETECTOR_CASES)}",
+            "sub": f"Бонус за доказательства: +{p_ok} (всего {myth_pts}/{myth_max})",
+            "tone": "normal",
+        },
+        {
+            "label": "2. Хронология (1800–1956)",
+            "value": chrono_status,
+            "sub": f"Попыток проверки: {st.session_state['chrono_attempts']}",
+            "tone": "normal",
+        },
+        {
+            "label": "3. Серия побед (комбо)",
+            "value": f"🔥 {st.session_state['myth_streak']}",
+            "sub": f"Рекорд серии: {st.session_state['myth_best_streak']} подряд",
+            "tone": "normal",
+        },
+        {
+            "label": "4. Текущий ранг",
+            "value": rank_title,
+            "sub": f"Общий счёт: {total_pts} из {max_pts} баллов",
+            "tone": "normal",
+        },
+    ])
+
+    cur_game = st.session_state["check_game_mode"]
+    with st.container():
+        st.markdown('<div class="kip-inline-pair-marker" aria-hidden="true"></div>', unsafe_allow_html=True)
+        g_col1, g_col2 = st.columns(2)
+        with g_col1:
+            if st.button(
+                "🕵️ Детектор мифов (10 дел)",
+                key="check_mode_myth_btn",
+                type="primary" if cur_game == "myth" else "secondary",
+                use_container_width=True,
+            ):
+                if cur_game != "myth":
+                    st.session_state["check_game_mode"] = "myth"
+                    st.rerun()
+        with g_col2:
+            if st.button(
+                "⏳ Хронология открытий (1800–1956)",
+                key="check_mode_chrono_btn",
+                type="primary" if cur_game == "chrono" else "secondary",
+                use_container_width=True,
+            ):
+                if cur_game != "chrono":
+                    st.session_state["check_game_mode"] = "chrono"
+                    st.rerun()
+
+    st.markdown("---")
+    if st.session_state["check_game_mode"] == "myth":
+        render_myth_detector_game(stage_titles)
+    else:
+        render_chronology_game()
+
+
 def _on_theory_stage_select_change(stage_titles: list[str]) -> None:
     """Синхронизирует theory_stage_idx при выборе этапа и прокручивает экран к началу текста этапа."""
     chosen_title = st.session_state.get("theory_stage_selectbox")
@@ -5192,7 +6177,7 @@ def render_theory_section() -> None:
 
     theory_subtabs = [
         ("Изучение по этапам (1–6)", "📖 Этапы теории (1–6)"),
-        ("Самопроверка", "✅ Самопроверка (10)"),
+        ("Самопроверка", "🎯 Проверка: Мифы и Хронология"),
         ("Словарь терминов", "🗂️ Словарь терминов (12)"),
     ]
     cur_subtab = st.session_state.get("theory_subtab", theory_subtabs[0][0])
@@ -5284,7 +6269,7 @@ def render_theory_section() -> None:
                 args=(-1, stage_titles),
             )
         with nav_col2:
-            if st.button("✅ Перейти к самопроверке", key="theory_goto_qa_btn", use_container_width=True):
+            if st.button("🎯 Проверить знания (Мифы и Хронология)", key="theory_goto_qa_btn", use_container_width=True):
                 st.session_state["theory_subtab"] = "Самопроверка"
                 request_page_scroll("kip-theory-content-anchor")
                 st.rerun()
@@ -5299,67 +6284,58 @@ def render_theory_section() -> None:
             )
 
     # -----------------------------------------------------------------
-    # ПОДРАЗДЕЛ 2: САМОПРОВЕРКА ПО МАТЕРИАЛУ
+    # ПОДРАЗДЕЛ 2: ИНТЕРАКТИВНАЯ ПРОВЕРКА ЗНАНИЙ (ДЕТЕКТОР МИФОВ + ХРОНОЛОГИЯ)
     # -----------------------------------------------------------------
     elif cur_subtab == "Самопроверка":
-        st.subheader("✅ Самопроверка по материалу")
-        st.markdown(
-            "**Порядок работы с вопросами:**\n"
-            "1. Сначала самостоятельно ответьте на вопрос.\n"
-            "2. Затем раскройте правильный ответ.\n"
-            "3. Сравните свой ответ с приведённым объяснением."
-        )
-        qa_pairs = [
-            (
-                "1. Что называют термо-ЭДС?",
-                "Электродвижущая сила, возникающая в цепи из разнородных проводников при разных температурах спаев."
-            ),
-            (
-                "2. Какие условия необходимы для возникновения эффекта Зеебека в цепи из двух разнородных проводников?",
-                "Нужны два разнородных проводника и разная температура мест их соединения."
-            ),
-            (
-                "3. Какие проводники использовал Зеебек в известном опыте и что наблюдал при нагревании одного спая?",
-                "Висмутовый и медный проводники; при нагревании одного спая магнитная стрелка отклонялась, а при перестановке горячего и холодного спаев направление отклонения менялось."
-            ),
-            (
-                "4. Как объясняется физическая причина возникновения термо-ЭДС в реферате?",
-                "Из-за диффузии носителей заряда от нагретой части к холодной, накопления заряда и возникновения электрического поля."
-            ),
-            (
-                "5. Что обозначают $T_1$, $T_2$ и $\\alpha$ в приближённой формуле термо-ЭДС?",
-                "$T_1$ и $T_2$ — температуры спаев; $\\alpha$ — коэффициент термо-ЭДС данной пары проводников."
-            ),
-            (
-                "6. Чем эффект Пельтье отличается от эффекта Зеебека?",
-                "Эффект Пельтье проявляется как выделение или поглощение дополнительной тепловой мощности ($\\dot{Q} = \\Pi I$) при прохождении тока через контакт разнородных проводников."
-            ),
-            (
-                "7. Что называют горячим и холодным спаями термопары?",
-                "Горячий (рабочий) спай находится в зоне измерения; холодный спай образован свободными концами, подключаемыми к измерительному прибору."
-            ),
-            (
-                "8. Для чего нужна компенсация холодного спая?",
-                "Чтобы учитывать температуру свободных концов, поскольку измеряемая термо-ЭДС зависит от разности температур спаев."
-            ),
-            (
-                "9. Какие три закона термоэлектрических цепей перечислены в реферате?",
-                "Закон однородной цепи, закон промежуточных металлов и закон промежуточных температур."
-            ),
-            (
-                "10. Где применяются термопары и другие термоэлектрические устройства согласно реферату?",
-                "В измерении температуры, регистрации теплового излучения, термоэлектрических генераторах и охладителях, а также в перечисленных промышленных и научных областях."
-            )
-        ]
+        stage_titles = [s[0] for s in stages_list]
+        render_knowledge_check_hub(stage_titles)
 
-        for q_text, a_text in qa_pairs:
-            with st.expander(q_text):
-                st.markdown(f"**Ответ для проверки:** {a_text}")
-
-        with st.expander("📋 Ответы для проверки (полный список)"):
-            st.markdown("### Ответы для проверки")
-            for idx, (_, a_text) in enumerate(qa_pairs, start=1):
-                st.markdown(f"{idx}. {a_text}")
+        st.markdown("---")
+        with st.expander("📋 Классические контрольные вопросы по реферату (10)", expanded=False):
+            qa_pairs = [
+                (
+                    "1. Что называют термо-ЭДС?",
+                    "Электродвижущая сила, возникающая в цепи из разнородных проводников при разных температурах спаев."
+                ),
+                (
+                    "2. Какие условия необходимы для возникновения эффекта Зеебека в цепи из двух разнородных проводников?",
+                    "Нужны два разнородных проводника и разная температура мест их соединения."
+                ),
+                (
+                    "3. Какие проводники использовал Зеебек в известном опыте и что наблюдал при нагревании одного спая?",
+                    "Висмутовый и медный проводники; при нагревании одного спая магнитная стрелка отклонялась, а при перестановке горячего и холодного спаев направление отклонения менялось."
+                ),
+                (
+                    "4. Как объясняется физическая причина возникновения термо-ЭДС в реферате?",
+                    "Из-за диффузии носителей заряда от нагретой части к холодной, накопления заряда и возникновения электрического поля."
+                ),
+                (
+                    "5. Что обозначают $T_1$, $T_2$ и $\\alpha$ в приближённой формуле термо-ЭДС?",
+                    "$T_1$ и $T_2$ — температуры спаев; $\\alpha$ — коэффициент термо-ЭДС данной пары проводников."
+                ),
+                (
+                    "6. Чем эффект Пельтье отличается от эффекта Зеебека?",
+                    "Эффект Пельтье проявляется как выделение или поглощение дополнительной тепловой мощности ($\\dot{Q} = \\Pi I$) при прохождении тока через контакт разнородных проводников."
+                ),
+                (
+                    "7. Что называют горячим и холодным спаями термопары?",
+                    "Горячий (рабочий) спай находится в зоне измерения; холодный спай образован свободными концами, подключаемыми к измерительному прибору."
+                ),
+                (
+                    "8. Для чего нужна компенсация холодного спая?",
+                    "Чтобы учитывать температуру свободных концов, поскольку измеряемая термо-ЭДС зависит от разности температур спаев."
+                ),
+                (
+                    "9. Какие три закона термоэлектрических цепей перечислены в реферате?",
+                    "Закон однородной цепи, закон промежуточных металлов и закон промежуточных температур."
+                ),
+                (
+                    "10. Где применяются термопары и другие термоэлектрические устройства согласно реферату?",
+                    "В измерении температуры, регистрации теплового излучения, термоэлектрических генераторах и охладителях, а также в перечисленных промышленных и научных областях."
+                )
+            ]
+            for q_text, a_text in qa_pairs:
+                st.markdown(f"**{q_text}**  \n{a_text}")
 
         qa_nav1, qa_nav2 = st.columns(2)
         with qa_nav1:
